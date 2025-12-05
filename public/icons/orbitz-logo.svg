@@ -1,0 +1,107 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for main orb -->
+    <linearGradient id="orbGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#830EF9"/>
+      <stop offset="50%" style="stop-color:#0E78F9"/>
+      <stop offset="100%" style="stop-color:#830EF9"/>
+    </linearGradient>
+    
+    <!-- Gradient for rings -->
+    <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#830EF9;stop-opacity:0.2"/>
+      <stop offset="50%" style="stop-color:#0E78F9;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#830EF9;stop-opacity:0.2"/>
+    </linearGradient>
+    
+    <!-- Glow effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Inner glow for orb -->
+    <radialGradient id="orbInner" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#830EF9;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background circle (optional, transparent) -->
+  <circle cx="256" cy="256" r="240" fill="#1C1F2E" opacity="0"/>
+  
+  <!-- Outer orbit ring 1 -->
+  <ellipse 
+    cx="256" cy="256" 
+    rx="200" ry="70" 
+    fill="none" 
+    stroke="url(#ringGradient)" 
+    stroke-width="3"
+    transform="rotate(-20 256 256)"
+    filter="url(#glow)"
+  />
+  
+  <!-- Outer orbit ring 2 -->
+  <ellipse 
+    cx="256" cy="256" 
+    rx="180" ry="60" 
+    fill="none" 
+    stroke="url(#ringGradient)" 
+    stroke-width="2"
+    transform="rotate(25 256 256)"
+    opacity="0.7"
+  />
+  
+  <!-- Outer orbit ring 3 -->
+  <ellipse 
+    cx="256" cy="256" 
+    rx="160" ry="50" 
+    fill="none" 
+    stroke="url(#ringGradient)" 
+    stroke-width="2"
+    transform="rotate(-45 256 256)"
+    opacity="0.5"
+  />
+  
+  <!-- Main orb/planet -->
+  <circle 
+    cx="256" cy="256" 
+    r="80" 
+    fill="url(#orbGradient)"
+    filter="url(#glow)"
+  />
+  
+  <!-- Inner highlight on orb -->
+  <circle 
+    cx="256" cy="256" 
+    r="80" 
+    fill="url(#orbInner)"
+  />
+  
+  <!-- Small orbiting dot 1 -->
+  <circle 
+    cx="420" cy="220" 
+    r="12" 
+    fill="#0E78F9"
+    filter="url(#glow)"
+  />
+  
+  <!-- Small orbiting dot 2 -->
+  <circle 
+    cx="120" cy="300" 
+    r="8" 
+    fill="#830EF9"
+    filter="url(#glow)"
+  />
+  
+  <!-- Small orbiting dot 3 -->
+  <circle 
+    cx="300" cy="130" 
+    r="6" 
+    fill="#C9DDFF"
+    opacity="0.8"
+  />
+</svg>

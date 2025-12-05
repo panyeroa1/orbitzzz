@@ -27,7 +27,12 @@ export const SIDEBAR_LINKS = [
   {
     label: "Integrations",
     route: "/integrations",
-    imgUrl: "/icons/add-personal.svg", // Using a placeholder icon for now
+    imgUrl: "/icons/add-personal.svg",
+  },
+  {
+    label: "API Docs",
+    route: "/docs",
+    imgUrl: "/icons/add-meeting.svg",
   },
 ] as const;
 

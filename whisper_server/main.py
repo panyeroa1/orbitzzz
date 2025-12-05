@@ -85,11 +85,8 @@ class APIKeyInfo(BaseModel):
 @app.get("/")
 def read_root():
     return {
-        "service": "Eburon STT",
         "status": "online",
-        "model": MODEL_SIZE,
-        "version": "1.0.0",
-        "docs": "/docs"
+        "message": "Eburon STT is Running"
     }
 
 @app.post("/api/keys", response_model=APIKeyResponse)

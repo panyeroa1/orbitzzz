@@ -180,7 +180,7 @@ export const MeetingRoom = () => {
                   Clear
                 </button>
               )}
-              <button onClick={() => setShowTranscript(false)}>
+              <button onClick={() => setShowTranscript(false)} title="Close transcript">
                 <X size={18} className="text-white/60 hover:text-white" />
               </button>
             </div>

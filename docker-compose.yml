@@ -1,0 +1,41 @@
+services:
+  # Orbitz Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        - NEXT_PUBLIC_CLERK_SIGN_IN_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_URL}
+        - NEXT_PUBLIC_CLERK_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_URL}
+        - NEXT_PUBLIC_STREAM_API_KEY=${NEXT_PUBLIC_STREAM_API_KEY}
+        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+        - NEXT_PUBLIC_WHISPER_SERVER_URL=http://whisper:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - STREAM_API_KEY=${STREAM_API_KEY}
+      - STREAM_API_SECRET=${STREAM_API_SECRET}
+      - NEXT_PUBLIC_WHISPER_SERVER_URL=http://whisper:8000
+    depends_on:
+      whisper:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Whisper Transcription Server
+  whisper:
+    build:
+      context: ./whisper_server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - WHISPER_MODEL_SIZE=tiny
+    restart: unless-stopped
+    # Optional: Mount cache directory for model persistence
+    volumes:
+      - whisper_models:/root/.cache/huggingface
+
+volumes:
+  whisper_models:

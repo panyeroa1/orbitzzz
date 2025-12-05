@@ -6,7 +6,11 @@ import asyncio
 import os
 import tempfile
 
-app = FastAPI()
+app = FastAPI(
+    title="Eburon STT",
+    description="Eburon Speech-to-Text Server powered by Whisper",
+    version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,17 +22,22 @@ app.add_middleware(
 
 # Load model (tiny for speed on CPU)
 # valid sizes: tiny, base, small, medium, large-v2
-MODEL_SIZE = "tiny" 
+MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "tiny")
 model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "message": "Whisper Server is Running"}
+    return {
+        "service": "Eburon STT",
+        "status": "online",
+        "model": MODEL_SIZE,
+        "version": "1.0.0"
+    }
 
 @app.websocket("/ws/transcribe")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("Client connected")
+    print("[Eburon STT] Client connected")
     
     try:
         while True:
@@ -48,18 +57,18 @@ async def websocket_endpoint(websocket: WebSocket):
                 transcription = " ".join([segment.text for segment in segments])
                 
                 if transcription.strip():
-                    print(f"Transcription: {transcription}")
+                    print(f"[Eburon STT] Transcription: {transcription}")
                     await websocket.send_text(transcription)
             except Exception as e:
-                print(f"Error processing audio: {e}")
+                print(f"[Eburon STT] Error processing audio: {e}")
             finally:
                 if os.path.exists(tmp_path):
                     os.unlink(tmp_path)
 
     except WebSocketDisconnect:
-        print("Client disconnected")
+        print("[Eburon STT] Client disconnected")
     except Exception as e:
-        print(f"Connection error: {e}")
+        print(f"[Eburon STT] Connection error: {e}")
 
 @app.websocket("/ws/status")
 async def status_endpoint(websocket: WebSocket):
@@ -68,4 +77,7 @@ async def status_endpoint(websocket: WebSocket):
     await websocket.close()
 
 if __name__ == "__main__":
+    print("\n🎤 Eburon STT Server starting...")
+    print(f"   Model: {MODEL_SIZE}")
+    print(f"   Endpoint: http://0.0.0.0:8000\n")
     uvicorn.run(app, host="0.0.0.0", port=8000)

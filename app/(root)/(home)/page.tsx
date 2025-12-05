@@ -18,9 +18,9 @@ const HomePage = () => {
 
   return (
     <section className="flex size-full flex-col gap-10 text-white">
-      <div className="h-[300px] w-full rounded-[20px] bg-hero bg-cover">
+      <div className="h-[300px] w-full rounded-apple-xl bg-hero bg-cover overflow-hidden">
         <div className="flex h-full flex-col justify-between max-md:px-5 max-md:py-8 lg:p-11">
-          <h2 className="glassmorphism max-w-[270px] rounded py-2 text-center text-base font-normal">
+          <h2 className="glassmorphism max-w-[270px] rounded-apple py-2 text-center text-sm font-medium tracking-apple-normal text-white/80">
             {upcomingCalls?.length === 0
               ? "No upcoming meeting"
               : upcomingCalls?.length &&
@@ -33,10 +33,10 @@ const HomePage = () => {
                 })}`}
           </h2>
 
-          <div className="flex flex-col gap-2">
-            <h1 className="text-4xl font-extrabold lg:text-7xl">{time}</h1>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-4xl font-light tracking-apple-tight lg:text-7xl">{time}</h1>
 
-            <p className="text-lg font-medium text-sky-1 lg:text-2xl">{date}</p>
+            <p className="text-base font-medium text-white/50 tracking-apple-normal lg:text-xl">{date}</p>
           </div>
         </div>
       </div>

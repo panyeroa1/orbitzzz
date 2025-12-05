@@ -32,11 +32,78 @@ export const MeetingRoom = () => {
   const searchParams = useSearchParams();
   const [showParticipants, setShowParticipants] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
+  
+  // Transcription State
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcription, setTranscription] = useState("");
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
 
   const isPersonalRoom = !!searchParams.get("personal");
+
+  const startTranscription = async () => {
+    try {
+        const ws = new WebSocket("ws://localhost:8000/ws/transcribe");
+        
+        ws.onopen = async () => {
+            console.log("WebSocket Connected");
+            setSocket(ws);
+            setIsTranscribing(true);
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+                    ws.send(event.data);
+                }
+            };
+
+            recorder.start(1000); // Send chunks every 1 second
+            setMediaRecorder(recorder);
+        };
+
+        ws.onmessage = (event) => {
+            setTranscription(event.data);
+            // Clear subtitle after 3 seconds
+            setTimeout(() => setTranscription(""), 5000);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket Disconnected");
+            stopTranscription();
+        };
+
+    } catch (error) {
+        console.error("Error starting transcription:", error);
+    }
+  };
+
+  const stopTranscription = () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+    if (socket) {
+        socket.close();
+    }
+    setIsTranscribing(false);
+    setSocket(null);
+    setMediaRecorder(null);
+    setTranscription("");
+  };
+
+  const toggleTranscription = () => {
+    if (isTranscribing) {
+        stopTranscription();
+    } else {
+        startTranscription();
+    }
+  };
+
 
   if (callingState !== CallingState.JOINED) return <Loader />;
 
@@ -67,6 +134,13 @@ export const MeetingRoom = () => {
         </div>
       </div>
 
+      {/* Subtitles Overlay */}
+      {transcription && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 transform rounded-lg bg-black/70 px-6 py-3 text-center text-xl text-yellow-400">
+            {transcription}
+        </div>
+      )}
+
       <div className="fixed bottom-0 flex w-full flex-wrap items-center justify-center gap-5">
         <CallControls onLeave={() => router.push("/")} />
 
@@ -96,6 +170,13 @@ export const MeetingRoom = () => {
                 <DropdownMenuSeparator className="border-dark-1" />
               </div>
             ))}
+            <DropdownMenuSeparator className="border-dark-1" />
+             <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={toggleTranscription}
+                >
+                  {isTranscribing ? "Stop Transcription" : "Start Transcription"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

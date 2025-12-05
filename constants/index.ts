@@ -24,6 +24,11 @@ export const SIDEBAR_LINKS = [
     route: "/personal-room",
     imgUrl: "/icons/add-personal.svg",
   },
+  {
+    label: "Integrations",
+    route: "/integrations",
+    imgUrl: "/icons/add-personal.svg", // Using a placeholder icon for now
+  },
 ] as const;
 
 export const avatarImages = [

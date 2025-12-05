@@ -43,14 +43,33 @@
 }
 
 .glassmorphism {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(30, 39, 87, 0.6);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .glassmorphism2 {
-  background: rgba(18, 17, 17, 0.25);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(22, 25, 37, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.premium-card {
+  background: linear-gradient(145deg, rgba(37, 42, 65, 0.8), rgba(28, 31, 46, 0.9));
+  border: 1px solid rgba(131, 14, 249, 0.2);
+  transition: all 0.3s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(131, 14, 249, 0.15);
+  border-color: rgba(131, 14, 249, 0.4);
+}
+
+body {
+  background: linear-gradient(180deg, #0d0f18 0%, #161925 50%, #1C1F2E 100%);
+  min-height: 100vh;
 }
 
 /* ==== clerk class override ===== */

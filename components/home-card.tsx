@@ -19,19 +19,19 @@ export const HomeCard = ({
   return (
     <button
       className={cn(
-        "flex min-h-[260px] w-full cursor-pointer flex-col justify-between rounded-[14px] p-0 px-4 py-6 text-left xl:max-w-[270px]",
+        "premium-card flex min-h-[260px] w-full cursor-pointer flex-col justify-between rounded-[14px] p-0 px-4 py-6 text-left xl:max-w-[270px] animate-fade-in",
         className
       )}
       onClick={handleClick}
     >
-      <div className="flex-center glassmorphism size-12 rounded-[10px]">
+      <div className="flex-center glassmorphism size-12 rounded-[10px] transition-transform duration-300 hover:scale-110">
         <Image src={img} alt={title} width={27} height={27} />
       </div>
 
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">{title}</h1>
 
-        <p className="text-lg font-normal">{description}</p>
+        <p className="text-lg font-normal text-sky-1/80">{description}</p>
       </div>
     </button>
   );

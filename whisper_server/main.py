@@ -152,11 +152,11 @@ def validate_key(api_key: str = Query(..., description="API key to validate")):
 @app.websocket("/ws/transcribe")
 async def websocket_endpoint(websocket: WebSocket, api_key: str = Query(None)):
     """
-    WebSocket endpoint for real-time transcription.
+    WebSocket endpoint for real-time transcription with auto language detection.
     
     Connect with: ws://host:8000/ws/transcribe?api_key=YOUR_API_KEY
     Send audio data as binary blobs (webm format recommended)
-    Receive transcribed text as string messages
+    Receive JSON: {"text": "transcription", "language": "en", "confidence": 0.95}
     """
     # Validate API key if provided (optional for backward compatibility)
     if api_key and not validate_api_key(api_key):
@@ -178,13 +178,24 @@ async def websocket_endpoint(websocket: WebSocket, api_key: str = Query(None)):
                 tmp_path = tmp.name
 
             try:
-                # Transcribe
+                # Transcribe with auto language detection
                 segments, info = model.transcribe(tmp_path, beam_size=5)
                 transcription = " ".join([segment.text for segment in segments])
                 
                 if transcription.strip():
-                    print(f"[Eburon STT] Transcription: {transcription}")
-                    await websocket.send_text(transcription)
+                    # Get detected language
+                    detected_lang = info.language if info.language else "unknown"
+                    lang_prob = info.language_probability if info.language_probability else 0.0
+                    
+                    print(f"[Eburon STT] [{detected_lang}] {transcription}")
+                    
+                    # Send JSON response with language info
+                    response = json.dumps({
+                        "text": transcription.strip(),
+                        "language": detected_lang,
+                        "confidence": round(lang_prob, 2)
+                    })
+                    await websocket.send_text(response)
             except Exception as e:
                 print(f"[Eburon STT] Error processing audio: {e}")
             finally:

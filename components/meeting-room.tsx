@@ -78,12 +78,23 @@ export const MeetingRoom = () => {
       };
 
       ws.onmessage = (event) => {
-        const text = event.data.trim();
-        if (text) {
-          setCurrentSubtitle(text);
-          setTranscriptHistory(prev => [...prev, text]);
-          // Clear subtitle after 4 seconds
-          setTimeout(() => setCurrentSubtitle(""), 4000);
+        try {
+          const data = JSON.parse(event.data);
+          if (data.text) {
+            const langLabel = data.language ? `[${data.language.toUpperCase()}]` : "";
+            setCurrentSubtitle(`${langLabel} ${data.text}`);
+            setTranscriptHistory(prev => [...prev, `${langLabel} ${data.text}`]);
+            // Clear subtitle after 4 seconds
+            setTimeout(() => setCurrentSubtitle(""), 4000);
+          }
+        } catch {
+          // Fallback for plain text (backward compatibility)
+          const text = event.data.trim();
+          if (text) {
+            setCurrentSubtitle(text);
+            setTranscriptHistory(prev => [...prev, text]);
+            setTimeout(() => setCurrentSubtitle(""), 4000);
+          }
         }
       };
 

@@ -78,17 +78,56 @@ export default function TranslatePage({ params }: TranslatePageProps) {
           socketRef.current = ws;
           setIsConnected(true);
 
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-
-          recorder.ondataavailable = (event) => {
-            if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-              ws.send(event.data);
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // Determine supported mime type
+            let mimeType = "audio/webm";
+            if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+              mimeType = "audio/webm;codecs=opus";
+            } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+              mimeType = "audio/mp4"; // Safari fallback
             }
-          };
 
-          recorder.start(2000);
-          mediaRecorderRef.current = recorder;
+            console.log(`[Translation] Using MIME type: ${mimeType}`);
+
+            const recordAndSend = () => {
+              if (ws.readyState !== WebSocket.OPEN) return;
+
+              const recorder = new MediaRecorder(stream, { mimeType });
+              
+              recorder.ondataavailable = (event) => {
+                if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+                  ws.send(event.data);
+                }
+              };
+
+              recorder.start();
+
+              // Stop and restart every 3 seconds to ensure headers are sent
+              setTimeout(() => {
+                if (recorder.state === "recording") {
+                  recorder.stop();
+                  if (ws.readyState === WebSocket.OPEN) {
+                     recordAndSend();
+                  }
+                }
+              }, 3000);
+            };
+            
+            // Start the loop
+            recordAndSend();
+            
+            // Store stream cleanup, not recorder ref since it changes
+            mediaRecorderRef.current = { 
+               stream, 
+               stop: () => stream.getTracks().forEach(t => t.stop()),
+               state: "active" 
+            } as any;
+
+          } catch (err) {
+            console.error("Error accessing microphone:", err);
+          }
         };
 
         ws.onmessage = async (event) => {
@@ -137,9 +176,9 @@ export default function TranslatePage({ params }: TranslatePageProps) {
         ws.onclose = () => {
           console.log("[Translation] Disconnected");
           setIsConnected(false);
-          if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+          // Cleanup stream
+          if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+             mediaRecorderRef.current.stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
           }
         };
       } catch (error) {

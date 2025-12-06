@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { use, useState, useRef, useEffect } from "react";
 import { Globe, Volume2, VolumeX, ArrowLeft, Loader2 } from "lucide-react";
 import {
   Select,
@@ -32,10 +32,13 @@ const LANGUAGES = [
 
 const WHISPER_URL = process.env.NEXT_PUBLIC_WHISPER_SERVER_URL || "ws://localhost:8000";
 
-export default function TranslatePage() {
-  const params = useParams();
+type TranslatePageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default function TranslatePage({ params }: TranslatePageProps) {
+  const { id: meetingId } = use(params);
   const router = useRouter();
-  const meetingId = params.id as string;
 
   const [targetLanguage, setTargetLanguage] = useState("es");
   const [isConnected, setIsConnected] = useState(false);

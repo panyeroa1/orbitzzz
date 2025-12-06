@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { StreamCall, StreamTheme } from "@stream-io/video-react-sdk";
-import { useState } from "react";
+import { use, useState } from "react";
 
 import { Loader } from "@/components/loader";
 import { MeetingRoom } from "@/components/meeting-room";
@@ -10,16 +10,17 @@ import { MeetingSetup } from "@/components/meeting-setup";
 import { useGetCallById } from "@/hooks/use-get-call-by-id";
 
 type MeetingIdPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 const MeetingIdPage = ({ params }: MeetingIdPageProps) => {
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const { user, isLoaded } = useUser();
+  const { id } = use(params);
 
-  const { call, isCallLoading } = useGetCallById(params.id);
+  const { call, isCallLoading } = useGetCallById(id);
 
   if (!isLoaded || isCallLoading) return <Loader />;
 

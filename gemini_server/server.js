@@ -38,11 +38,13 @@ IMPORTANT RULES:
 - Wait for complete sentences or natural speech pauses before translating.
 - Do NOT translate word-by-word or overlap with the speaker.
 - Translate each sentence fully, then speak it with natural human expression.
+- Read aloud in a DEEP, RICH VOICE with the authentic native accent of ${targetLang}.
+- Use CORRECT PRONUNCIATION for ${targetLang} - speak like a native speaker would.
 - Match the emotional tone: if the speaker is excited, sound excited; if serious, sound serious.
 - Use natural pauses, intonation, and rhythm like a native speaker.
 - Never introduce yourself or add commentary. Just speak the translation.
 - If there is silence, remain completely silent.
-- Aim for clear, expressive, human-like speech that sounds like a professional voice actor.` 
+- Aim for clear, expressive, human-like speech that sounds like a professional voice actor from a ${targetLang}-speaking country.` 
         }],
     },
 });

@@ -230,33 +230,33 @@ Known limitations or follow-up tasks:
 
 Task ID: T-0007
 Title: Debug Whisper Server Not Found Error
-Status: DONE
+Status: OBSOLETE - Migrated to Web Speech API
 Owner: Miles
 Created: 2025-12-05 23:38
-Last updated: 2025-12-05 23:38
+Last updated: 2025-12-07
 
 START LOG
 
 Timestamp: 2025-12-05 23:38
 Current behavior or state:
 - User receives `{"detail":"Not Found"}`.
-- Likely checking `localhost:8000` which has no root route.
+- Whisper server was localhost-only.
 
-Plan and scope for this task:
-- Add `@app.get("/")` to return status.
-- Add CORS middleware to `main.py` to ensure smooth frontend-backend communication.
+Resolution:
+- Migrated to Web Speech API for production-ready transcription.
+- No longer requires localhost server.
+- Works entirely in browser with broader language support.
 
-Files or modules expected to change:
-- whisper_server/main.py
-
-Risks or things to watch out for:
-- None.
+Files or modules changed:
+- components/meeting-room.tsx - Now uses Web Speech API
+- app/(root)/(home)/docs/page.tsx - Updated documentation
 
 WORK CHECKLIST
 
 - [x] Code changes implemented according to the defined scope
 - [x] No unrelated refactors or drive-by changes
 - [x] Logs and error handling reviewed
+- [x] Documentation updated
 
 END LOG
 

@@ -26,7 +26,7 @@ export default function DocsPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-apple-tight">Live Transcription</h1>
         <p className="text-sm sm:text-base text-white/60 tracking-apple-normal">
-          Real-time speech-to-text powered by Web Speech API - works everywhere, no server required.
+          Real-time speech-to-text powered by Gemini AI - accurate, multilingual cloud transcription.
         </p>
       </div>
 
@@ -37,10 +37,10 @@ export default function DocsPage() {
             <div className="p-2 bg-purple-1/20 rounded-apple">
               <Globe size={20} className="text-purple-1" />
             </div>
-            <h3 className="font-semibold text-base sm:text-lg">Works in Production</h3>
+            <h3 className="font-semibold text-base sm:text-lg">Cloud-Powered AI</h3>
           </div>
           <p className="text-sm text-white/60">
-            No backend server required. Runs entirely in the browser using the Web Speech API.
+            Powered by Google Gemini AI for highly accurate transcription across all languages.
           </p>
         </div>
 
@@ -73,10 +73,10 @@ export default function DocsPage() {
             <div className="p-2 bg-orange-500/20 rounded-apple">
               <Shield size={20} className="text-orange-500" />
             </div>
-            <h3 className="font-semibold text-base sm:text-lg">Privacy First</h3>
+            <h3 className="font-semibold text-base sm:text-lg">Smart Processing</h3>
           </div>
           <p className="text-sm text-white/60">
-            Audio processed locally in your browser. No data sent to external servers.
+            Advanced AI processing with contextual understanding and natural language processing.
           </p>
         </div>
       </div>
@@ -153,31 +153,31 @@ export default function DocsPage() {
           <div className="flex items-center justify-between p-3 bg-dark-3/50 rounded-apple">
             <div className="flex items-center gap-3">
               <div className="text-2xl">🌐</div>
-              <span className="text-sm sm:text-base">Chrome / Edge</span>
+              <span className="text-sm sm:text-base">All Modern Browsers</span>
             </div>
             <span className="text-green-500 text-xs sm:text-sm font-medium">✓ Fully Supported</span>
           </div>
 
           <div className="flex items-center justify-between p-3 bg-dark-3/50 rounded-apple">
             <div className="flex items-center gap-3">
-              <div className="text-2xl">🧭</div>
-              <span className="text-sm sm:text-base">Safari (iOS 14.5+)</span>
+              <div className="text-2xl">📱</div>
+              <span className="text-sm sm:text-base">Mobile Devices</span>
             </div>
             <span className="text-green-500 text-xs sm:text-sm font-medium">✓ Supported</span>
           </div>
 
           <div className="flex items-center justify-between p-3 bg-dark-3/50 rounded-apple">
             <div className="flex items-center gap-3">
-              <div className="text-2xl">🦊</div>
-              <span className="text-sm sm:text-base">Firefox</span>
+              <div className="text-2xl">🎤</div>
+              <span className="text-sm sm:text-base">Microphone Required</span>
             </div>
-            <span className="text-orange-500 text-xs sm:text-sm font-medium">⚠ Limited Support</span>
+            <span className="text-blue-500 text-xs sm:text-sm font-medium">ⓘ Required</span>
           </div>
         </div>
 
         <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-apple">
           <p className="text-xs sm:text-sm text-blue-400">
-            💡 <strong>Note:</strong> HTTPS is required in production. Localhost works for development.
+            💡 <strong>Note:</strong> Requires internet connection. Audio is processed securely via Gemini AI.
           </p>
         </div>
       </div>

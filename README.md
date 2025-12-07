@@ -140,6 +140,10 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_STREAM_API_KEY=xxxxxxxxxxxxxxxxxxxxxx
 STREAM_SECRET_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+# gemini ai api key for transcription and translation
+EBURON_SPEECH_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+
 # app base url
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
@@ -184,13 +188,28 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 3. **Copy the Secret Key**:
    - In the same section, you will find the "Secret Key". Copy this key as well.
 
-### 9. Save and Secure:
+### 9. Set Up Gemini AI API
+
+1. **Create a Google AI Studio Account**:
+
+   - If you don't have a Google AI Studio account, sign up at [Google AI Studio](https://aistudio.google.com/).
+
+2. **Get API Key**:
+   - After logging in, navigate to the API Keys section.
+   - Click on "Create API Key" to generate a new key.
+   - Copy the API key.
+
+3. **Add to Environment Variables**:
+   - Add both `EBURON_SPEECH_API_KEY` and `GEMINI_API_KEY` with your Gemini API key.
+   - This enables cloud-powered transcription and translation features.
+
+### 10. Save and Secure:
 
 - Save the changes to the `.env.local` file.
 
-10. Install Project Dependencies using `npm install --legacy-peer-deps` or `yarn install --legacy-peer-deps`.
+11. Install Project Dependencies using `npm install --legacy-peer-deps` or `yarn install --legacy-peer-deps`.
 
-11. Now app is fully configured 👍 and you can start using this app using either one of `npm run dev` or `yarn dev`.
+12. Now app is fully configured 👍 and you can start using this app using either one of `npm run dev` or `yarn dev`.
 
 **NOTE:** Please make sure to keep your API keys and configuration values secure and do not expose them publicly.
 

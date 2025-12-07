@@ -13,7 +13,7 @@ import {
 import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { useWebSpeech } from "@/hooks/useWebSpeech";
+import { useCloudTranscription } from "@/hooks/useCloudTranscription";
 
 import {
   DropdownMenu,
@@ -40,7 +40,7 @@ export const MeetingRoom = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
-  // Web Speech API for transcription
+  // Cloud-based Gemini AI transcription
   const {
     isListening,
     isSupported,
@@ -52,10 +52,9 @@ export const MeetingRoom = () => {
     stopListening,
     resetTranscript,
     setLanguage,
-  } = useWebSpeech({
+  } = useCloudTranscription({
     language: selectedLanguage,
     continuous: true,
-    interimResults: true,
   });
 
   const { useCallCallingState } = useCallStateHooks();

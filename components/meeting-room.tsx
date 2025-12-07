@@ -37,10 +37,9 @@ export const MeetingRoom = () => {
   
   // Transcription State
   const [showTranscript, setShowTranscript] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
-  // Web Speech API for transcription
+  // Web Speech API for transcription with auto-detect
   const {
     isListening,
     isSupported,
@@ -51,9 +50,8 @@ export const MeetingRoom = () => {
     startListening,
     stopListening,
     resetTranscript,
-    setLanguage,
   } = useWebSpeech({
-    language: selectedLanguage,
+    language: "", // Auto-detect language
     continuous: true,
     interimResults: true,
   });
@@ -79,11 +77,6 @@ export const MeetingRoom = () => {
 
   const clearTranscript = () => {
     resetTranscript();
-  };
-
-  const handleLanguageChange = (lang: string) => {
-    setSelectedLanguage(lang);
-    setLanguage(lang);
   };
 
   if (callingState !== CallingState.JOINED) return <Loader />;

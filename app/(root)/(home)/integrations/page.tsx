@@ -6,7 +6,7 @@ import { Mic, MicOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useWebSpeech } from "@/hooks/useWebSpeech";
 
 const IntegrationsPage = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
+  const [selectedLanguage, setSelectedLanguage] = useState("");
   
   const {
     isListening,
@@ -26,16 +26,17 @@ const IntegrationsPage = () => {
   });
 
   const LANGUAGES = [
-    { code: "en-US", name: "English (US)" },
-    { code: "en-GB", name: "English (UK)" },
-    { code: "es-ES", name: "Spanish" },
-    { code: "fr-FR", name: "French" },
-    { code: "de-DE", name: "German" },
-    { code: "it-IT", name: "Italian" },
-    { code: "pt-BR", name: "Portuguese" },
-    { code: "ja-JP", name: "Japanese" },
-    { code: "ko-KR", name: "Korean" },
-    { code: "zh-CN", name: "Chinese" },
+    { code: "", name: "Auto-Detect", flag: "🌍" },
+    { code: "en-US", name: "English (US)", flag: "🇺🇸" },
+    { code: "en-GB", name: "English (UK)", flag: "🇬🇧" },
+    { code: "es-ES", name: "Spanish", flag: "🇪🇸" },
+    { code: "fr-FR", name: "French", flag: "🇫🇷" },
+    { code: "de-DE", name: "German", flag: "🇩🇪" },
+    { code: "it-IT", name: "Italian", flag: "🇮🇹" },
+    { code: "pt-BR", name: "Portuguese", flag: "🇧🇷" },
+    { code: "ja-JP", name: "Japanese", flag: "🇯🇵" },
+    { code: "ko-KR", name: "Korean", flag: "🇰🇷" },
+    { code: "zh-CN", name: "Chinese", flag: "🇨🇳" },
   ];
 
   const handleLanguageChange = (lang: string) => {
@@ -96,8 +97,11 @@ const IntegrationsPage = () => {
                   : "bg-dark-3/50 border-white/5 hover:border-white/10"
               }`}
             >
-              <div className="text-sm font-medium">{lang.name}</div>
-              <div className="text-xs text-white/40 mt-1">{lang.code}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{lang.flag}</span>
+                <div className="text-sm font-medium">{lang.name}</div>
+              </div>
+              {lang.code && <div className="text-xs text-white/40 mt-1">{lang.code}</div>}
             </button>
           ))}
         </div>

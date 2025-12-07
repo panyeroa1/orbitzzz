@@ -13,6 +13,7 @@ import {
 import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { useWebSpeech } from "@/hooks/useWebSpeech";
 
 import {
   DropdownMenu,
@@ -28,8 +29,6 @@ import { Loader } from "./loader";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
-const WHISPER_URL = process.env.NEXT_PUBLIC_WHISPER_SERVER_URL || "ws://localhost:8000";
-
 export const MeetingRoom = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,13 +36,27 @@ export const MeetingRoom = () => {
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   
   // Transcription State
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [currentSubtitle, setCurrentSubtitle] = useState("");
-  const [transcriptHistory, setTranscriptHistory] = useState<string[]>([]);
   const [showTranscript, setShowTranscript] = useState(false);
-  const socketRef = useRef<WebSocket | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+  // Web Speech API for transcription
+  const {
+    isListening,
+    isSupported,
+    transcript,
+    interimTranscript,
+    segments,
+    error,
+    startListening,
+    stopListening,
+    resetTranscript,
+    setLanguage,
+  } = useWebSpeech({
+    language: selectedLanguage,
+    continuous: true,
+    interimResults: true,
+  });
 
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
@@ -54,91 +67,23 @@ export const MeetingRoom = () => {
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [transcriptHistory]);
-
-  const startTranscription = async () => {
-    try {
-      const wsUrl = WHISPER_URL.replace("http://", "ws://").replace("https://", "wss://");
-      const ws = new WebSocket(`${wsUrl}/ws/transcribe`);
-      
-      ws.onopen = async () => {
-        console.log("[Eburon STT] Connected to transcription service");
-        socketRef.current = ws;
-        setIsTranscribing(true);
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-
-        recorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-            ws.send(event.data);
-          }
-        };
-
-        recorder.start(2000); // Send chunks every 2 seconds for better accuracy
-        mediaRecorderRef.current = recorder;
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.text) {
-            const langLabel = data.language ? `[${data.language.toUpperCase()}]` : "";
-            setCurrentSubtitle(`${langLabel} ${data.text}`);
-            setTranscriptHistory(prev => [...prev, `${langLabel} ${data.text}`]);
-            // Clear subtitle after 4 seconds
-            setTimeout(() => setCurrentSubtitle(""), 4000);
-          }
-        } catch {
-          // Fallback for plain text (backward compatibility)
-          const text = event.data.trim();
-          if (text) {
-            setCurrentSubtitle(text);
-            setTranscriptHistory(prev => [...prev, text]);
-            setTimeout(() => setCurrentSubtitle(""), 4000);
-          }
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("[Eburon STT] Connection error:", error);
-      };
-
-      ws.onclose = () => {
-        console.log("[Eburon STT] Disconnected");
-        stopTranscription();
-      };
-
-    } catch (error) {
-      console.error("[Eburon STT] Error starting transcription:", error);
-      alert("Could not access microphone. Please allow microphone permissions.");
-    }
-  };
-
-  const stopTranscription = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-    }
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
-    setIsTranscribing(false);
-    socketRef.current = null;
-    mediaRecorderRef.current = null;
-    setCurrentSubtitle("");
-  };
+  }, [segments]);
 
   const toggleTranscription = () => {
-    if (isTranscribing) {
-      stopTranscription();
+    if (isListening) {
+      stopListening();
     } else {
-      startTranscription();
+      startListening();
     }
   };
 
   const clearTranscript = () => {
-    setTranscriptHistory([]);
+    resetTranscript();
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang);
+    setLanguage(lang);
   };
 
   if (callingState !== CallingState.JOINED) return <Loader />;
@@ -171,10 +116,19 @@ export const MeetingRoom = () => {
       </div>
 
       {/* Live Subtitles Overlay */}
-      {currentSubtitle && (
+      {interimTranscript && (
         <div className="fixed bottom-28 left-1/2 -translate-x-1/2 max-w-[80%] animate-fade-in">
           <div className="rounded-apple-lg bg-black/80 backdrop-blur-sm px-6 py-3 text-center">
-            <p className="text-lg font-medium text-white leading-relaxed">{currentSubtitle}</p>
+            <p className="text-lg font-medium text-white leading-relaxed">{interimTranscript}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Browser Support Warning */}
+      {!isSupported && showTranscript && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 max-w-md animate-fade-in">
+          <div className="rounded-apple-lg bg-red-600/90 backdrop-blur-sm px-6 py-3 text-center">
+            <p className="text-sm font-medium text-white">Web Speech API is not supported in this browser. Please use Chrome or Edge.</p>
           </div>
         </div>
       )}
@@ -185,7 +139,7 @@ export const MeetingRoom = () => {
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <h3 className="font-semibold tracking-apple-tight">Live Transcript</h3>
             <div className="flex items-center gap-2">
-              {transcriptHistory.length > 0 && (
+              {segments.length > 0 && (
                 <button 
                   onClick={clearTranscript}
                   className="text-xs text-white/50 hover:text-white"
@@ -199,16 +153,27 @@ export const MeetingRoom = () => {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {transcriptHistory.length === 0 ? (
+            {segments.length === 0 ? (
               <p className="text-white/40 text-center text-sm py-8">
-                {isTranscribing ? "Listening for speech..." : "Start transcription to see live text"}
+                {isListening ? "Listening for speech..." : "Start transcription to see live text"}
               </p>
             ) : (
-              transcriptHistory.map((text, i) => (
-                <div key={i} className="p-3 bg-dark-3/50 rounded-apple text-sm text-white/90">
-                  {text}
+              segments.map((segment, i) => (
+                <div key={i} className="p-3 bg-dark-3/50 rounded-apple text-sm">
+                  <p className="text-white/90">{segment.text}</p>
+                  <div className="flex items-center justify-between mt-1 text-xs text-white/40">
+                    <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
+                    {segment.confidence && (
+                      <span>{Math.round(segment.confidence * 100)}% confident</span>
+                    )}
+                  </div>
                 </div>
               ))
+            )}
+            {interimTranscript && (
+              <div className="p-3 bg-blue-500/20 rounded-apple text-sm text-white/70 italic">
+                {interimTranscript}
+              </div>
             )}
             <div ref={transcriptEndRef} />
           </div>
@@ -222,19 +187,19 @@ export const MeetingRoom = () => {
         {/* Transcription Button */}
         <button
           onClick={toggleTranscription}
-          title={isTranscribing ? "Stop Transcription" : "Start Transcription"}
+          title={isListening ? "Stop Transcription" : "Start Transcription"}
           className={cn(
             "cursor-pointer rounded-2xl px-4 py-2 transition-all",
-            isTranscribing 
+            isListening 
               ? "bg-green-600 hover:bg-green-700" 
               : "bg-[#19232D] hover:bg-[#4C535B]"
           )}
         >
-          <MessageSquare size={20} className={cn("text-white", { "animate-pulse": isTranscribing })} />
+          <MessageSquare size={20} className={cn("text-white", { "animate-pulse": isListening })} />
         </button>
 
         {/* Show Transcript Button */}
-        {(isTranscribing || transcriptHistory.length > 0) && (
+        {(isListening || segments.length > 0) && (
           <button
             onClick={() => setShowTranscript(!showTranscript)}
             title="Show Transcript"
@@ -244,7 +209,7 @@ export const MeetingRoom = () => {
             )}
           >
             <span className="text-white text-sm font-medium">
-              {transcriptHistory.length > 0 ? `(${transcriptHistory.length})` : "Transcript"}
+              {segments.length > 0 ? `(${segments.length})` : "Transcript"}
             </span>
           </button>
         )}

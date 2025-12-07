@@ -1,132 +1,54 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Mic, MicOff, Loader2 } from "lucide-react";
-
-const WHISPER_URL = process.env.NEXT_PUBLIC_WHISPER_SERVER_URL || "ws://localhost:8000";
+import { Mic, MicOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useWebSpeech } from "@/hooks/useWebSpeech";
 
 const IntegrationsPage = () => {
-  const [status, setStatus] = useState<"Connected" | "Disconnected">("Disconnected");
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState<string[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const websocketRef = useRef<WebSocket | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const {
+    isListening,
+    isSupported,
+    transcript,
+    interimTranscript,
+    segments,
+    error,
+    startListening,
+    stopListening,
+    resetTranscript,
+    setLanguage,
+  } = useWebSpeech({
+    language: selectedLanguage,
+    continuous: true,
+    interimResults: true,
+  });
 
-  // Check connection status
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const wsUrl = WHISPER_URL.replace("http://", "ws://").replace("https://", "wss://");
-        const socket = new WebSocket(`${wsUrl}/ws/status`);
-        
-        socket.onopen = () => {
-          setStatus("Connected");
-          socket.close();
-        };
+  const LANGUAGES = [
+    { code: "en-US", name: "English (US)" },
+    { code: "en-GB", name: "English (UK)" },
+    { code: "es-ES", name: "Spanish" },
+    { code: "fr-FR", name: "French" },
+    { code: "de-DE", name: "German" },
+    { code: "it-IT", name: "Italian" },
+    { code: "pt-BR", name: "Portuguese" },
+    { code: "ja-JP", name: "Japanese" },
+    { code: "ko-KR", name: "Korean" },
+    { code: "zh-CN", name: "Chinese" },
+  ];
 
-        socket.onerror = () => {
-          setStatus("Disconnected");
-        };
-      } catch {
-        setStatus("Disconnected");
-      }
-    };
-
-    checkConnection();
-    const interval = setInterval(checkConnection, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Connect to WebSocket for transcription
-  const connectWebSocket = useCallback(() => {
-    const wsUrl = WHISPER_URL.replace("http://", "ws://").replace("https://", "wss://");
-    const ws = new WebSocket(`${wsUrl}/ws/transcribe`);
-    
-    ws.onopen = () => {
-      console.log("[Eburon STT] WebSocket connected");
-    };
-
-    ws.onmessage = (event) => {
-      setIsProcessing(false);
-      if (event.data.trim()) {
-        setTranscription(prev => [...prev, event.data.trim()]);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error("[Eburon STT] WebSocket error:", error);
-      setIsProcessing(false);
-    };
-
-    ws.onclose = () => {
-      console.log("[Eburon STT] WebSocket closed");
-    };
-
-    websocketRef.current = ws;
-    return ws;
-  }, []);
-
-  // Start recording
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      
-      // Connect WebSocket
-      connectWebSocket();
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        // Send accumulated audio to server
-        if (chunksRef.current.length > 0 && websocketRef.current?.readyState === WebSocket.OPEN) {
-          const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-          setIsProcessing(true);
-          websocketRef.current.send(audioBlob);
-          chunksRef.current = [];
-        }
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start(1000); // Collect data every second
-      mediaRecorderRef.current = mediaRecorder;
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Error starting recording:", error);
-      alert("Could not access microphone. Please allow microphone permissions.");
-    }
+  const handleLanguageChange = (lang: string) => {
+    setSelectedLanguage(lang);
+    setLanguage(lang);
   };
 
-  // Stop recording
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  // Toggle recording
   const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
+    if (isListening) {
+      stopListening();
     } else {
-      startRecording();
+      startListening();
     }
-  };
-
-  // Clear transcription
-  const clearTranscription = () => {
-    setTranscription([]);
   };
 
   return (
@@ -137,22 +59,47 @@ const IntegrationsPage = () => {
       <div className="apple-card flex w-full items-center justify-between p-5 sm:max-w-[400px]">
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-apple bg-gradient-to-br from-purple-1 to-blue-1">
-            <Image 
-              src="/icons/add-personal.svg"
-              alt="Eburon STT"
-              width={24}
-              height={24}
-            />
+            <Mic size={24} className="text-white" />
           </div>
           <div className="flex flex-col">
-            <p className="text-lg font-semibold tracking-apple-tight">Eburon STT</p>
-            <p className="text-sm text-white/50 tracking-apple-normal">Real-time Transcription</p>
+            <p className="text-lg font-semibold tracking-apple-tight">Web Speech API</p>
+            <p className="text-sm text-white/50 tracking-apple-normal">Browser-based Transcription</p>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <div className={`size-2.5 rounded-full ${status === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-          <p className={`text-sm font-medium ${status === 'Connected' ? 'text-green-400' : 'text-red-400'}`}>{status}</p>
+          {isSupported ? (
+            <>
+              <CheckCircle2 size={20} className="text-green-500" />
+              <p className="text-sm font-medium text-green-400">Available</p>
+            </>
+          ) : (
+            <>
+              <XCircle size={20} className="text-red-500" />
+              <p className="text-sm font-medium text-red-400">Not Supported</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Language Selection */}
+      <div className="apple-card p-6">
+        <h2 className="text-xl font-semibold tracking-apple-tight mb-4">Transcription Language</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => handleLanguageChange(lang.code)}
+              className={`p-3 rounded-apple border transition-all ${
+                selectedLanguage === lang.code
+                  ? "bg-purple-1/20 border-purple-1"
+                  : "bg-dark-3/50 border-white/5 hover:border-white/10"
+              }`}
+            >
+              <div className="text-sm font-medium">{lang.name}</div>
+              <div className="text-xs text-white/40 mt-1">{lang.code}</div>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -162,9 +109,9 @@ const IntegrationsPage = () => {
           <h2 className="text-xl font-semibold tracking-apple-tight">Live Transcription</h2>
           
           <div className="flex items-center gap-3">
-            {transcription.length > 0 && (
+            {segments.length > 0 && (
               <button
-                onClick={clearTranscription}
+                onClick={resetTranscript}
                 className="text-sm text-white/50 hover:text-white transition-colors"
               >
                 Clear
@@ -173,16 +120,16 @@ const IntegrationsPage = () => {
             
             <button
               onClick={toggleRecording}
-              disabled={status !== "Connected"}
+              disabled={!isSupported}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-apple font-medium transition-all duration-apple ${
-                isRecording 
+                isListening 
                   ? "bg-red-500 hover:bg-red-600 text-white" 
-                  : status === "Connected"
+                  : isSupported
                     ? "bg-purple-1 hover:bg-purple-1/90 text-white"
                     : "bg-dark-3 text-white/30 cursor-not-allowed"
               }`}
             >
-              {isRecording ? (
+              {isListening ? (
                 <>
                   <MicOff size={18} />
                   Stop
@@ -198,35 +145,48 @@ const IntegrationsPage = () => {
         </div>
 
         {/* Recording indicator */}
-        {isRecording && (
-          <div className="flex items-center gap-2 text-red-400">
-            <div className="size-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-sm font-medium">Recording...</span>
+        {isListening && (
+          <div className="flex items-center gap-2 text-green-400">
+            <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-sm font-medium">Listening...</span>
+          </div>
+        )}
+
+        {/* Error display */}
+        {error && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-apple text-red-400 text-sm">
+            {error}
           </div>
         )}
 
         {/* Transcription output */}
         <div className="min-h-[200px] max-h-[400px] overflow-y-auto bg-dark-3/50 rounded-apple p-4 border border-white/5">
-          {transcription.length === 0 ? (
+          {segments.length === 0 && !interimTranscript ? (
             <p className="text-white/30 text-center py-8">
-              {status === "Connected" 
+              {isSupported
                 ? "Click 'Start Recording' to begin live transcription" 
-                : "Connect to Eburon STT server to start transcription"}
+                : "Web Speech API is not supported in your browser. Please use Chrome or Edge."}
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {transcription.map((text, index) => (
+              {segments.map((segment, index) => (
                 <div 
                   key={index} 
                   className="p-3 bg-dark-4/50 rounded-apple animate-slide-up"
                 >
-                  <p className="text-white/90 leading-relaxed">{text}</p>
+                  <p className="text-white/90 leading-relaxed">{segment.text}</p>
+                  <div className="flex items-center justify-between mt-2 text-xs text-white/40">
+                    <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
+                    {segment.confidence && (
+                      <span>{Math.round(segment.confidence * 100)}% confident</span>
+                    )}
+                  </div>
                 </div>
               ))}
-              {isProcessing && (
-                <div className="flex items-center gap-2 text-white/50 p-3">
-                  <Loader2 size={16} className="animate-spin" />
-                  <span className="text-sm">Processing audio...</span>
+              {interimTranscript && (
+                <div className="p-3 bg-blue-500/10 rounded-apple">
+                  <p className="text-white/70 leading-relaxed italic">{interimTranscript}</p>
+                  <span className="text-xs text-white/40">Speaking...</span>
                 </div>
               )}
             </div>
@@ -235,9 +195,10 @@ const IntegrationsPage = () => {
 
         {/* Instructions */}
         <div className="text-sm text-white/40 space-y-1">
-          <p>• Make sure the Eburon STT server is running on port 8000</p>
+          <p>• Works directly in your browser - no server needed</p>
           <p>• Speak clearly for best transcription results</p>
-          <p>• Stop recording to send audio for transcription</p>
+          <p>• Supports Chrome, Edge, and Safari (iOS 14.5+)</p>
+          <p>• Transcription happens in real-time as you speak</p>
         </div>
       </div>
     </section>

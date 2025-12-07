@@ -10,6 +10,7 @@ import os
 import tempfile
 import secrets
 import json
+import subprocess
 from datetime import datetime
 
 app = FastAPI(
@@ -177,9 +178,18 @@ async def websocket_endpoint(websocket: WebSocket, api_key: str = Query(None)):
                 tmp.write(data)
                 tmp_path = tmp.name
 
+            wav_path = tmp_path + ".wav"
+
             try:
+                # Convert to WAV using system FFmpeg (robust against container issues)
+                subprocess.run([
+                    "ffmpeg", "-y", "-i", tmp_path,
+                    "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le",
+                    wav_path
+                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
                 # Transcribe with auto language detection
-                segments, info = model.transcribe(tmp_path, beam_size=5)
+                segments, info = model.transcribe(wav_path, beam_size=5)
                 transcription = " ".join([segment.text for segment in segments])
                 
                 if transcription.strip():
@@ -201,6 +211,8 @@ async def websocket_endpoint(websocket: WebSocket, api_key: str = Query(None)):
             finally:
                 if os.path.exists(tmp_path):
                     os.unlink(tmp_path)
+                if os.path.exists(wav_path):
+                    os.unlink(wav_path)
 
     except WebSocketDisconnect:
         print("[Eburon STT] Client disconnected")

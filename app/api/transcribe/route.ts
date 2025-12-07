@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai";
 
+// Constants
+const MAX_WAIT_TIME_MS = 15000; // 15 seconds timeout for transcription
+const POLLING_INTERVAL_MS = 50; // Polling interval for response queue
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Get audio data from request
@@ -65,17 +69,17 @@ export async function POST(req: NextRequest) {
 
     // Send audio as realtime input
     const audioMimeType = audioFile.type || "audio/webm";
+    // Note: Type assertion needed as Gemini Live API types may not fully match the SDK
     await session.sendRealtimeInput({
       mimeType: audioMimeType,
       data: audioBase64
     } as any);
 
     // 6. Wait for response
-    const maxWaitTimeMs = 15000;
     const startTime = Date.now();
 
     while (!turnComplete) {
-      if (Date.now() - startTime > maxWaitTimeMs) {
+      if (Date.now() - startTime > MAX_WAIT_TIME_MS) {
         console.error("[Transcribe API] Timeout waiting for response");
         break;
       }
@@ -101,7 +105,7 @@ export async function POST(req: NextRequest) {
           turnComplete = true;
         }
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS));
       }
     }
     

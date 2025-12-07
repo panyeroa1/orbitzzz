@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// Constants
+const MIN_AUDIO_BLOB_SIZE = 1000; // Minimum blob size in bytes (1KB)
+const AUDIO_CHUNK_INTERVAL_MS = 3000; // Process audio chunks every 3 seconds
+const RESTART_DELAY_MS = 500; // Delay before restarting recording after language change
+
 export interface TranscriptSegment {
   text: string;
   timestamp: string;
@@ -116,8 +121,8 @@ export function useCloudTranscription(
       const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
       audioChunksRef.current = [];
       
-      // Only send if blob has meaningful data (> 1KB)
-      if (audioBlob.size > 1000) {
+      // Only send if blob has meaningful data
+      if (audioBlob.size > MIN_AUDIO_BLOB_SIZE) {
         sendAudioForTranscription(audioBlob);
       }
     }
@@ -160,18 +165,22 @@ export function useCloudTranscription(
       isListeningRef.current = true;
       setIsListening(true);
 
-      // Process audio chunks every 3 seconds for continuous transcription
+      // Process audio chunks periodically for continuous transcription
       if (continuous) {
         intervalRef.current = setInterval(() => {
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            // Stop recording and process chunks
+            mediaRecorderRef.current.addEventListener("stop", () => {
+              processAudioChunks();
+              // Restart recording if still listening
+              if (isListeningRef.current && mediaRecorderRef.current) {
+                mediaRecorderRef.current.start();
+              }
+            }, { once: true });
+            
             mediaRecorderRef.current.stop();
-            processAudioChunks();
-            // Restart recording
-            if (isListeningRef.current) {
-              mediaRecorderRef.current.start();
-            }
           }
-        }, 3000);
+        }, AUDIO_CHUNK_INTERVAL_MS);
       }
 
     } catch (err: any) {
@@ -225,7 +234,8 @@ export function useCloudTranscription(
     setCurrentLanguage(lang);
     
     if (wasListening) {
-      setTimeout(() => startListening(), 500);
+      // Add delay to ensure resources are cleaned up before restarting
+      setTimeout(() => startListening(), RESTART_DELAY_MS);
     }
   }, [startListening, stopListening]);
 

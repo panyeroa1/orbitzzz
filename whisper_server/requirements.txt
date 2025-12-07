@@ -3,3 +3,4 @@ uvicorn
 python-socketio
 faster-whisper
 websockets
+google-generativeai

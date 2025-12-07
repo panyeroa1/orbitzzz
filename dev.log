@@ -1,0 +1,19 @@
+
+> orbitz@1.0.1 dev
+> next dev
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/developer/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/developer/orbitzzz-1/package-lock.json
+
+ ⚠ Port 3000 is in use by process 28793, using available port 3002 instead.
+   ▲ Next.js 15.5.7
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.1.26:3002
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.6s

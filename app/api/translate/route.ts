@@ -83,15 +83,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Text is required" }, { status: 400 });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("GEMINI_API_KEY is missing");
+  // 2. Initialize Gemini Client
+  const apiKey = process.env.EBURON_SPEECH_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("EBURON_SPEECH_API_KEY or GEMINI_API_KEY is missing");
     return NextResponse.json({ error: "Server configuration error (API Key missing)" }, { status: 500 });
   }
-
-  // 2. Initialize Gemini Client
-  const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-  });
+  const ai = new GoogleGenAI({ apiKey });
 
   const model = "models/gemini-2.5-flash-native-audio-preview-09-2025";
   const responseQueue: LiveServerMessage[] = [];
@@ -109,7 +107,7 @@ export async function POST(req: NextRequest) {
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
-              voiceName: "Puck", // User preferred voice
+              voiceName: "Orus", // User preferred voice
             },
           },
         },

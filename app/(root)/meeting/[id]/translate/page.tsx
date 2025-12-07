@@ -188,7 +188,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
               <Globe size={24} className="text-purple-1" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-apple-tight">Gemini Live Translation</h1>
+              <h1 className="text-2xl font-bold tracking-apple-tight">Live Translation</h1>
               <p className="text-white/60 text-sm">Meeting: {meetingId}</p>
             </div>
           </div>

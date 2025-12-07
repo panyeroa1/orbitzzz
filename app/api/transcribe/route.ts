@@ -20,34 +20,104 @@ export async function POST(req: NextRequest) {
     }
 
     const ai = new GoogleGenAI({ apiKey });
+    const model = "models/gemini-2.0-flash-exp";
 
     // 3. Convert audio file to base64
     const audioBuffer = await audioFile.arrayBuffer();
     const audioBase64 = Buffer.from(audioBuffer).toString("base64");
 
-    // 4. Use Gemini model for transcription
-    const model = ai.getGenerativeModel({
-      model: "gemini-2.0-flash-exp",
-    });
+    // 4. Use Live API for transcription
+    const responseQueue: any[] = [];
+    let turnComplete = false;
+    let connectionError: Error | null = null;
+    let transcriptionText = "";
 
-    // 5. Send audio for transcription
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          data: audioBase64,
-          mimeType: audioFile.type || "audio/webm",
+    const session = await ai.live.connect({
+      model,
+      config: {
+        responseModalities: [Modality.TEXT], // We want text output
+      },
+      callbacks: {
+        onopen: () => {
+          console.log("[Transcribe API] Connected to Live Session");
+        },
+        onmessage: (msg: any) => {
+          responseQueue.push(msg);
+        },
+        onclose: () => {
+          console.log("[Transcribe API] Session closed");
+        },
+        onerror: (err: any) => {
+          console.error("[Transcribe API] Error:", err);
+          connectionError = err;
+          turnComplete = true;
         },
       },
-      {
-        text: `Transcribe this audio accurately. Return only the transcribed text without any additional commentary or formatting. The audio is in ${language}.`,
-      },
-    ]);
+    });
 
-    const response = await result.response;
-    const transcription = response.text();
+    // 5. Send audio and prompt together
+    const prompt = `Transcribe this audio accurately. Return only the transcribed text without any additional commentary or formatting. The audio language is ${language}.`;
+    
+    await session.sendClientContent({
+      turns: [prompt],
+      turnComplete: true,
+    });
+
+    // Send audio as realtime input
+    const audioMimeType = audioFile.type || "audio/webm";
+    await session.sendRealtimeInput({
+      mimeType: audioMimeType,
+      data: audioBase64
+    } as any);
+
+    // 6. Wait for response
+    const maxWaitTimeMs = 15000;
+    const startTime = Date.now();
+
+    while (!turnComplete) {
+      if (Date.now() - startTime > maxWaitTimeMs) {
+        console.error("[Transcribe API] Timeout waiting for response");
+        break;
+      }
+      
+      if (connectionError) break;
+
+      if (responseQueue.length > 0) {
+        const msg = responseQueue.shift();
+        if (!msg) continue;
+
+        // Extract text from response
+        if (msg.serverContent?.modelTurn?.parts) {
+          const parts = msg.serverContent.modelTurn.parts;
+          for (const part of parts) {
+            if (part.text) {
+              transcriptionText += part.text;
+            }
+          }
+        }
+
+        // Check completion
+        if (msg.serverContent?.turnComplete) {
+          turnComplete = true;
+        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
+    
+    // 7. Cleanup
+    await session.close();
+
+    if (connectionError) {
+      throw connectionError;
+    }
+
+    if (!transcriptionText.trim()) {
+      return NextResponse.json({ error: "No transcription generated" }, { status: 500 });
+    }
 
     return NextResponse.json({
-      text: transcription,
+      text: transcriptionText.trim(),
       language: language,
       timestamp: Date.now(),
     });

@@ -149,7 +149,10 @@ export function useCloudTranscription(
       mediaRecorder.onerror = (event: any) => {
         console.error("[CloudTranscription] MediaRecorder error:", event.error);
         setError("Recording error. Please try again.");
-        stopListening();
+        // Stop listening inline instead of calling stopListening
+        isListeningRef.current = false;
+        setIsListening(false);
+        cleanup();
       };
 
       // Start recording
@@ -177,7 +180,7 @@ export function useCloudTranscription(
       setIsListening(false);
       isListeningRef.current = false;
     }
-  }, [continuous, processAudioChunks, stopListening]);
+  }, [continuous, processAudioChunks, cleanup]);
 
   const stopListening = useCallback(() => {
     if (!isListeningRef.current) return;

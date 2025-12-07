@@ -4,10 +4,10 @@ const { GoogleGenAI } = require('@google/genai');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-const PORT = 8000;
+const PORT = 8001; // Translation server on 8001, STT server on 8000
 const wss = new WebSocketServer({ port: PORT });
 
-console.log(`[Gemini Server] Starting on port ${PORT}...`);
+console.log(`[Eburon Translator] Starting on port ${PORT}...`);
 
 const apiKey = process.env.EBURON_SPEECH_API_KEY || process.env.GEMINI_API_KEY;
 if (!apiKey) {

@@ -147,7 +147,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
       // Connect to Gemini Backend with Target Language
       const langName = LANGUAGES.find(l => l.code === targetLanguage)?.name || "Spanish";
       // Encode language safely
-      const wsUrl = `ws://localhost:8000?lang=${encodeURIComponent(langName)}`;
+      const wsUrl = `ws://localhost:8001?lang=${encodeURIComponent(langName)}`;
       const ws = new WebSocket(wsUrl); 
       systemWsRef.current = ws;
 

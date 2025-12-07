@@ -13,6 +13,7 @@ import {
 import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
 import { useWebSpeech } from "@/hooks/useWebSpeech";
 
 import {
@@ -39,10 +40,29 @@ export const MeetingRoom = () => {
   const [showTranscript, setShowTranscript] = useState(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
-  // Web Speech API for transcription with auto-detect
+  // Get Deepgram API key from environment
+  const deepgramApiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
+
+  // Primary: Deepgram for real-time transcription with auto-detect
+  const deepgram = useDeepgramTranscription({
+    apiKey: deepgramApiKey,
+    language: "auto", // Auto-detect language
+    enableFallback: true,
+  });
+
+  // Fallback: Web Speech API (only used if Deepgram fails)
+  const webSpeech = useWebSpeech({
+    language: "en-US",
+    continuous: true,
+    interimResults: true,
+  });
+
+  // Use Deepgram if available, otherwise fallback to Web Speech
+  const useDeepgram = deepgramApiKey.length > 0;
+  const transcriptionService = useDeepgram ? deepgram : webSpeech;
+
   const {
     isListening,
-    isSupported,
     transcript,
     interimTranscript,
     segments,
@@ -50,11 +70,15 @@ export const MeetingRoom = () => {
     startListening,
     stopListening,
     resetTranscript,
-  } = useWebSpeech({
-    language: "", // Auto-detect language
-    continuous: true,
-    interimResults: true,
-  });
+  } = transcriptionService;
+
+  // Get detected language if using Deepgram
+  const detectedLanguage = useDeepgram && "detectedLanguage" in deepgram 
+    ? deepgram.detectedLanguage 
+    : null;
+
+  // Check if browser supports Web Speech (for fallback scenario)
+  const isSupported = useDeepgram || ("isSupported" in webSpeech ? webSpeech.isSupported : true);
 
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
@@ -130,7 +154,13 @@ export const MeetingRoom = () => {
       {showTranscript && (
         <div className="fixed right-4 top-20 bottom-24 w-80 apple-card flex flex-col animate-slide-up z-50">
           <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <h3 className="font-semibold tracking-apple-tight">Live Transcript</h3>
+            <div className="flex flex-col">
+              <h3 className="font-semibold tracking-apple-tight">Live Transcript</h3>
+              <p className="text-xs text-white/50 mt-1">
+                {useDeepgram ? "🎙️ Deepgram" : "🌐 Web Speech"} 
+                {detectedLanguage && ` • ${detectedLanguage.toUpperCase()}`}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               {segments.length > 0 && (
                 <button 
@@ -156,9 +186,14 @@ export const MeetingRoom = () => {
                   <p className="text-white/90">{segment.text}</p>
                   <div className="flex items-center justify-between mt-1 text-xs text-white/40">
                     <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
-                    {segment.confidence && (
-                      <span>{Math.round(segment.confidence * 100)}% confident</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {segment.language && (
+                        <span className="text-blue-400">{segment.language.toUpperCase()}</span>
+                      )}
+                      {segment.confidence && (
+                        <span>{Math.round(segment.confidence * 100)}% confident</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

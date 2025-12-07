@@ -8,6 +8,9 @@ declare global {
       NEXT_PUBLIC_STREAM_API_KEY: string;
       STREAM_SECRET_KEY: string;
 
+      // deepgram api key
+      NEXT_PUBLIC_DEEPGRAM_API_KEY: string;
+
       // app base url
       NEXT_PUBLIC_BASE_URL: string;
     }

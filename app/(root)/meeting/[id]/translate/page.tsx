@@ -425,7 +425,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
               <Globe size={24} className="text-purple-1" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-apple-tight">Live Translation</h1>
+              <h1 className="text-2xl font-bold tracking-apple-tight">Eburon Translator</h1>
               <p className="text-white/60 text-sm">Meeting: {meetingId}</p>
             </div>
           </div>
@@ -516,7 +516,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
               {currentTranslated && (
                 <div className="pt-2 border-t border-white/5">
                   <div className="text-xs text-purple-1 mb-1 flex items-center gap-2">
-                    Live Translation {processing && <Loader2 size={12} className="animate-spin" />}
+                    Eburon Translator {processing && <Loader2 size={12} className="animate-spin" />}
                   </div>
                   <p className="text-white font-medium text-xl text-purple-200">{currentTranslated}</p>
                 </div>

@@ -31,11 +31,26 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
     }
   }, [isMicCamToggledOn, call?.camera, call?.microphone]);
 
+  // Wait for call to be ready before showing VideoPreview
+  const [isCallReady, setIsCallReady] = useState(false);
+
+  useEffect(() => {
+    if (call && call.camera) {
+      setIsCallReady(true);
+    }
+  }, [call]);
+
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center gap-3 text-white">
       <h1 className="text-2xl font-bold">Setup</h1>
 
-      <VideoPreview />
+      {isCallReady ? (
+        <VideoPreview />
+      ) : (
+        <div className="flex h-[300px] w-[400px] items-center justify-center bg-dark-3 rounded-lg">
+          <p className="text-white/50">Loading camera...</p>
+        </div>
+      )}
 
       <div className="flex h-16 items-center justify-center gap-3">
         <label className="flex items-center justify-center gap-2 font-medium">

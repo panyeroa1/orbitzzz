@@ -277,3 +277,41 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+
+Task ID: T-0008
+Title: Commit Live Translation Updates
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-08 16:50
+Last updated: 2025-12-08 16:50
+
+START LOG
+
+Timestamp: 2025-12-08 16:50
+Current behavior or state:
+- Changes to `integrations/page.tsx` (switched to Web Speech API), `translate/page.tsx` (port fix), and `server.js` (port fix) are on `main` but not committed.
+- User requested to commit these in a development branch.
+
+Plan and scope for this task:
+- Create and switch to new branch `feature/translation-updates`.
+- Stage and commit all pending changes.
+- Push to origin (if applicable).
+
+Files or modules expected to change:
+- app/(root)/(home)/integrations/page.tsx
+- app/(root)/meeting/[id]/translate/page.tsx
+- gemini_server/server.js
+- server.log
+- tasks.md
+
+Risks or things to watch out for:
+- Ensure we don't lose any changes when switching branches (though git usually handles dirty working directory fine).
+
+WORK CHECKLIST
+
+- [ ] Code changes implemented according to the defined scope
+- [ ] No unrelated refactors or drive-by changes
+- [ ] Configuration and environment variables verified
+- [ ] Logs and error handling reviewed

@@ -2,6 +2,60 @@
 > orbitz@1.0.1 server
 > node gemini_server/server.js
 
-[dotenv@17.2.3] injecting env (21) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
-[Gemini Server] Starting on port 8000...
+[dotenv@17.2.3] injecting env (21) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[Eburon Translator] Starting on port 8000...
 Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Gemini Session Closed
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open
+[Gemini Server] Client connected
+[Gemini Server] Target Language: Spanish
+[Gemini Server] Gemini Session Open

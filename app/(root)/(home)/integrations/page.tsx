@@ -3,14 +3,35 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Mic, MicOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
 import { useWebSpeech } from "@/hooks/useWebSpeech";
 
 const IntegrationsPage = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   
+  // Get Deepgram API key from environment
+  const deepgramApiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
+  
+  // Primary: Eburon Deep Speech (powered by Deepgram)
+  const deepgram = useDeepgramTranscription({
+    apiKey: deepgramApiKey,
+    language: selectedLanguage || "auto",
+    enableFallback: true,
+  });
+
+  // Fallback: Web Speech API
+  const webSpeech = useWebSpeech({
+    language: selectedLanguage || "en-US",
+    continuous: true,
+    interimResults: true,
+  });
+
+  // Use Deepgram if API key is available, otherwise fallback to Web Speech
+  const useDeepgram = deepgramApiKey.length > 0;
+  const transcriptionService = useDeepgram ? deepgram : webSpeech;
+
   const {
     isListening,
-    isSupported,
     transcript,
     interimTranscript,
     segments,
@@ -18,12 +39,18 @@ const IntegrationsPage = () => {
     startListening,
     stopListening,
     resetTranscript,
-    setLanguage,
-  } = useWebSpeech({
-    language: selectedLanguage,
-    continuous: true,
-    interimResults: true,
-  });
+  } = transcriptionService;
+
+  // Get detected language from Deepgram
+  const detectedLanguage = useDeepgram && "detectedLanguage" in deepgram 
+    ? deepgram.detectedLanguage 
+    : null;
+
+  // Check browser support for Web Speech (fallback)
+  const isSupported = useDeepgram || ("isSupported" in webSpeech ? webSpeech.isSupported : true);
+
+  // For Web Speech, need to call setLanguage when language changes
+  const setLanguage = "setLanguage" in webSpeech ? webSpeech.setLanguage : () => {};
 
   const LANGUAGES = [
     { code: "", name: "Auto-Detect", flag: "🌍" },
@@ -56,15 +83,24 @@ const IntegrationsPage = () => {
     <section className="flex size-full flex-col gap-8 text-white animate-fade-in">
       <h1 className="text-3xl font-semibold tracking-apple-tight">Integrations</h1>
 
-      {/* Connection Status Card */}
-      <div className="apple-card flex w-full items-center justify-between p-5 sm:max-w-[400px]">
+      {/* Connection Status Card - Primary Service */}
+      <div className="apple-card flex w-full items-center justify-between p-5 sm:max-w-[500px]">
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-apple bg-gradient-to-br from-purple-1 to-blue-1">
             <Mic size={24} className="text-white" />
           </div>
           <div className="flex flex-col">
-            <p className="text-lg font-semibold tracking-apple-tight">Web Speech API</p>
-            <p className="text-sm text-white/50 tracking-apple-normal">Browser-based Transcription</p>
+            <p className="text-lg font-semibold tracking-apple-tight">
+              {useDeepgram ? "🎙️ Eburon Deep Speech" : "🌐 Web Speech API"}
+            </p>
+            <p className="text-sm text-white/50 tracking-apple-normal">
+              {useDeepgram ? "AI-Powered Transcription with Auto Language Detection" : "Browser-based Transcription (Fallback)"}
+            </p>
+            {detectedLanguage && (
+              <p className="text-xs text-blue-400 mt-1">
+                Detected: {detectedLanguage.toUpperCase()}
+              </p>
+            )}
           </div>
         </div>
         
@@ -72,12 +108,12 @@ const IntegrationsPage = () => {
           {isSupported ? (
             <>
               <CheckCircle2 size={20} className="text-green-500" />
-              <p className="text-sm font-medium text-green-400">Available</p>
+              <p className="text-sm font-medium text-green-400">Active</p>
             </>
           ) : (
             <>
               <XCircle size={20} className="text-red-500" />
-              <p className="text-sm font-medium text-red-400">Not Supported</p>
+              <p className="text-sm font-medium text-red-400">Not Available</p>
             </>
           )}
         </div>
@@ -168,8 +204,8 @@ const IntegrationsPage = () => {
           {segments.length === 0 && !interimTranscript ? (
             <p className="text-white/30 text-center py-8">
               {isSupported
-                ? "Click 'Start Recording' to begin live transcription" 
-                : "Web Speech API is not supported in your browser. Please use Chrome or Edge."}
+                ? `Click 'Start Recording' to begin live transcription with ${useDeepgram ? "Eburon Deep Speech" : "Web Speech API"}` 
+                : "Transcription is not available. Please check your browser or API configuration."}
             </p>
           ) : (
             <div className="flex flex-col gap-3">
@@ -181,9 +217,14 @@ const IntegrationsPage = () => {
                   <p className="text-white/90 leading-relaxed">{segment.text}</p>
                   <div className="flex items-center justify-between mt-2 text-xs text-white/40">
                     <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
-                    {segment.confidence && (
-                      <span>{Math.round(segment.confidence * 100)}% confident</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {segment.language && (
+                        <span className="text-blue-400">{segment.language.toUpperCase()}</span>
+                      )}
+                      {segment.confidence && (
+                        <span>{Math.round(segment.confidence * 100)}% confident</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -199,9 +240,9 @@ const IntegrationsPage = () => {
 
         {/* Instructions */}
         <div className="text-sm text-white/40 space-y-1">
-          <p>• Works directly in your browser - no server needed</p>
+          <p>• {useDeepgram ? "Powered by Eburon Deep Speech AI for accurate transcription" : "Works directly in your browser - no server needed"}</p>
+          <p>• {useDeepgram ? "Automatic language detection for 30+ languages" : "Supports Chrome, Edge, and Safari (iOS 14.5+)"}</p>
           <p>• Speak clearly for best transcription results</p>
-          <p>• Supports Chrome, Edge, and Safari (iOS 14.5+)</p>
           <p>• Transcription happens in real-time as you speak</p>
         </div>
       </div>

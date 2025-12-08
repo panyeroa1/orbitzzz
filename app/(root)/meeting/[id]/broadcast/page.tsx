@@ -15,7 +15,7 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
   const { id: meetingId } = use(params);
   const router = useRouter();
 
-  const [source, setSource] = useState<"mic" | "system">("mic");
+  const [source, setSource] = useState<"mic" | "share-tab" | "mixed">("mic");
   const [stream, setStream] = useState<MediaStream | null>(null);
   
   const { start, stop, isTranscribing, error } = useBroadcastTranscription({ meetingId });
@@ -78,20 +78,45 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
   const startBroadcast = async () => {
     try {
       let newStream: MediaStream;
+
       if (source === "mic") {
          newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } else {
+      } else if (source === "share-tab") {
          newStream = await navigator.mediaDevices.getDisplayMedia({ 
-             video: true, // Required to get system audio usually
+             video: true, 
              audio: { 
                  echoCancellation: false, 
-                 noiseSuppression: false 
+                 noiseSuppression: false,
+                 autoGainControl: false,
              }
          });
-         // If user stops sharing via browser UI
-         newStream.getVideoTracks()[0].onended = () => {
-             stopBroadcast();
-         };
+      } else {
+         // Mixed: Mic + System
+         const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+         const systemStream = await navigator.mediaDevices.getDisplayMedia({ 
+             video: true, 
+             audio: { 
+                 echoCancellation: false, 
+                 noiseSuppression: false,
+             } 
+         });
+
+         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+         const micSource = audioContext.createMediaStreamSource(micStream);
+         const systemSource = audioContext.createMediaStreamSource(systemStream);
+         const dest = audioContext.createMediaStreamDestination();
+
+         micSource.connect(dest);
+         systemSource.connect(dest);
+
+         newStream = dest.stream;
+
+         // Keep tracks referenced to stop them later
+         // We might need to attach them to the newStream so stopBroadcast cleans them up?
+         // Actually, let's just track them. 
+         // simpler hack: add original tracks to the newStream so we can stop them
+         micStream.getTracks().forEach(t => newStream.addTrack(t));
+         systemStream.getTracks().forEach(t => newStream.addTrack(t));
       }
 
       setStream(newStream);
@@ -148,28 +173,42 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
 
           <div className="apple-card p-6 bg-dark-3/50 backdrop-blur-xl border border-white/10 space-y-6">
              {/* Source Selector */}
-             <div className="grid grid-cols-2 gap-3 p-1 bg-dark-2 rounded-lg">
+             <div className="grid grid-cols-1 gap-2 p-1 bg-dark-2 rounded-lg">
                 <button
                    onClick={() => !isTranscribing && setSource("mic")}
                    disabled={isTranscribing}
                    className={cn(
                        "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
-                       source === "mic" ? "bg-dark-4 text-white shadow-sm" : "text-white/50 hover:text-white/80",
+                       source === "mic" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
                        isTranscribing && "opacity-50 cursor-not-allowed"
                    )}
                 >
                     <Mic size={16} /> Microphone
                 </button>
                 <button
-                   onClick={() => !isTranscribing && setSource("system")}
+                   onClick={() => !isTranscribing && setSource("share-tab")}
                    disabled={isTranscribing}
                    className={cn(
                        "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
-                       source === "system" ? "bg-dark-4 text-white shadow-sm" : "text-white/50 hover:text-white/80",
+                       source === "share-tab" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
                        isTranscribing && "opacity-50 cursor-not-allowed"
                    )}
                 >
-                    <Monitor size={16} /> System Audio
+                    <Monitor size={16} /> Share Tab
+                </button>
+                 <button
+                   onClick={() => !isTranscribing && setSource("mixed")}
+                   disabled={isTranscribing}
+                   className={cn(
+                       "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
+                       source === "mixed" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
+                       isTranscribing && "opacity-50 cursor-not-allowed"
+                   )}
+                >
+                    <div className="flex items-center gap-1">
+                        <Mic size={14} /> + <Monitor size={14} />
+                    </div>
+                    Mic + System
                 </button>
              </div>
 

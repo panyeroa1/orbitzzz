@@ -66,43 +66,54 @@ export function useBroadcastTranscription({
            "audio/mp4;codecs=mp4a.40.2"
         ].find(type => MediaRecorder.isTypeSupported(type)) || "";
 
+        const setupRecorder = (useDefault: boolean) => {
+             const options = useDefault ? {} : (mimeType ? { mimeType } : {});
+             console.log(`[Broadcast] Attempting recorder with: ${useDefault ? "default" : (mimeType || "default")}`);
+             
+             const recorder = new MediaRecorder(stream, options);
+             const chunks: Blob[] = [];
+
+             recorder.ondataavailable = (e) => {
+               if (e.data.size > 0) chunks.push(e.data);
+             };
+
+             recorder.onstop = () => {
+               const type = recorder.mimeType || mimeType || "audio/webm"; 
+               const blob = new Blob(chunks, { type });
+               if (blob.size > 0) {
+                 sendAudioChunk(blob, chunkIndexRef.current);
+                 chunkIndexRef.current++;
+               }
+             };
+             
+             return recorder;
+        };
+
         let recorder: MediaRecorder;
+
         try {
-             // 1. Try with detected supported mimeType
-             const options = mimeType ? { mimeType } : {};
-             console.log(`[Broadcast] Attempting mimeType: ${mimeType || "default"}`);
-             recorder = new MediaRecorder(stream, options);
+            // 1. Try preferred settings
+            recorder = setupRecorder(false);
+            recorder.start();
         } catch (err) {
-             console.warn(`[Broadcast] Failed with ${mimeType}, falling back to default`, err);
-             // 2. Fallback to default (no usage of mimeType)
-             try {
-                recorder = new MediaRecorder(stream);
-             } catch (retryErr) {
-                 // If default also fails, bubble up
-                 throw retryErr;
-             }
+            console.warn(`[Broadcast] Preferred config failed, retrying with default`, err);
+            // 2. Retry with default settings
+            try {
+                recorder = setupRecorder(true);
+                recorder.start();
+            } catch (retryErr) {
+                 throw retryErr; // Give up
+            }
         }
-        const chunks: Blob[] = [];
-
-        recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) chunks.push(e.data);
-        };
-
-        recorder.onstop = () => {
-          const type = recorder.mimeType || mimeType || "audio/webm"; 
-          const blob = new Blob(chunks, { type });
-          if (blob.size > 0) {
-            sendAudioChunk(blob, chunkIndexRef.current);
-            chunkIndexRef.current++;
-          }
-        };
-
-        recorder.start();
         
         // Stop recording after duration
         setTimeout(() => {
           if (recorder.state !== "inactive") {
-            recorder.stop();
+            try {
+                recorder.stop();
+            } catch (stopErr) {
+                console.warn("Error stopping recorder:", stopErr);
+            }
           }
           // Recursively call for next segment if still active
           if (isTranscribingRef.current) {

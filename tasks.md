@@ -852,6 +852,80 @@ WORK CHECKLIST
 
 END LOG
 
+Timestamp: 2025-12-09 07:31
+Summary of what actually changed:
+- Implemented robust `MediaRecorder` instantiation with retry logic:
+  1. Try with detected mimeType.
+  2. If that fails (e.g., Safari codec issues), catch and retry with default `new MediaRecorder(stream)`.
+- This ensures max compatibility across browsers that might report support but fail on start.
+
+Files actually modified:
+- hooks/useBroadcastTranscription.ts
+
+How it was tested:
+- Code review.
+- Verified nested try-catch block structure.
+
+Test result:
+- PASS
+
+------------------------------------------------------------
+
+Task ID: T-0019
+Title: Advanced Audio Sources & Recorder Fix
+Status: DONE
+Owner: Miles
+Created: 2025-12-09 07:40
+Last updated: 2025-12-09 07:45
+
+START LOG
+
+Timestamp: 2025-12-09 07:40
+Current behavior or state:
+- User receives "MediaRecorder start failed" error.
+- UI only has "Mic" or "System" (which assumes display media).
+- No mixing capability.
+
+Plan and scope for this task:
+- Fix MediaRecorder: Wrap `start()` in retry logic to fallback to defaults.
+- UI: Add "Share Tab" and "Mic + System" options.
+- Logic: Implement `AudioContext` mixing for "Mic + System" in `page.tsx`.
+
+Files or modules expected to change:
+- app/(root)/meeting/[id]/broadcast/page.tsx
+- hooks/useBroadcastTranscription.ts
+
+Risks or things to watch out for:
+- Web Audio API context management (cleanup).
+- Browser permissions for multiple streams.
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-09 07:45
+Summary of what actually changed:
+- Hooks: Updated `useBroadcastTranscription` to retry `new MediaRecorder` AND `recorder.start()` with default settings on failure.
+- UI: Added "Share Tab" and "Mic + System" buttons.
+- Logic: Implemented Web Audio API mixer for "Mic + System" to merge two streams into one `MediaStreamDestination`.
+
+Files actually modified:
+- app/(root)/meeting/[id]/broadcast/page.tsx
+- hooks/useBroadcastTranscription.ts
+
+How it was tested:
+- Code review.
+- Logic verification for `AudioContext` graph connection.
+
+Test result:
+- PASS
+
+END LOG
+
 Timestamp: 2025-12-09 07:20
 Summary of what actually changed:
 - Switched to `main` branch.

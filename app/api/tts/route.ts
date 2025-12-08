@@ -62,8 +62,10 @@ function convertToWav(base64Parts: string[], mimeType: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  
   try {
-    const { text } = await req.json();
+    const { text, language, sessionId } = await req.json();
 
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.EBURON_SPEECH_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("API Key is missing");
+      console.error("[TTS API] API Key is missing");
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
     const ai = new GoogleGenAI({ apiKey });
@@ -82,10 +84,28 @@ export async function POST(req: NextRequest) {
     let turnComplete = false;
     let connectionError: Error | null = null;
 
+    // Strict TTS system prompt - pure read-aloud, no conversation
+    const targetLanguage = language || "the same language as the text";
+    const systemPrompt = `You are a professional voice actor performing a read-aloud.
+
+STRICT RULES:
+- Read the provided text EXACTLY as written, word for word.
+- Do NOT add any commentary, introductions, or extra words.
+- Do NOT say things like "Here is the text" or "Sure, I'll read this".
+- Just speak the text directly, nothing else.
+- Use a DEEP, RICH voice with authentic native accent for ${targetLanguage}.
+- Match natural intonation, rhythm, and emotional tone.
+- If the text expresses emotion (excitement, sadness, urgency), reflect that in your voice.
+- Speak clearly and at a natural pace.
+- This is OUTPUT-ONLY - you are not having a conversation.`;
+
     const session = await ai.live.connect({
       model,
       config: {
         responseModalities: [Modality.AUDIO],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
+        },
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -95,9 +115,9 @@ export async function POST(req: NextRequest) {
         },
       },
       callbacks: {
-        onopen: () => console.log("[TTS API] Connected"),
+        onopen: () => console.log(`[TTS API] Connected session=${sessionId || 'unknown'}`),
         onmessage: (msg: LiveServerMessage) => responseQueue.push(msg),
-        onclose: () => console.log("[TTS API] Closed"),
+        onclose: () => console.log(`[TTS API] Closed session=${sessionId || 'unknown'}`),
         onerror: (err: any) => {
           console.error("[TTS API] Error:", err);
           connectionError = err;
@@ -106,9 +126,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Just read the text
+    // Send text directly - no wrapper phrase needed with system prompt
     await session.sendClientContent({
-      turns: [`Read this text aloud naturally: "${text}"`],
+      turns: [text],
     });
 
     const audioParts: string[] = [];

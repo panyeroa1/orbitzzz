@@ -49,6 +49,14 @@ export function useBroadcastTranscription({
     const recordSegment = () => {
       if (!isTranscribingRef.current) return;
 
+      if (stream.getTracks().every(track => track.readyState === 'ended')) {
+          console.error("Stream ended");
+          setError("Audio stream ended unexpectedly");
+          isTranscribingRef.current = false;
+          setIsTranscribing(false);
+          return;
+      }
+
       try {
         const mimeType = [
            "audio/webm", 
@@ -69,7 +77,7 @@ export function useBroadcastTranscription({
         };
 
         recorder.onstop = () => {
-          const type = mimeType || "audio/webm"; // Default fallback for Blob constructor
+          const type = recorder.mimeType || mimeType || "audio/webm"; 
           const blob = new Blob(chunks, { type });
           if (blob.size > 0) {
             sendAudioChunk(blob, chunkIndexRef.current);
@@ -92,7 +100,8 @@ export function useBroadcastTranscription({
 
       } catch (err: any) {
         console.error("Recorder loop error:", err);
-        setError("Failed to record audio segment");
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(`Failed to record: ${errorMessage}`);
         isTranscribingRef.current = false;
         setIsTranscribing(false);
       }

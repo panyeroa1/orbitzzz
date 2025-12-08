@@ -4,7 +4,7 @@ const { GoogleGenAI } = require('@google/genai');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-const PORT = 8000; // Single port for translation server
+const PORT = 8001; // Translation server on 8001, STT server on 8000
 const wss = new WebSocketServer({ port: PORT });
 
 console.log(`[Eburon Translator] Starting on port ${PORT}...`);

@@ -309,6 +309,124 @@ Files or modules expected to change:
 Risks or things to watch out for:
 - Ensure we don't lose any changes when switching branches (though git usually handles dirty working directory fine).
 
+
+LOCK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-08 16:58
+Summary of what actually changed:
+- Committed changes to `integrations/page.tsx` (switched to Web Speech API), `translate/page.tsx`, and `server.js`.
+- Created branch `feature/translation-updates`.
+
+Files actually modified:
+- app/(root)/(home)/integrations/page.tsx
+- app/(root)/meeting/[id]/translate/page.tsx
+- gemini_server/server.js
+- server.log
+- tasks.md
+
+How it was tested:
+- `npm run build` (previous task).
+- `git status` verified clean state.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- User reported auto-detect transcription is not working. Needs investigation.
+
+------------------------------------------------------------
+
+Task ID: T-0009
+Title: Fix Auto Detect Transcription
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-08 16:58
+Last updated: 2025-12-08 16:58
+
+START LOG
+
+Timestamp: 2025-12-08 16:58
+Current behavior or state:
+- User reports "auto detect transcription is not working".
+- Recently switched `integrations/page.tsx` to Web Speech API.
+
+Plan and scope for this task:
+- Investigate `integrations/page.tsx` and `meeting-room.tsx` to see how language detection is handled.
+- Check if Web Speech API supports the intended auto-detect functionality or if we need to revert/adjust.
+- Fix the issue.
+
+Files or modules expected to change:
+- app/(root)/(home)/integrations/page.tsx
+- components/meeting-room.tsx
+- (possibly others)
+
+Risks or things to watch out for:
+- Web Speech API may not support true auto-detection of multiple languages dynamically without restarting recognition.
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-08 17:01
+Summary of what actually changed:
+- Reverted `gemini_server` port to 8001.
+- Updated `translate/page.tsx` to connect to 8001.
+- Resolved port conflict with `whisper_server` (8000).
+
+Files actually modified:
+- gemini_server/server.js
+- app/(root)/meeting/[id]/translate/page.tsx
+
+How it was tested:
+- Manual code verification.
+- User to verify if auto-detect works (requires restarting servers).
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None
+
+------------------------------------------------------------
+
+Task ID: T-0010
+Title: Commit Port Conflict Fix
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-08 17:23
+Last updated: 2025-12-08 17:23
+
+START LOG
+
+Timestamp: 2025-12-08 17:23
+Current behavior or state:
+- Changes to revert port to 8001 are in working directory.
+- User requested commit.
+
+Plan and scope for this task:
+- Stage and commit changes to `gemini_server/server.js` and `app/(root)/meeting/[id]/translate/page.tsx`.
+- Commit to `feature/translation-updates`.
+
+Files or modules expected to change:
+- gemini_server/server.js
+- app/(root)/meeting/[id]/translate/page.tsx
+- tasks.md
+
+Risks or things to watch out for:
+- None.
+
 WORK CHECKLIST
 
 - [ ] Code changes implemented according to the defined scope

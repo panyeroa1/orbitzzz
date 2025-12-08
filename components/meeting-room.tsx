@@ -13,7 +13,7 @@ import {
 import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
+
 
 
 import {
@@ -37,63 +37,13 @@ export const MeetingRoom = () => {
   const [showParticipants, setShowParticipants] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   
-  // Transcription State
-  const [showTranscript, setShowTranscript] = useState(false);
-  const transcriptEndRef = useRef<HTMLDivElement>(null);
-
-  // Get Deepgram API key from environment
-  const deepgramApiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
-
-  // Primary: Deepgram for real-time transcription with auto-detect
-  const deepgram = useDeepgramTranscription({
-    apiKey: deepgramApiKey,
-    language: "auto", // Auto-detect language
-    enableFallback: true,
-    meetingId: call?.id,
-  });
-
-  // Fallback: Web Speech API (Removed)
-  // Only using Deepgram now
-  
-  const transcriptionService = deepgram;
-
-  const {
-    isListening,
-    transcript,
-    interimTranscript,
-    segments,
-    error,
-    startListening,
-    stopListening,
-    resetTranscript,
-  } = transcriptionService;
-
-  const isSupported = true; // Deepgram is supported via WebSocket
-
+  // Transcription State Removed (moved to Broadcast/Translate pages)
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
 
+  if (callingState !== CallingState.JOINED) return <Loader />;
 
   const isPersonalRoom = !!searchParams.get("personal");
-
-  // Auto-scroll transcript
-  useEffect(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [segments]);
-
-  const toggleTranscription = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  };
-
-  const clearTranscript = () => {
-    resetTranscript();
-  };
-
-  if (callingState !== CallingState.JOINED) return <Loader />;
 
   const CallLayout = () => {
     switch (layout) {
@@ -122,115 +72,27 @@ export const MeetingRoom = () => {
         </div>
       </div>
 
-      {/* Live Subtitles Overlay */}
-      {interimTranscript && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 max-w-[80%] animate-fade-in">
-          <div className="rounded-apple-lg bg-black/80 backdrop-blur-sm px-6 py-3 text-center">
-            <p className="text-lg font-medium text-white leading-relaxed">{interimTranscript}</p>
-          </div>
-        </div>
-      )}
 
-      {/* Browser Support Warning */}
-      {!isSupported && showTranscript && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 max-w-md animate-fade-in">
-          <div className="rounded-apple-lg bg-red-600/90 backdrop-blur-sm px-6 py-3 text-center">
-            <p className="text-sm font-medium text-white">Web Speech API is not supported in this browser. Please use Chrome or Edge.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Transcript Panel */}
-      {showTranscript && (
-        <div className="fixed right-4 top-20 bottom-24 w-80 apple-card flex flex-col animate-slide-up z-50">
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <div className="flex flex-col">
-              <h3 className="font-semibold tracking-apple-tight">Live Transcript</h3>
-              <p className="text-xs text-white/50 mt-1">
-                Eburon Deep Speech
-                {deepgram.detectedLanguage && ` • ${deepgram.detectedLanguage.toUpperCase()}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {segments.length > 0 && (
-                <button 
-                  onClick={clearTranscript}
-                  className="text-xs text-white/50 hover:text-white"
-                >
-                  Clear
-                </button>
-              )}
-              <button onClick={() => setShowTranscript(false)} title="Close transcript">
-                <X size={18} className="text-white/60 hover:text-white" />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {segments.length === 0 ? (
-              <p className="text-white/40 text-center text-sm py-8">
-                {isListening ? "Listening for speech..." : "Start transcription to see live text"}
-              </p>
-            ) : (
-              segments.map((segment, i) => (
-                <div key={i} className="p-3 bg-dark-3/50 rounded-apple text-sm">
-                  <p className="text-white/90">{segment.text}</p>
-                  <div className="flex items-center justify-between mt-1 text-xs text-white/40">
-                    <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
-                    <div className="flex items-center gap-2">
-                      {segment.language && (
-                        <span className="text-blue-400">{segment.language.toUpperCase()}</span>
-                      )}
-                      {segment.confidence && (
-                        <span>{Math.round(segment.confidence * 100)}% confident</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-            {interimTranscript && (
-              <div className="p-3 bg-blue-500/20 rounded-apple text-sm text-white/70 italic">
-                {interimTranscript}
-              </div>
-            )}
-            <div ref={transcriptEndRef} />
-          </div>
-        </div>
-      )}
 
       {/* Controls */}
       <div className="fixed bottom-0 flex w-full flex-wrap items-center justify-center gap-3 pb-4">
         <CallControls onLeave={() => router.push("/")} />
 
-        {/* Transcription Button */}
+        {/* Broadcast Button */}
         <button
-          onClick={toggleTranscription}
-          title={isListening ? "Stop Transcription" : "Start Transcription"}
-          className={cn(
-            "cursor-pointer rounded-2xl px-4 py-2 transition-all",
-            isListening 
-              ? "bg-green-600 hover:bg-green-700" 
-              : "bg-[#19232D] hover:bg-[#4C535B]"
-          )}
+          onClick={() => {
+            const meetingId = call?.id || "unknown";
+            // Open in new window
+            window.open(`/meeting/${meetingId}/broadcast`, "_blank", "width=800,height=700");
+          }}
+          title="Open Broadcaster (Source)"
+          className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"
         >
-          <MessageSquare size={20} className={cn("text-white", { "animate-pulse": isListening })} />
+          <div className="flex items-center gap-2">
+              <span className="text-red-500 animate-pulse">●</span>
+              <span className="text-white text-sm font-medium">Broadcast</span>
+          </div>
         </button>
-
-        {/* Show Transcript Button */}
-        {(isListening || segments.length > 0) && (
-          <button
-            onClick={() => setShowTranscript(!showTranscript)}
-            title="Show Transcript"
-            className={cn(
-              "cursor-pointer rounded-2xl px-4 py-2",
-              showTranscript ? "bg-purple-1" : "bg-[#19232D] hover:bg-[#4C535B]"
-            )}
-          >
-            <span className="text-white text-sm font-medium">
-              {segments.length > 0 ? `(${segments.length})` : "Transcript"}
-            </span>
-          </button>
-        )}
 
         {/* Translation Button */}
         <button

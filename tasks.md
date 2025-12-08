@@ -633,3 +633,136 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+
+Task ID: T-0014
+Title: Commit Build Fixes
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-09 06:41
+Last updated: 2025-12-09 06:41
+
+START LOG
+
+Timestamp: 2025-12-09 06:41
+Current behavior or state:
+- Fixed build error by removing WebSpeech dependencies.
+- Changes pending in working directory.
+
+Plan and scope for this task:
+- Stage all changes.
+- Commit with message "fix: resolve build error by replacing WebSpeech with Deepgram in translate page".
+- Push to stagger branch.
+
+Files or modules expected to change:
+- app/(root)/meeting/[id]/translate/page.tsx
+- hooks/useWebSocket.ts
+- components/web-speech-transcription.tsx (deleted)
+- tasks.md
+
+Risks or things to watch out for:
+- None
+
+WORK CHECKLIST
+
+- [ ] Code changes implemented according to the defined scope
+- [ ] Logs and error handling reviewed
+
+END LOG (pending)
+
+END LOG
+
+Timestamp: 2025-12-09 06:42
+Summary of what actually changed:
+- Committed build fixes to `stagger`.
+- All legacy code removed.
+
+Files actually modified:
+- (See Start Log)
+
+How it was tested:
+- git push confirmation.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None
+
+------------------------------------------------------------
+
+Task ID: T-0015
+Title: Implement Broadcast & Translator Modes
+Status: DONE
+Owner: Miles
+Created: 2025-12-09 07:05
+Last updated: 2025-12-09 07:05
+
+START LOG
+
+Timestamp: 2025-12-09 06:45
+Current behavior or state:
+- Application lacks distinct modes for "Broadcaster" (Input) and "Translator" (Output).
+- Meeting Room handles everything inline, causing audio confusion.
+- Need to decouple ingestion from playback.
+
+Plan and scope for this task:
+- Create Supabase schema for `transcriptions`.
+- Implement `api/transcription/ingest-audio`.
+- Create `BroadcastPage` and hooks.
+- Create `TranslatePage` and playback hooks (Supabase subscription).
+- Refactor `MeetingRoom` to link to these pages.
+
+Files or modules expected to change:
+- app/api/transcription/ingest-audio/route.ts
+- app/(root)/meeting/[id]/broadcast/page.tsx
+- app/(root)/meeting/[id]/translate/page.tsx
+- components/meeting-room.tsx
+- hooks/useBroadcastTranscription.ts
+- hooks/useTranslationPlayback.ts
+- supabase/schema.sql
+
+Risks or things to watch out for:
+- Audio feedback loops (mitigated by page separation).
+- Latency in TTS.
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] Logs and error handling reviewed
+- [x] Verified build passes
+
+END LOG
+
+Timestamp: 2025-12-09 07:05
+Summary of what actually changed:
+- Implemented full "Broadcast" vs "Translator" architecture.
+- Created `BroadcastPage` for capturing audio and sending to Deepgram -> Supabase.
+- Created `TranslatePage` for subscribing to Supabase -> Gemini Translate -> TTS.
+- Updated `MeetingRoom` to serve as a portal with deep links to these modes.
+- Added `DebugPage` to view raw transcription rows.
+- Validated via production build.
+
+Files actually modified:
+- app/api/transcription/ingest-audio/route.ts
+- app/(root)/meeting/[id]/broadcast/page.tsx
+- app/(root)/meeting/[id]/translate/page.tsx
+- components/meeting-room.tsx
+- hooks/useBroadcastTranscription.ts
+- hooks/useTranslationPlayback.ts
+- hooks/useDeepgramTranscription.ts (cleanup)
+- app/debug/transcriptions/[id]/page.tsx
+- supabase/schema.sql
+
+How it was tested:
+- `npm run build` passed successfully.
+- Verified logic flow via walkthrough steps.
+- Validated variable scope fixes in MeetingRoom.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- Latency depends on internet connection and API speeds.
+- Requires Deepgram and Gemini API keys in .env.local.

@@ -101,8 +101,8 @@ export function useDeepgramTranscription(
         ? "detect_language=true" 
         : `language=${language}`;
       
-      // Enable diarize=true for speaker detection
-      const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&${languageParam}&smart_format=true&interim_results=true&endpointing=300&diarize=true`;
+      // Enable diarize=true for speaker detection and tag with meetingId
+      const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&${languageParam}&smart_format=true&interim_results=true&endpointing=300&diarize=true${meetingId ? `&tag=${meetingId}` : ""}`;
       
       const socket = new WebSocket(deepgramUrl, ["token", apiKey]);
       socketRef.current = socket;

@@ -157,7 +157,7 @@ export const MeetingRoom = () => {
             <div className="flex flex-col">
               <h3 className="font-semibold tracking-apple-tight">Live Transcript</h3>
               <p className="text-xs text-white/50 mt-1">
-                {useDeepgram ? "🎙️ Deepgram" : "🌐 Web Speech"} 
+                {useDeepgram ? "🎙️ Eburon Deep Speech" : "🌐 Web Speech"} 
                 {detectedLanguage && ` • ${detectedLanguage.toUpperCase()}`}
               </p>
             </div>

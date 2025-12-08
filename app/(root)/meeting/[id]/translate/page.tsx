@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useWebSpeech } from "@/hooks/useWebSpeech"; 
+import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription"; 
 import { cn } from "@/lib/utils";
 
 const LANGUAGES = [
@@ -42,7 +42,7 @@ const LANGUAGES = [
   { code: "cs", name: "Czech" },
   { code: "da", name: "Danish" },
   { code: "nl", name: "Dutch" },
-  { code: "nl-BE", name: "Dutch (Belgium/Flemish)" },
+  { code: "en-US", name: "English (United States)" },
   { code: "nl-NL", name: "Dutch (Netherlands)" },
   { code: "en", name: "English" },
   { code: "en-US", name: "English (United States)" },
@@ -209,20 +209,22 @@ export default function TranslatePage({ params }: TranslatePageProps) {
   const [audioSource, setAudioSource] = useState<"mic" | "system">("mic");
   const [systemAudioStatus, setSystemAudioStatus] = useState<"idle" | "connected" | "error">("idle");
 
-  // --- Web Speech (Mic) ---
+  // --- Deepgram (Mic) ---
+  const deepgramApiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
   const {
     isListening: isMicListening,
     startListening: startMic,
     stopListening: stopMic,
     segments,
     interimTranscript,
-    isSupported,
-    error: webSpeechError
-  } = useWebSpeech({
-    language: "en-US",
-    continuous: true,
-    interimResults: true,
+    error: deepgramError
+  } = useDeepgramTranscription({
+    apiKey: deepgramApiKey,
+    language: "auto",
+    meetingId: meetingId,
   });
+
+  const isSupported = true; // Deepgram supported via WebSocket
 
   // --- System Audio Logic ---
   const systemWsRef = useRef<WebSocket | null>(null);
@@ -615,9 +617,9 @@ export default function TranslatePage({ params }: TranslatePageProps) {
             </div>
           </div>
           
-           {webSpeechError && audioSource === 'mic' && (
+           {deepgramError && audioSource === 'mic' && (
               <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-apple text-red-400 text-sm">
-                  Error: {webSpeechError}
+                  Error: {deepgramError}
               </div>
            )}
 

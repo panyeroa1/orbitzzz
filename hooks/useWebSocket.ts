@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { TranscriptSegment } from "./useWebSpeech";
+
 
 interface UseWebSocketOptions {
   url: string;

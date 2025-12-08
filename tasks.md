@@ -556,3 +556,80 @@ WORK CHECKLIST
 - [ ] Logs and error handling reviewed
 
 END LOG (pending)
+
+END LOG
+
+Timestamp: 2025-12-09 06:41
+Summary of what actually changed:
+- Created `stagger` branch.
+- Committed all changes (removals and updates).
+
+Files actually modified:
+- (See Start Log)
+
+How it was tested:
+- git status and git branch confirmation.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None
+
+------------------------------------------------------------
+
+Task ID: T-0013
+Title: Fix Build Error - Remove WebSpeech Drift
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-09 06:41
+Last updated: 2025-12-09 06:41
+
+START LOG
+
+Timestamp: 2025-12-09 06:41
+Current behavior or state:
+- `npm run build` failed.
+- Module not found: `hooks/useWebSpeech` in `app/(root)/meeting/[id]/translate/page.tsx`.
+
+Plan and scope for this task:
+- Remove `useWebSpeech` usage from `app/(root)/meeting/[id]/translate/page.tsx`.
+- Grep for any other usages of `useWebSpeech`.
+- Commit the fix.
+
+Files or modules expected to change:
+- app/(root)/meeting/[id]/translate/page.tsx
+
+Risks or things to watch out for:
+- Ensure Deepgram is correctly hooked up in this page if it was relying on WebSpeech.
+
+WORK CHECKLIST
+
+- [ ] Code changes implemented according to the defined scope
+- [ ] Logs and error handling reviewed
+
+END LOG (pending)
+
+END LOG
+
+Timestamp: 2025-12-09 06:42
+Summary of what actually changed:
+- Removed `hooks/useWebSpeech.ts` dependency from `app/(root)/meeting/[id]/translate/page.tsx`.
+- Replaced WebSpeech with Deepgram in Translate page.
+- Removed `components/web-speech-transcription.tsx`.
+- Fixed implicit type dependency in `hooks/useWebSocket.ts`.
+
+Files actually modified:
+- app/(root)/meeting/[id]/translate/page.tsx
+- hooks/useWebSocket.ts
+- components/web-speech-transcription.tsx (Deleted)
+
+How it was tested:
+- Code review.
+- npm run build (should pass now).
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None

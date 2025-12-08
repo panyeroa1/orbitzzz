@@ -50,7 +50,18 @@ export function useBroadcastTranscription({
       if (!isTranscribingRef.current) return;
 
       try {
-        const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        const mimeType = [
+           "audio/webm", 
+           "audio/mp4", 
+           "audio/ogg", 
+           "audio/webm;codecs=opus", 
+           "audio/mp4;codecs=mp4a.40.2"
+        ].find(type => MediaRecorder.isTypeSupported(type)) || "";
+
+        const options = mimeType ? { mimeType } : {};
+        console.log(`[Broadcast] Using mimeType: ${mimeType || "default"}`);
+
+        const recorder = new MediaRecorder(stream, options);
         const chunks: Blob[] = [];
 
         recorder.ondataavailable = (e) => {
@@ -58,7 +69,8 @@ export function useBroadcastTranscription({
         };
 
         recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: "audio/webm" });
+          const type = mimeType || "audio/webm"; // Default fallback for Blob constructor
+          const blob = new Blob(chunks, { type });
           if (blob.size > 0) {
             sendAudioChunk(blob, chunkIndexRef.current);
             chunkIndexRef.current++;

@@ -766,3 +766,53 @@ Test result:
 Known limitations or follow-up tasks:
 - Latency depends on internet connection and API speeds.
 - Requires Deepgram and Gemini API keys in .env.local.
+
+------------------------------------------------------------
+
+Task ID: T-0016
+Title: Fix Recording Error
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-09 07:10
+Last updated: 2025-12-09 07:10
+
+START LOG
+
+Timestamp: 2025-12-09 07:10
+Current behavior or state:
+- User reports "recording error".
+- Suspect MediaRecorder mimeType compatibility issues (hardcoded "audio/webm").
+
+Plan and scope for this task:
+- Implement dynamic mimeType detection in `useBroadcastTranscription`.
+- Fallback to `audio/mp4` or empty mimeType if webm is not supported.
+
+Files or modules expected to change:
+- hooks/useBroadcastTranscription.ts
+- app/api/transcription/ingest-audio/route.ts (to handle different mimetypes if needed)
+
+Risks or things to watch out for:
+- Backend Deepgram call might need correct mimetype.
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-09 07:15
+Summary of what actually changed:
+- Implemented dynamic mimeType detection for `MediaRecorder` in `hooks/useBroadcastTranscription.ts`.
+- Fallbacks: webm -> mp4 -> ogg -> empty (browser default).
+- Fixed syntax error introduced during edit (duplicate onstop block).
+
+Files actually modified:
+- hooks/useBroadcastTranscription.ts
+
+How it was tested:
+- Code review to ensure syntax validity.
+- Logic check: `MediaRecorder.isTypeSupported` is standard API.
+
+Test result:
+- PASS

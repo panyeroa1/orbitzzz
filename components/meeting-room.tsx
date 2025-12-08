@@ -10,7 +10,7 @@ import {
   useCallStateHooks,
   useCall,
 } from "@stream-io/video-react-sdk";
-import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
+import { LayoutList, Users, MessageSquare, X, Languages, ChevronDown } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
@@ -28,7 +28,25 @@ import { Loader } from "./loader";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
-const WHISPER_URL = process.env.NEXT_PUBLIC_WHISPER_SERVER_URL || "ws://localhost:8000";
+// Supported languages for transcription
+const TRANSCRIPTION_LANGUAGES = [
+  { code: "en-US", label: "English (US)" },
+  { code: "en-GB", label: "English (UK)" },
+  { code: "es-ES", label: "Spanish" },
+  { code: "fr-FR", label: "French" },
+  { code: "de-DE", label: "German" },
+  { code: "it-IT", label: "Italian" },
+  { code: "pt-BR", label: "Portuguese" },
+  { code: "zh-CN", label: "Chinese" },
+  { code: "ja-JP", label: "Japanese" },
+  { code: "ko-KR", label: "Korean" },
+  { code: "fil-PH", label: "Tagalog" },
+  { code: "hi-IN", label: "Hindi" },
+  { code: "ar-SA", label: "Arabic" },
+  { code: "ru-RU", label: "Russian" },
+  { code: "vi-VN", label: "Vietnamese" },
+  { code: "th-TH", label: "Thai" },
+];
 
 export const MeetingRoom = () => {
   const router = useRouter();
@@ -41,8 +59,8 @@ export const MeetingRoom = () => {
   const [currentSubtitle, setCurrentSubtitle] = useState("");
   const [transcriptHistory, setTranscriptHistory] = useState<string[]>([]);
   const [showTranscript, setShowTranscript] = useState(false);
-  const socketRef = useRef<WebSocket | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [transcriptLanguage, setTranscriptLanguage] = useState("en-US");
+  const recognitionRef = useRef<any>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   const { useCallCallingState } = useCallStateHooks();
@@ -56,76 +74,96 @@ export const MeetingRoom = () => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcriptHistory]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
   const startTranscription = async () => {
     try {
-      const wsUrl = WHISPER_URL.replace("http://", "ws://").replace("https://", "wss://");
-      const ws = new WebSocket(`${wsUrl}/ws/transcribe`);
+      // Use Web Speech API (works in most browsers without server)
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
-      ws.onopen = async () => {
-        console.log("[Eburon STT] Connected to transcription service");
-        socketRef.current = ws;
+      if (!SpeechRecognition) {
+        alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = transcriptLanguage;
+
+      recognition.onstart = () => {
+        console.log(`[Transcription] Started - Language: ${transcriptLanguage}`);
         setIsTranscribing(true);
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-
-        recorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-            ws.send(event.data);
-          }
-        };
-
-        recorder.start(2000); // Send chunks every 2 seconds for better accuracy
-        mediaRecorderRef.current = recorder;
       };
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.text) {
-            const langLabel = data.language ? `[${data.language.toUpperCase()}]` : "";
-            setCurrentSubtitle(`${langLabel} ${data.text}`);
-            setTranscriptHistory(prev => [...prev, `${langLabel} ${data.text}`]);
-            // Clear subtitle after 4 seconds
-            setTimeout(() => setCurrentSubtitle(""), 4000);
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        let finalTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + " ";
+          } else {
+            interimTranscript += transcript;
           }
-        } catch {
-          // Fallback for plain text (backward compatibility)
-          const text = event.data.trim();
-          if (text) {
-            setCurrentSubtitle(text);
-            setTranscriptHistory(prev => [...prev, text]);
-            setTimeout(() => setCurrentSubtitle(""), 4000);
+        }
+
+        // Show interim results as subtitle
+        if (interimTranscript) {
+          setCurrentSubtitle(interimTranscript);
+        }
+
+        // Add final results to history
+        if (finalTranscript.trim()) {
+          const langCode = transcriptLanguage.split("-")[0].toUpperCase();
+          setTranscriptHistory(prev => [...prev, `[${langCode}] ${finalTranscript.trim()}`]);
+          setCurrentSubtitle("");
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("[Transcription] Error:", event.error);
+        if (event.error === "no-speech") {
+          // Restart on no-speech
+          recognition.stop();
+          setTimeout(() => recognition.start(), 100);
+        }
+      };
+
+      recognition.onend = () => {
+        // Auto-restart if still transcribing
+        if (isTranscribing && recognitionRef.current) {
+          try {
+            recognition.start();
+          } catch {
+            console.log("[Transcription] Restarting...");
           }
         }
       };
 
-      ws.onerror = (error) => {
-        console.error("[Eburon STT] Connection error:", error);
-      };
-
-      ws.onclose = () => {
-        console.log("[Eburon STT] Disconnected");
-        stopTranscription();
-      };
+      recognition.start();
+      recognitionRef.current = recognition;
 
     } catch (error) {
-      console.error("[Eburon STT] Error starting transcription:", error);
+      console.error("[Transcription] Error:", error);
       alert("Could not access microphone. Please allow microphone permissions.");
     }
   };
 
   const stopTranscription = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-    }
-    if (socketRef.current) {
-      socketRef.current.close();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
     }
     setIsTranscribing(false);
-    socketRef.current = null;
-    mediaRecorderRef.current = null;
     setCurrentSubtitle("");
   };
 
@@ -218,6 +256,40 @@ export const MeetingRoom = () => {
       {/* Controls */}
       <div className="fixed bottom-0 flex w-full flex-wrap items-center justify-center gap-3 pb-4">
         <CallControls onLeave={() => router.push("/")} />
+
+        {/* Language Selector for Transcription */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="cursor-pointer rounded-2xl bg-[#19232D] px-3 py-2 hover:bg-[#4C535B] flex items-center gap-1"
+            title="Select transcription language"
+          >
+            <span className="text-white text-xs font-medium">
+              {transcriptLanguage.split("-")[0].toUpperCase()}
+            </span>
+            <ChevronDown size={14} className="text-white/60" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="border-dark-1 bg-dark-1 text-white max-h-64 overflow-y-auto">
+            {TRANSCRIPTION_LANGUAGES.map((lang) => (
+              <DropdownMenuItem
+                key={lang.code}
+                className={cn(
+                  "cursor-pointer",
+                  transcriptLanguage === lang.code && "bg-purple-1"
+                )}
+                onClick={() => {
+                  setTranscriptLanguage(lang.code);
+                  // Restart transcription with new language if active
+                  if (isTranscribing) {
+                    stopTranscription();
+                    setTimeout(() => startTranscription(), 100);
+                  }
+                }}
+              >
+                {lang.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Transcription Button */}
         <button

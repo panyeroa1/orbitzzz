@@ -515,6 +515,40 @@
                 <section class="card controls-area">
                     <h2 class="card-title">Transcription Controls</h2>
                     
+                    <div class="control-group">
+                        <label for="languageSelect">Transcription Language</label>
+                        <select id="languageSelect">
+                            <option value="en-US">English (US)</option>
+                            <option value="en-GB">English (UK)</option>
+                            <option value="es-ES">Spanish (Spain)</option>
+                            <option value="es-MX">Spanish (Mexico)</option>
+                            <option value="fil-PH">Tagalog (Philippines)</option>
+                            <option value="fr-FR">French</option>
+                            <option value="de-DE">German</option>
+                            <option value="it-IT">Italian</option>
+                            <option value="pt-BR">Portuguese (Brazil)</option>
+                            <option value="zh-CN">Chinese (Mandarin)</option>
+                            <option value="zh-TW">Chinese (Traditional)</option>
+                            <option value="ja-JP">Japanese</option>
+                            <option value="ko-KR">Korean</option>
+                            <option value="hi-IN">Hindi</option>
+                            <option value="ar-SA">Arabic</option>
+                            <option value="ru-RU">Russian</option>
+                            <option value="nl-NL">Dutch</option>
+                            <option value="pl-PL">Polish</option>
+                            <option value="vi-VN">Vietnamese</option>
+                            <option value="th-TH">Thai</option>
+                            <option value="id-ID">Indonesian</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="audioInputSelect">Audio Input Device</label>
+                        <select id="audioInputSelect">
+                            <option value="">System default microphone</option>
+                        </select>
+                    </div>
+                    
                     <div class="button-group">
                         <button id="startRecordBtn" class="btn btn-primary">Start Mic Recording (Batch)</button>
                         <button id="startLiveBtn" class="btn btn-secondary">Start Live Mic Transcription (Web Speech)</button>
@@ -679,7 +713,32 @@
                 document.getElementById('currentYear').textContent = new Date().getFullYear();
                 setupEventListeners();
                 setupTTS();
+                populateAudioInputDevices();
                 checkApiKey(); // Checks Deepgram key for batch mode stability
+            }
+            
+            // --- AUDIO INPUT DEVICE ENUMERATION ---
+            async function populateAudioInputDevices() {
+                const audioInputSelect = document.getElementById('audioInputSelect');
+                try {
+                    // Request permission first to get device labels
+                    await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                        stream.getTracks().forEach(track => track.stop());
+                    }).catch(() => {});
+                    
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const audioInputs = devices.filter(device => device.kind === 'audioinput');
+                    
+                    audioInputSelect.innerHTML = '<option value="">System default microphone</option>';
+                    audioInputs.forEach((device, index) => {
+                        const option = document.createElement('option');
+                        option.value = device.deviceId;
+                        option.textContent = device.label || `Microphone ${index + 1}`;
+                        audioInputSelect.appendChild(option);
+                    });
+                } catch (err) {
+                    console.error('Error enumerating audio devices:', err);
+                }
             }
 
             // --- UTILITY FUNCTIONS ---
@@ -793,7 +852,7 @@
                     recognition = new SpeechRecognition();
                     recognition.continuous = true;
                     recognition.interimResults = true;
-                    recognition.lang = 'en-US';
+                    recognition.lang = document.getElementById('languageSelect').value || 'en-US';
 
                     recognition.onstart = function() {
                         recordingState = 'webspeech';
@@ -867,7 +926,11 @@
                         updateStatus("Capturing System/Tab Audio...", "success");
                     } else {
                         updateStatus("Requesting microphone for batch recording...", "info");
-                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const selectedDeviceId = document.getElementById('audioInputSelect').value;
+                        const audioConstraints = selectedDeviceId 
+                            ? { audio: { deviceId: { exact: selectedDeviceId } } }
+                            : { audio: true };
+                        stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
                         currentStream = stream;
                         updateStatus("Recording for batch processing...", "success");
                     }

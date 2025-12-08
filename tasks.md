@@ -513,3 +513,65 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+
+Task ID: T-0012
+Title: Clean Unused Code
+Status: DONE
+Owner: Miles
+Created: 2025-12-09 01:53
+Last updated: 2025-12-09 01:55
+
+START LOG
+
+Timestamp: 2025-12-09 01:53
+Current behavior or state:
+- Codebase contained unused hooks and components from previous implementations.
+- User requested cleanup of unused code.
+
+Plan and scope for this task:
+- Identify unused files via grep search.
+- Delete unused hooks, components, and config files.
+- Verify build still passes.
+
+Files or modules expected to change:
+- hooks/useTTS.ts
+- hooks/useTTSQueue.ts
+- hooks/useTranslation.ts
+- components/web-speech-transcription.tsx
+- lib/tts-queue.ts
+- config/audio.ts
+
+Risks or things to watch out for:
+- Ensure no other files depend on deleted code.
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-09 01:55
+Summary of what actually changed:
+- Deleted 6 unused files: `useTTS.ts`, `useTTSQueue.ts`, `useTranslation.ts`, `web-speech-transcription.tsx`, `tts-queue.ts`, `audio.ts`.
+
+Files actually modified:
+- hooks/useTTS.ts (deleted)
+- hooks/useTTSQueue.ts (deleted)
+- hooks/useTranslation.ts (deleted)
+- components/web-speech-transcription.tsx (deleted)
+- lib/tts-queue.ts (deleted)
+- config/audio.ts (deleted)
+
+How it was tested:
+- `npm run build` passed successfully.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None

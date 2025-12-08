@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Mic, MicOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
-import { useWebSpeech } from "@/hooks/useWebSpeech";
+
 
 const IntegrationsPage = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
@@ -20,16 +20,9 @@ const IntegrationsPage = () => {
     meetingId: "integration-test",
   });
 
-  // Fallback: Web Speech API
-  const webSpeech = useWebSpeech({
-    language: selectedLanguage || "en-US",
-    continuous: true,
-    interimResults: true,
-  });
-
-  // Use Deepgram if API key is available, otherwise fallback to Web Speech
-  const useDeepgram = deepgramApiKey.length > 0;
-  const transcriptionService = useDeepgram ? deepgram : webSpeech;
+  // Fallback: Web Speech API (Removed)
+  // Only using Deepgram now
+  const transcriptionService = deepgram;
 
   const {
     isListening,
@@ -42,16 +35,9 @@ const IntegrationsPage = () => {
     resetTranscript,
   } = transcriptionService;
 
-  // Get detected language from Deepgram
-  const detectedLanguage = useDeepgram && "detectedLanguage" in deepgram 
-    ? deepgram.detectedLanguage 
-    : null;
+  const detectedLanguage = deepgram.detectedLanguage;
 
-  // Check browser support for Web Speech (fallback)
-  const isSupported = useDeepgram || ("isSupported" in webSpeech ? webSpeech.isSupported : true);
-
-  // For Web Speech, need to call setLanguage when language changes
-  const setLanguage = "setLanguage" in webSpeech ? webSpeech.setLanguage : () => {};
+  const isSupported = true; // Deepgram is supported via WebSocket
 
   const LANGUAGES = [
     { code: "", name: "Auto-Detect", flag: "🌍" },
@@ -69,7 +55,7 @@ const IntegrationsPage = () => {
 
   const handleLanguageChange = (lang: string) => {
     setSelectedLanguage(lang);
-    setLanguage(lang);
+    setSelectedLanguage(lang);
   };
 
   const toggleRecording = () => {
@@ -92,10 +78,10 @@ const IntegrationsPage = () => {
           </div>
           <div className="flex flex-col">
             <p className="text-lg font-semibold tracking-apple-tight">
-              {useDeepgram ? "🎙️ Eburon Deep Speech" : "🌐 Web Speech API"}
+              🎙️ Eburon Deep Speech
             </p>
             <p className="text-sm text-white/50 tracking-apple-normal">
-              {useDeepgram ? "AI-Powered Transcription with Auto Language Detection" : "Browser-based Transcription (Fallback)"}
+              AI-Powered Transcription with Auto Language Detection
             </p>
             {detectedLanguage && (
               <p className="text-xs text-blue-400 mt-1">
@@ -205,7 +191,7 @@ const IntegrationsPage = () => {
           {segments.length === 0 && !interimTranscript ? (
             <p className="text-white/30 text-center py-8">
               {isSupported
-                ? `Click 'Start Recording' to begin live transcription with ${useDeepgram ? "Eburon Deep Speech" : "Web Speech API"}` 
+                ? `Click 'Start Recording' to begin live transcription with Eburon Deep Speech` 
                 : "Transcription is not available. Please check your browser or API configuration."}
             </p>
           ) : (
@@ -241,8 +227,8 @@ const IntegrationsPage = () => {
 
         {/* Instructions */}
         <div className="text-sm text-white/40 space-y-1">
-          <p>• {useDeepgram ? "Powered by Eburon Deep Speech AI for accurate transcription" : "Works directly in your browser - no server needed"}</p>
-          <p>• {useDeepgram ? "Automatic language detection for 30+ languages" : "Supports Chrome, Edge, and Safari (iOS 14.5+)"}</p>
+          <p>• Powered by Eburon Deep Speech AI for accurate transcription</p>
+          <p>• Automatic language detection for 30+ languages</p>
           <p>• Speak clearly for best transcription results</p>
           <p>• Transcription happens in real-time as you speak</p>
         </div>

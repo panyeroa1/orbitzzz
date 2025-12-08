@@ -14,7 +14,7 @@ import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
-import { useWebSpeech } from "@/hooks/useWebSpeech";
+
 
 import {
   DropdownMenu,
@@ -52,16 +52,10 @@ export const MeetingRoom = () => {
     meetingId: call?.id,
   });
 
-  // Fallback: Web Speech API (only used if Deepgram fails)
-  const webSpeech = useWebSpeech({
-    language: "en-US",
-    continuous: true,
-    interimResults: true,
-  });
-
-  // Use Deepgram if available, otherwise fallback to Web Speech
-  const useDeepgram = deepgramApiKey.length > 0;
-  const transcriptionService = useDeepgram ? deepgram : webSpeech;
+  // Fallback: Web Speech API (Removed)
+  // Only using Deepgram now
+  
+  const transcriptionService = deepgram;
 
   const {
     isListening,
@@ -74,13 +68,7 @@ export const MeetingRoom = () => {
     resetTranscript,
   } = transcriptionService;
 
-  // Get detected language if using Deepgram
-  const detectedLanguage = useDeepgram && "detectedLanguage" in deepgram 
-    ? deepgram.detectedLanguage 
-    : null;
-
-  // Check if browser supports Web Speech (for fallback scenario)
-  const isSupported = useDeepgram || ("isSupported" in webSpeech ? webSpeech.isSupported : true);
+  const isSupported = true; // Deepgram is supported via WebSocket
 
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
@@ -159,8 +147,8 @@ export const MeetingRoom = () => {
             <div className="flex flex-col">
               <h3 className="font-semibold tracking-apple-tight">Live Transcript</h3>
               <p className="text-xs text-white/50 mt-1">
-                {useDeepgram ? "🎙️ Eburon Deep Speech" : "🌐 Web Speech"} 
-                {detectedLanguage && ` • ${detectedLanguage.toUpperCase()}`}
+                Eburon Deep Speech
+                {deepgram.detectedLanguage && ` • ${deepgram.detectedLanguage.toUpperCase()}`}
               </p>
             </div>
             <div className="flex items-center gap-2">

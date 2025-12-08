@@ -2,7 +2,7 @@
 const { WebSocketServer } = require('ws');
 const { GoogleGenAI } = require('@google/genai');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 
 const PORT = 8001; // Translation server on 8001, STT server on 8000
 const wss = new WebSocketServer({ port: PORT });

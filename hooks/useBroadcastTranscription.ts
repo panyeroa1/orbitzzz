@@ -66,10 +66,22 @@ export function useBroadcastTranscription({
            "audio/mp4;codecs=mp4a.40.2"
         ].find(type => MediaRecorder.isTypeSupported(type)) || "";
 
-        const options = mimeType ? { mimeType } : {};
-        console.log(`[Broadcast] Using mimeType: ${mimeType || "default"}`);
-
-        const recorder = new MediaRecorder(stream, options);
+        let recorder: MediaRecorder;
+        try {
+             // 1. Try with detected supported mimeType
+             const options = mimeType ? { mimeType } : {};
+             console.log(`[Broadcast] Attempting mimeType: ${mimeType || "default"}`);
+             recorder = new MediaRecorder(stream, options);
+        } catch (err) {
+             console.warn(`[Broadcast] Failed with ${mimeType}, falling back to default`, err);
+             // 2. Fallback to default (no usage of mimeType)
+             try {
+                recorder = new MediaRecorder(stream);
+             } catch (retryErr) {
+                 // If default also fails, bubble up
+                 throw retryErr;
+             }
+        }
         const chunks: Blob[] = [];
 
         recorder.ondataavailable = (e) => {

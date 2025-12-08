@@ -88,7 +88,12 @@ export function useDeepgramTranscription(
       streamRef.current = stream;
 
       // Create Deepgram WebSocket connection
-      const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&language=${language}&smart_format=true&interim_results=true&endpointing=300`;
+      // For auto-detection, use detect_language=true instead of language=auto
+      const languageParam = language === "auto" 
+        ? "detect_language=true" 
+        : `language=${language}`;
+      
+      const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&${languageParam}&smart_format=true&interim_results=true&endpointing=300`;
       
       const socket = new WebSocket(deepgramUrl, ["token", apiKey]);
       socketRef.current = socket;

@@ -67,8 +67,8 @@ export function useBroadcastTranscription({
         ].find(type => MediaRecorder.isTypeSupported(type)) || "";
 
         const setupRecorder = (useDefault: boolean) => {
-             const options = useDefault ? {} : (mimeType ? { mimeType } : {});
-             console.log(`[Broadcast] Attempting recorder with: ${useDefault ? "default" : (mimeType || "default")}`);
+             const options = useDefault ? undefined : (mimeType ? { mimeType } : undefined);
+             console.log(`[Broadcast] Creating recorder with: ${useDefault ? "default" : (mimeType || "default")}`);
              
              const recorder = new MediaRecorder(stream, options);
              const chunks: Blob[] = [];
@@ -89,23 +89,29 @@ export function useBroadcastTranscription({
              return recorder;
         };
 
-        let recorder: MediaRecorder;
+        if (stream.getAudioTracks().length === 0) {
+             throw new Error("No audio tracks in stream");
+        }
 
+        let recorder: MediaRecorder;
         try {
             // 1. Try preferred settings
             recorder = setupRecorder(false);
-            recorder.start();
+            recorder.start(1000); // Timeslice 1s
         } catch (err) {
             console.warn(`[Broadcast] Preferred config failed, retrying with default`, err);
             // 2. Retry with default settings
             try {
                 recorder = setupRecorder(true);
-                recorder.start();
-            } catch (retryErr) {
-                 throw retryErr; // Give up
+                recorder.start(1000);
+            } catch (retryErr: any) {
+                 console.error("[Broadcast] Default recorder failed:", retryErr);
+                 throw new Error(`Recorder start failed: ${retryErr.message || String(retryErr)}`);
             }
         }
         
+        mediaRecorderRef.current = recorder;
+
         // Stop recording after duration
         setTimeout(() => {
           if (recorder.state !== "inactive") {

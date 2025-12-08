@@ -82,7 +82,7 @@ export function useDeepgramTranscription(
 
   const startListening = useCallback(async () => {
     if (isListeningRef.current || !canUseDeepgram) {
-      setError("Deepgram API key not configured");
+      setError("Eburon API key not configured");
       return;
     }
 
@@ -108,7 +108,7 @@ export function useDeepgramTranscription(
       socketRef.current = socket;
 
       socket.onopen = () => {
-        console.log("[Deepgram] Connected");
+        console.log("[Eburon] Connected");
         setIsConnected(true);
         setError(null);
 
@@ -197,18 +197,18 @@ export function useDeepgramTranscription(
             }
           }
         } catch (err) {
-          console.error("[Deepgram] Error parsing message:", err);
+          console.error("[Eburon] Error parsing message:", err);
         }
       };
 
       socket.onerror = (err) => {
-        console.error("[Deepgram] WebSocket error:", err);
-        setError("Deepgram connection error");
+        console.error("[Eburon] WebSocket error:", err);
+        setError("Connection error");
         setIsConnected(false);
       };
 
       socket.onclose = () => {
-        console.log("[Deepgram] Disconnected");
+        console.log("[Eburon] Disconnected");
         setIsConnected(false);
         
         if (isListeningRef.current) {
@@ -216,7 +216,7 @@ export function useDeepgramTranscription(
         }
       };
     } catch (err) {
-      console.error("[Deepgram] Error starting transcription:", err);
+      console.error("[Eburon] Error starting transcription:", err);
       setError(
         err instanceof Error ? err.message : "Failed to start transcription"
       );
@@ -235,7 +235,7 @@ export function useDeepgramTranscription(
         track.enabled = false;
       });
       setIsPaused(true);
-      console.log("[Deepgram] Microphone muted");
+      console.log("[Eburon] Microphone muted");
     }
   }, []);
 
@@ -246,7 +246,7 @@ export function useDeepgramTranscription(
         track.enabled = true;
       });
       setIsPaused(false);
-      console.log("[Deepgram] Microphone unmuted");
+      console.log("[Eburon] Microphone unmuted");
     }
   }, []);
 

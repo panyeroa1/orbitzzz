@@ -871,33 +871,36 @@ Test result:
 
 ------------------------------------------------------------
 
-Task ID: T-0019
-Title: Advanced Audio Sources & Recorder Fix
+Task ID: T-0020
+Title: Remove Deepgram Branding & Generalize Connection Errors
 Status: DONE
 Owner: Miles
-Created: 2025-12-09 07:40
-Last updated: 2025-12-09 07:45
+Created: 2025-12-09 07:55
+Last updated: 2025-12-09 08:00
 
 START LOG
 
-Timestamp: 2025-12-09 07:40
+Timestamp: 2025-12-09 07:55
 Current behavior or state:
-- User receives "MediaRecorder start failed" error.
-- UI only has "Mic" or "System" (which assumes display media).
-- No mixing capability.
+- UI displays "Deepgram connection error" and "Deepgram API key not configured".
+- "Powered by Deepgram" comments visible in source/integrations page.
+- User requests "Eburon" branding only.
 
 Plan and scope for this task:
-- Fix MediaRecorder: Wrap `start()` in retry logic to fallback to defaults.
-- UI: Add "Share Tab" and "Mic + System" options.
-- Logic: Implement `AudioContext` mixing for "Mic + System" in `page.tsx`.
+- Replace "Deepgram" strings with "Eburon" or generic terms in `useDeepgramTranscription.ts`.
+- Update `integrations/page.tsx` comments.
+- Update `useBroadcastTranscription.ts` comments.
+- Ensure error messages are generic ("Connection error") or branded ("Eburon connection error").
 
 Files or modules expected to change:
-- app/(root)/meeting/[id]/broadcast/page.tsx
+- hooks/useDeepgramTranscription.ts
+- app/(root)/(home)/integrations/page.tsx
 - hooks/useBroadcastTranscription.ts
+- environment.d.ts
 
 Risks or things to watch out for:
-- Web Audio API context management (cleanup).
-- Browser permissions for multiple streams.
+- Don't break the actual Deepgram API connection logic (URLs must stay `api.deepgram.com`).
+- Only change display strings and logs.
 
 WORK CHECKLIST
 
@@ -907,19 +910,24 @@ WORK CHECKLIST
 
 END LOG
 
-Timestamp: 2025-12-09 07:45
+Timestamp: 2025-12-09 08:00
 Summary of what actually changed:
-- Hooks: Updated `useBroadcastTranscription` to retry `new MediaRecorder` AND `recorder.start()` with default settings on failure.
-- UI: Added "Share Tab" and "Mic + System" buttons.
-- Logic: Implemented Web Audio API mixer for "Mic + System" to merge two streams into one `MediaStreamDestination`.
+- Replaced all visible "Deepgram" text in UI and Console Logs with "Eburon" or "Connection".
+- Updated `useDeepgramTranscription` error states:
+  - "Deepgram connection error" -> "Connection error"
+  - "Deepgram API key..." -> "Eburon API key..."
+  - "[Deepgram] Connected" -> "[Eburon] Connected"
+- Cleaned up comments in hooks and integration page.
 
 Files actually modified:
-- app/(root)/meeting/[id]/broadcast/page.tsx
+- hooks/useDeepgramTranscription.ts
+- app/(root)/(home)/integrations/page.tsx
 - hooks/useBroadcastTranscription.ts
+- environment.d.ts
 
 How it was tested:
-- Code review.
-- Logic verification for `AudioContext` graph connection.
+- Code review of replaced strings.
+- Verified that API endpoint logic (`wss://api.deepgram.com`) remains untouched.
 
 Test result:
 - PASS

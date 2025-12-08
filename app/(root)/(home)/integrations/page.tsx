@@ -12,7 +12,7 @@ const IntegrationsPage = () => {
   // Get Deepgram API key from environment
   const deepgramApiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "";
   
-  // Primary: Eburon Deep Speech (powered by Deepgram)
+  // Primary: Eburon Deep Speech
   const deepgram = useDeepgramTranscription({
     apiKey: deepgramApiKey,
     language: selectedLanguage || "auto",

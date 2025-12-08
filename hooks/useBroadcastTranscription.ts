@@ -44,7 +44,7 @@ export function useBroadcastTranscription({
 
   const startRecorderLoop = useCallback((stream: MediaStream) => {
     // We use a "stop-start" loop to ensure each chunk is a valid standalone file with headers.
-    // This is safer for backend processing (Deepgram Pre-recorded API).
+    // This is safer for backend processing.
     
     const recordSegment = () => {
       if (!isTranscribingRef.current) return;

@@ -15,11 +15,17 @@ type MeetingSetupProps = {
 
 export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
   const [isMicCamToggledOn, setIsMicCamToggledOn] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const call = useCall();
 
   if (!call)
     throw new Error("useCall must be used within StreamCall component.");
+
+  // Wait for client-side hydration before rendering VideoPreview
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isMicCamToggledOn) {
@@ -35,7 +41,11 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
     <div className="flex h-screen w-full flex-col items-center justify-center gap-3 text-white">
       <h1 className="text-2xl font-bold">Setup</h1>
 
-      <VideoPreview />
+      {isMounted ? <VideoPreview /> : (
+        <div className="flex h-[300px] w-[400px] items-center justify-center rounded-lg bg-gray-800">
+          <span className="text-gray-400">Loading camera...</span>
+        </div>
+      )}
 
       <div className="flex h-16 items-center justify-center gap-3">
         <label className="flex items-center justify-center gap-2 font-medium">

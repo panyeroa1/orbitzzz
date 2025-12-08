@@ -106,6 +106,64 @@ Known limitations or follow-up tasks:
 
 ------------------------------------------------------------
 
+Task ID: T-0011
+Title: Supabase Live Translation Integration
+Status: DONE
+Owner: Miles
+Related repo or service: orbitz
+Created: 2025-12-08 22:45
+Last updated: 2025-12-08 23:10
+
+START LOG
+
+Timestamp: 2025-12-08 22:45
+Current behavior or state:
+- Live translation lacked audio isolation and feedback prevention.
+- Wanted to use Supabase as a realtime middleware to separate Source (Mic) and Receiver (Speaker).
+
+Plan and scope for this task:
+- Install Supabase SDK.
+- Create `translations` table interface (schema provided to user).
+- Implement Broadcaster/Receiver logic in `translate/page.tsx`.
+- Refactor `api/translate` for Text-only translation (saving to DB).
+- Create `api/tts` for generating audio from text on demand.
+- Configure environment variables.
+
+Files or modules expected to change:
+- app/(root)/meeting/[id]/translate/page.tsx
+- app/api/translate/route.ts
+- app/api/tts/route.ts
+- lib/supabase.ts
+- .env
+
+Risks or things to watch out for:
+- Environment variables must be correct.
+- Latency in realtime subscription.
+
+END LOG
+
+Timestamp: 2025-12-08 23:10
+Summary of what actually changed:
+- Configured Supabase client in `lib/supabase.ts`.
+- Updated `api/translate/route.ts` to use `@google/generative-ai` for text translation and insert into Supabase `translations` table.
+- Created `api/tts/route.ts` to generate audio using `@google/genai` (Gemini Live) from text.
+- Enhanced `translate/page.tsx` with "Broadcaster" (Mic input) and "Receiver" (TTS output) modes.
+- Added Audio Output Device selection for Receiver to ensure isolation.
+- Added Supabase credentials to `.env`.
+
+How it was tested:
+- `npm run build` verification.
+- User provided credentials; verified manual insertion.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- `translations` table MUST exist in Supabase for this to work.
+one
+
+------------------------------------------------------------
+
 Task ID: T-0005
 Title: Commit Changes to GitHub
 Status: DONE

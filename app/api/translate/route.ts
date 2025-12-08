@@ -91,53 +91,79 @@ export async function POST(req: NextRequest) {
   }
   const ai = new GoogleGenAI({ apiKey });
 
-  const model = "models/gemini-2.5-flash-native-audio-preview-09-2025";
-  const responseQueue: LiveServerMessage[] = [];
-
-  // Scoped variables for this request
-  let turnComplete = false;
-  let connectionError: Error | null = null;
-
   try {
-    // 3. Connect to Live API
+    // 3. Step 1: Translate with Gemini Flash Lite (text-only, fast)
+    console.log("[Translation] Step 1: Translating with Gemini Flash Lite...");
+    const translationModel = ai.models.generateContent;
+    
+    const translationPrompt = `You are a professional translator. Translate the following text to ${targetLanguage || "Spanish"}. 
+IMPORTANT RULES:
+- Output ONLY the translation, nothing else
+- Preserve the natural tone and meaning
+- Use appropriate regional expressions and idioms for ${targetLanguage}
+- Do not add explanations or notes
+
+Text to translate: "${text}"`;
+
+    const translationResult = await ai.models.generateContent({
+      model: "gemini-2.0-flash-lite",
+      contents: translationPrompt,
+    });
+
+    const translatedText = translationResult.text?.trim() || text;
+    console.log(`[Translation] Translated to ${targetLanguage}: "${translatedText}"`);
+
+    // 4. Step 2: Use Live Audio for TTS-only (no listening, output only)
+    // This reads the translated text aloud with human-rich nuances and deep accent
+    console.log("[Translation] Step 2: Generating speech with Gemini Live Audio (TTS-only)...");
+    
+    const ttsModel = "models/gemini-2.5-flash-native-audio-preview-09-2025";
+    const responseQueue: LiveServerMessage[] = [];
+
+    let turnComplete = false;
+    let connectionError: Error | null = null;
+
+    // 5. Connect to Live API for TTS (output-only, no listening)
     const session = await ai.live.connect({
-      model,
+      model: ttsModel,
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
-              voiceName: "Orus", // User preferred voice
+              voiceName: "Orus", // Human-rich voice with deep accent
             },
           },
         },
       },
       callbacks: {
         onopen: () => {
-          console.log("[Gemini API] Connected to Live Session");
+          console.log("[Gemini TTS] Connected - TTS only mode (no listening)");
         },
         onmessage: (msg: LiveServerMessage) => {
           responseQueue.push(msg);
         },
         onclose: () => {
-          console.log("[Gemini API] Session closed");
+          console.log("[Gemini TTS] Session closed");
         },
         onerror: (err: any) => {
-          console.error("[Gemini API] Error:", err);
+          console.error("[Gemini TTS] Error:", err);
           connectionError = err;
-          turnComplete = true; // Break loop on error
+          turnComplete = true;
         },
       },
     });
 
-    // 4. Send Prompt
-    const prompt = `Translate the following text to ${targetLanguage || "Spanish"} and read it aloud naturally. Do not say anything else, just the translation. Text: "${text}"`;
+    // 6. Send TTS prompt - read the translated text aloud with nuances
+    const ttsPrompt = `Read the following ${targetLanguage} text aloud naturally with human-rich nuances, emotion, and a deep authentic accent. Speak as a native speaker would, with proper intonation, rhythm, and expression. Do not say anything else, just read the text:
+
+"${translatedText}"`;
     
     await session.sendClientContent({
-      turns: [prompt],
+      turns: [ttsPrompt],
     });
 
-    // 5. Accumulate Audio
+    // 7. Accumulate Audio
     const audioParts: string[] = [];
     let mimeType = "audio/pcm; rate=24000";
 

@@ -18,6 +18,7 @@ interface UseDeepgramTranscriptionOptions {
 interface UseDeepgramTranscriptionReturn {
   isListening: boolean;
   isConnected: boolean;
+  isPaused: boolean;
   transcript: string;
   interimTranscript: string;
   segments: DeepgramTranscriptSegment[];
@@ -25,6 +26,8 @@ interface UseDeepgramTranscriptionReturn {
   error: string | null;
   startListening: () => void;
   stopListening: () => void;
+  pauseListening: () => void;
+  resumeListening: () => void;
   resetTranscript: () => void;
 }
 
@@ -40,6 +43,7 @@ export function useDeepgramTranscription(
 
   const [isListening, setIsListening] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [segments, setSegments] = useState<DeepgramTranscriptSegment[]>([]);
@@ -187,6 +191,28 @@ export function useDeepgramTranscription(
     cleanup();
   }, [cleanup]);
 
+  // Pause listening - mutes the microphone to prevent audio feedback during TTS
+  const pauseListening = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = false;
+      });
+      setIsPaused(true);
+      console.log("[Deepgram] Microphone muted");
+    }
+  }, []);
+
+  // Resume listening - unmutes the microphone after TTS finishes
+  const resumeListening = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = true;
+      });
+      setIsPaused(false);
+      console.log("[Deepgram] Microphone unmuted");
+    }
+  }, []);
+
   const resetTranscript = useCallback(() => {
     setTranscript("");
     setInterimTranscript("");
@@ -205,6 +231,7 @@ export function useDeepgramTranscription(
   return {
     isListening,
     isConnected,
+    isPaused,
     transcript,
     interimTranscript,
     segments,
@@ -212,6 +239,8 @@ export function useDeepgramTranscription(
     error,
     startListening,
     stopListening,
+    pauseListening,
+    resumeListening,
     resetTranscript,
   };
 }

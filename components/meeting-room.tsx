@@ -33,6 +33,7 @@ type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 export const MeetingRoom = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const call = useCall();
   const [showParticipants, setShowParticipants] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   
@@ -48,6 +49,7 @@ export const MeetingRoom = () => {
     apiKey: deepgramApiKey,
     language: "auto", // Auto-detect language
     enableFallback: true,
+    meetingId: call?.id,
   });
 
   // Fallback: Web Speech API (only used if Deepgram fails)
@@ -82,7 +84,7 @@ export const MeetingRoom = () => {
 
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
-  const call = useCall();
+
 
   const isPersonalRoom = !!searchParams.get("personal");
 

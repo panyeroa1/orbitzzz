@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export interface DeepgramTranscriptSegment {
   text: string;
@@ -6,6 +7,7 @@ export interface DeepgramTranscriptSegment {
   isFinal: boolean;
   confidence?: number;
   language?: string;
+  speaker?: number;
 }
 
 interface UseDeepgramTranscriptionOptions {
@@ -13,6 +15,7 @@ interface UseDeepgramTranscriptionOptions {
   model?: string;
   language?: string; // "auto" for auto-detection or specific language code
   enableFallback?: boolean; // Fallback to Web Speech API if Deepgram fails
+  meetingId?: string; // Optional meeting ID to associate transcriptions
 }
 
 interface UseDeepgramTranscriptionReturn {
@@ -39,6 +42,7 @@ export function useDeepgramTranscription(
     model = "nova-2",
     language = "auto",
     enableFallback = true,
+    meetingId,
   } = options;
 
   const [isListening, setIsListening] = useState(false);
@@ -97,7 +101,8 @@ export function useDeepgramTranscription(
         ? "detect_language=true" 
         : `language=${language}`;
       
-      const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&${languageParam}&smart_format=true&interim_results=true&endpointing=300`;
+      // Enable diarize=true for speaker detection
+      const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&${languageParam}&smart_format=true&interim_results=true&endpointing=300&diarize=true`;
       
       const socket = new WebSocket(deepgramUrl, ["token", apiKey]);
       socketRef.current = socket;
@@ -122,7 +127,7 @@ export function useDeepgramTranscription(
         mediaRecorder.start(250); // Send audio chunks every 250ms
       };
 
-      socket.onmessage = (message) => {
+      socket.onmessage = async (message) => {
         try {
           const data = JSON.parse(message.data);
           
@@ -135,6 +140,12 @@ export function useDeepgramTranscription(
               const confidence = alternative.confidence;
               const detectedLang = data.channel.detected_language || language;
 
+              // Extract speaker from the first word if available
+              let speakerId: number | undefined = undefined;
+              if (alternative.words && alternative.words.length > 0) {
+                 speakerId = alternative.words[0].speaker;
+              }
+
               if (isFinal) {
                 // Final transcript - add to segments
                 const segment: DeepgramTranscriptSegment = {
@@ -143,6 +154,7 @@ export function useDeepgramTranscription(
                   isFinal: true,
                   confidence: confidence,
                   language: detectedLang,
+                  speaker: speakerId,
                 };
 
                 setSegments((prev) => [...prev, segment]);
@@ -153,6 +165,31 @@ export function useDeepgramTranscription(
                 if (detectedLang && detectedLang !== "auto") {
                   setDetectedLanguage(detectedLang);
                 }
+
+                // Save to Supabase
+                if (meetingId) {
+                  try {
+                    const { error: supabaseError } = await supabase
+                      .from('transcriptions')
+                      .insert([
+                        { 
+                          text: transcriptText,
+                          is_final: true,
+                          confidence: confidence,
+                          language: detectedLang,
+                          meeting_id: meetingId,
+                          speaker_id: speakerId !== undefined ? speakerId.toString() : null
+                        }
+                      ]);
+                    
+                    if (supabaseError) {
+                      console.error("[Supabase] Error saving transcript:", supabaseError);
+                    }
+                  } catch (sbErr) {
+                    console.error("[Supabase] Exception saving transcript:", sbErr);
+                  }
+                }
+
               } else {
                 // Interim transcript
                 setInterimTranscript(transcriptText);
@@ -185,7 +222,7 @@ export function useDeepgramTranscription(
       );
       cleanup();
     }
-  }, [apiKey, model, language, canUseDeepgram, cleanup]);
+  }, [apiKey, model, language, canUseDeepgram, cleanup, meetingId]);
 
   const stopListening = useCallback(() => {
     cleanup();

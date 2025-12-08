@@ -17,6 +17,7 @@ const IntegrationsPage = () => {
     apiKey: deepgramApiKey,
     language: selectedLanguage || "auto",
     enableFallback: true,
+    meetingId: "integration-test",
   });
 
   // Fallback: Web Speech API

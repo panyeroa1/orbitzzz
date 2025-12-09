@@ -68,6 +68,72 @@ export function useTranslationPlayback({
     console.log(`[Translator] Subscribing to meeting: ${meetingId}`);
     setStatus("connecting");
 
+    // Track processed IDs to avoid duplicates
+    const processedIds = new Set<string>(history.map(h => h.id));
+
+    // Function to process a new transcription row
+    const processTranscription = async (row: any) => {
+      if (processedIds.has(row.id)) return; // Skip duplicates
+      processedIds.add(row.id);
+
+      const chunkIndex = row.chunk_index;
+
+      // Deduplication / Ordering check
+      if (chunkIndex <= lastIndexRef.current) {
+        return;
+      }
+      lastIndexRef.current = chunkIndex;
+
+      const originalText = row.text_original;
+      
+      // Update History with placeholder
+      const newItem: TranscriptItem = {
+        id: row.id,
+        original: originalText,
+        timestamp: row.created_at,
+        speaker: row.speaker_label,
+        translated: "Translating..."
+      };
+      
+      setHistory(prev => [...prev, newItem]);
+
+      try {
+        // Fetch Translation and Audio from Gemini Live Audio TTS
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: originalText,
+            targetLanguage
+          })
+        });
+        
+        if (!res.ok) throw new Error("Translation request failed");
+        
+        const blob = await res.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        activeUrlsRef.current.push(audioUrl);
+
+        // Queue Audio for playback
+        audioQueueRef.current.push(audioUrl);
+        if (!isPlayingRef.current) {
+          playNext();
+        }
+        
+        // Update with status
+        setHistory(prev => prev.map(item => 
+          item.id === row.id ? { ...item, translated: "Playing Audio..." } : item
+        ));
+
+      } catch (err) {
+        console.error("Translation processing error:", err);
+        setHistory(prev => prev.map(item => 
+          item.id === row.id ? { ...item, translated: "Translation Failed" } : item
+        ));
+      }
+    };
+
+    // Realtime subscription (works if enabled in Supabase dashboard)
     const channel = supabase
       .channel(`transcriptions:${meetingId}`)
       .on(
@@ -79,78 +145,56 @@ export function useTranslationPlayback({
           filter: `meeting_id=eq.${meetingId}`,
         },
         async (payload) => {
-          const row = payload.new;
-          const chunkIndex = row.chunk_index;
-
-          // Deduplication / Ordering check
-          if (chunkIndex <= lastIndexRef.current) {
-             return;
-          }
-          lastIndexRef.current = chunkIndex;
-
-          const originalText = row.text_original;
-          
-          // Update History with placeholder
-          const newItem: TranscriptItem = {
-              id: row.id,
-              original: originalText,
-              timestamp: row.created_at,
-              speaker: row.speaker_label,
-              translated: "Translating..."
-          };
-          
-          setHistory(prev => [...prev, newItem]);
-
-          try {
-             // Fetch Translation and Audio
-             const res = await fetch("/api/translate", {
-                 method: "POST",
-                 headers: { "Content-Type": "application/json" },
-                 body: JSON.stringify({
-                     text: originalText,
-                     targetLanguage
-                 })
-             });
-             
-             if (!res.ok) throw new Error("Translation request failed");
-             
-             const blob = await res.blob();
-             const audioUrl = URL.createObjectURL(blob);
-             activeUrlsRef.current.push(audioUrl);
-
-             // Queue Audio
-             audioQueueRef.current.push(audioUrl);
-             if (!isPlayingRef.current) {
-                 playNext();
-             }
-             
-             // Since API returns Audio, we don't get the text translation back in the body easily if it's a WAV blob.
-             // Ideally we might want both. But current API returns raw audio. 
-             // We can infer "Translated" state or update with "(Audio Playing)" 
-             // Or update the API to return JSON { text, audioBase64 }.
-             // For now, based on current API, we just indicate audio is ready.
-             
-             setHistory(prev => prev.map(item => 
-                 item.id === row.id ? { ...item, translated: "Playing Audio..." } : item
-             ));
-
-          } catch (err) {
-             console.error("Translation processing error:", err);
-             setHistory(prev => prev.map(item => 
-                 item.id === row.id ? { ...item, translated: "Translation Failed" } : item
-             ));
-          }
+          processTranscription(payload.new);
         }
       )
       .subscribe((status) => {
-          if (status === "SUBSCRIBED") {
-              setStatus("connected");
-          } else if (status === "CHANNEL_ERROR") {
-              setStatus("error");
-          }
+        console.log(`[Translator] Realtime status: ${status}`);
+        if (status === "SUBSCRIBED") {
+          setStatus("connected");
+        } else if (status === "CHANNEL_ERROR") {
+          setStatus("error");
+        }
       });
 
+    // Polling fallback (in case Realtime isn't enabled)
+    const pollTranscripts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("transcriptions")
+          .select("*")
+          .eq("meeting_id", meetingId)
+          .order("chunk_index", { ascending: true })
+          .limit(50);
+
+        if (error) {
+          console.error("[Translator] Polling error:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Process any new transcriptions
+          for (const row of data) {
+            if (!processedIds.has(row.id)) {
+              await processTranscription(row);
+            }
+          }
+          
+          // Set connected status if we have data
+          setStatus("connected");
+        }
+      } catch (err) {
+        console.error("[Translator] Polling exception:", err);
+      }
+    };
+
+    // Poll every 2 seconds as fallback
+    const pollInterval = setInterval(pollTranscripts, 2000);
+    // Initial poll
+    pollTranscripts();
+
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
       // cleanup blobs
       activeUrlsRef.current.forEach(url => URL.revokeObjectURL(url));

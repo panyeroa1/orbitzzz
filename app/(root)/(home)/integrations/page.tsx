@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { Mic, MicOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useState } from "react";
+import { Mic, MicOff, CheckCircle2, XCircle } from "lucide-react";
 import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
 
 

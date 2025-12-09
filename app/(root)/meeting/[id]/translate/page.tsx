@@ -2,7 +2,7 @@
 
 import { use, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Globe, ArrowLeft, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Globe, ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -45,7 +45,6 @@ const LANGUAGES = [
   { code: "en-US", name: "English (United States)" },
   { code: "nl-NL", name: "Dutch (Netherlands)" },
   { code: "en", name: "English" },
-  { code: "en-US", name: "English (United States)" },
   { code: "en-GB", name: "English (United Kingdom)" },
   { code: "en-AU", name: "English (Australia)" },
   { code: "en-CA", name: "English (Canada)" },
@@ -289,7 +288,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
                                  <span>{new Date(item.timestamp).toLocaleTimeString()}</span>
                                  <span>{item.speaker || "Speaker"}</span>
                              </div>
-                             <p className="text-white/60 text-sm italic">"{item.original}"</p>
+                             <p className="text-white/60 text-sm italic">&ldquo;{item.original}&rdquo;</p>
                              <div className="border-l-2 border-purple-1/50 pl-4 py-1">
                                  <p className="text-white font-medium text-lg leading-relaxed text-purple-100">
                                      {item.translated}

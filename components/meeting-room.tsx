@@ -10,9 +10,9 @@ import {
   useCallStateHooks,
   useCall,
 } from "@stream-io/video-react-sdk";
-import { LayoutList, Users, MessageSquare, X, Languages } from "lucide-react";
+import { LayoutList, Users, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
 
 

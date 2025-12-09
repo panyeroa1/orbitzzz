@@ -2,8 +2,9 @@
 
 import { use, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mic, Monitor, Radio, Square, RefreshCcw } from "lucide-react";
+import { ArrowLeft, Mic, Monitor, Radio, Square, Languages } from "lucide-react";
 import { useBroadcastTranscription } from "@/hooks/useBroadcastTranscription";
+import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 
 // Types
@@ -11,12 +12,21 @@ type BroadcastPageProps = {
   params: Promise<{ id: string }>;
 };
 
+interface TranscriptItem {
+  id: string;
+  text: string;
+  language: string | null;
+  speaker: string | null;
+  timestamp: string;
+}
+
 export default function BroadcastPage({ params }: BroadcastPageProps) {
   const { id: meetingId } = use(params);
   const router = useRouter();
 
   const [source, setSource] = useState<"mic" | "share-tab" | "mixed">("mic");
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [transcripts, setTranscripts] = useState<TranscriptItem[]>([]);
   
   const { start, stop, isTranscribing, error } = useBroadcastTranscription({ meetingId });
   const [status, setStatus] = useState<"idle" | "broadcasting" | "error">("idle");
@@ -24,6 +34,47 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>(null);
   const analyzerRef = useRef<AnalyserNode | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to transcriptions from Supabase Realtime
+  useEffect(() => {
+    if (!isTranscribing) return;
+
+    console.log(`[Broadcast] Subscribing to transcriptions for ${meetingId}`);
+
+    const channel = supabase
+      .channel(`broadcast-transcripts:${meetingId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "transcriptions",
+          filter: `meeting_id=eq.${meetingId}`,
+        },
+        (payload) => {
+          const row = payload.new;
+          const item: TranscriptItem = {
+            id: row.id,
+            text: row.text_original,
+            language: row.source_language,
+            speaker: row.speaker_label,
+            timestamp: row.created_at,
+          };
+          setTranscripts((prev) => [...prev.slice(-20), item]); // Keep last 20
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [meetingId, isTranscribing]);
+
+  // Auto-scroll transcripts
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [transcripts]);
 
   // Visualize audio
   useEffect(() => {
@@ -78,6 +129,7 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
   const startBroadcast = async () => {
     try {
       let newStream: MediaStream;
+      setTranscripts([]); // Clear previous transcripts
 
       if (source === "mic") {
          newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -160,7 +212,7 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
           </button>
        </div>
 
-       <div className="max-w-md w-full relative z-10">
+       <div className="max-w-2xl w-full relative z-10">
           <div className="text-center mb-8">
              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-dark-3 mb-6 shadow-2xl border border-white/10">
                  <Radio size={40} className={cn("text-white/80", status === "broadcasting" && "text-purple-1 animate-pulse")} />
@@ -171,81 +223,120 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
              </p>
           </div>
 
-          <div className="apple-card p-6 bg-dark-3/50 backdrop-blur-xl border border-white/10 space-y-6">
-             {/* Source Selector */}
-             <div className="grid grid-cols-1 gap-2 p-1 bg-dark-2 rounded-lg">
-                <button
-                   onClick={() => !isTranscribing && setSource("mic")}
-                   disabled={isTranscribing}
-                   className={cn(
-                       "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
-                       source === "mic" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
-                       isTranscribing && "opacity-50 cursor-not-allowed"
-                   )}
-                >
-                    <Mic size={16} /> Microphone
-                </button>
-                <button
-                   onClick={() => !isTranscribing && setSource("share-tab")}
-                   disabled={isTranscribing}
-                   className={cn(
-                       "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
-                       source === "share-tab" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
-                       isTranscribing && "opacity-50 cursor-not-allowed"
-                   )}
-                >
-                    <Monitor size={16} /> Share Tab
-                </button>
-                 <button
-                   onClick={() => !isTranscribing && setSource("mixed")}
-                   disabled={isTranscribing}
-                   className={cn(
-                       "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
-                       source === "mixed" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
-                       isTranscribing && "opacity-50 cursor-not-allowed"
-                   )}
-                >
-                    <div className="flex items-center gap-1">
-                        <Mic size={14} /> + <Monitor size={14} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             {/* Controls Card */}
+             <div className="apple-card p-6 bg-dark-3/50 backdrop-blur-xl border border-white/10 space-y-6">
+                {/* Source Selector */}
+                <div className="grid grid-cols-1 gap-2 p-1 bg-dark-2 rounded-lg">
+                   <button
+                      onClick={() => !isTranscribing && setSource("mic")}
+                      disabled={isTranscribing}
+                      className={cn(
+                          "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
+                          source === "mic" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
+                          isTranscribing && "opacity-50 cursor-not-allowed"
+                      )}
+                   >
+                       <Mic size={16} /> Microphone
+                   </button>
+                   <button
+                      onClick={() => !isTranscribing && setSource("share-tab")}
+                      disabled={isTranscribing}
+                      className={cn(
+                          "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
+                          source === "share-tab" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
+                          isTranscribing && "opacity-50 cursor-not-allowed"
+                      )}
+                   >
+                       <Monitor size={16} /> Share Tab
+                   </button>
+                    <button
+                      onClick={() => !isTranscribing && setSource("mixed")}
+                      disabled={isTranscribing}
+                      className={cn(
+                          "flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-all",
+                          source === "mixed" ? "bg-dark-4 text-white shadow-sm border border-white/10" : "text-white/50 hover:text-white/80",
+                          isTranscribing && "opacity-50 cursor-not-allowed"
+                      )}
+                   >
+                       <div className="flex items-center gap-1">
+                           <Mic size={14} /> + <Monitor size={14} />
+                       </div>
+                       Mic + System
+                   </button>
+                </div>
+
+                {/* Visualizer Canvas */}
+                <div className="h-32 bg-black/40 rounded-lg overflow-hidden relative border border-white/5">
+                    {status === "idle" && (
+                        <div className="absolute inset-0 flex items-center justify-center text-white/20 text-sm">
+                            Audio Inactive
+                        </div>
+                    )}
+                    <canvas ref={canvasRef} width={400} height={128} className="w-full h-full" />
+                </div>
+
+                {/* Action Button */}
+                {status === "idle" || status === "error" ? (
+                    <button
+                       onClick={startBroadcast}
+                       className="w-full py-4 rounded-xl bg-purple-1 hover:bg-purple-600 text-white font-semibold text-lg shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-3"
+                    >
+                        <Radio size={24} />
+                        Start Broadcasting
+                    </button>
+                ) : (
+                    <button
+                       onClick={stopBroadcast}
+                       className="w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-lg shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-3 animate-pulse"
+                    >
+                        <Square size={24} fill="currentColor" />
+                        Stop Broadcasting
+                    </button>
+                )}
+                
+                {error && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+                        {error}
                     </div>
-                    Mic + System
-                </button>
+                )}
              </div>
 
-             {/* Visualizer Canvas */}
-             <div className="h-32 bg-black/40 rounded-lg overflow-hidden relative border border-white/5">
-                 {status === "idle" && (
-                     <div className="absolute inset-0 flex items-center justify-center text-white/20 text-sm">
-                         Audio Inactive
-                     </div>
-                 )}
-                 <canvas ref={canvasRef} width={400} height={128} className="w-full h-full" />
+             {/* Live Transcription Card */}
+             <div className="apple-card p-6 bg-dark-3/50 backdrop-blur-xl border border-white/10 flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                    <Languages size={20} className="text-purple-1" />
+                    <h2 className="text-lg font-semibold">Live Transcription</h2>
+                </div>
+                
+                <div className="flex-1 min-h-[200px] max-h-[300px] overflow-y-auto bg-black/30 rounded-lg p-4 border border-white/5 space-y-3">
+                    {transcripts.length === 0 ? (
+                        <div className="flex items-center justify-center h-full text-white/30 text-sm">
+                            {isTranscribing ? "Waiting for speech..." : "Start broadcasting to see transcription"}
+                        </div>
+                    ) : (
+                        <>
+                            {transcripts.map((item) => (
+                                <div key={item.id} className="p-3 bg-dark-4/50 rounded-lg border border-white/5 animate-fade-in">
+                                    <p className="text-white/90">{item.text}</p>
+                                    <div className="flex items-center justify-between mt-2 text-xs text-white/40">
+                                        <span>{new Date(item.timestamp).toLocaleTimeString()}</span>
+                                        <div className="flex items-center gap-2">
+                                            {item.speaker && <span className="text-purple-400">{item.speaker}</span>}
+                                            {item.language && (
+                                                <span className="bg-purple-1/20 text-purple-300 px-2 py-0.5 rounded-full font-mono">
+                                                    {item.language.toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={transcriptEndRef} />
+                        </>
+                    )}
+                </div>
              </div>
-
-             {/* Action Button */}
-             {status === "idle" || status === "error" ? (
-                 <button
-                    onClick={startBroadcast}
-                    className="w-full py-4 rounded-xl bg-purple-1 hover:bg-purple-600 text-white font-semibold text-lg shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-3"
-                 >
-                     <Radio size={24} />
-                     Start Broadcasting
-                 </button>
-             ) : (
-                 <button
-                    onClick={stopBroadcast}
-                    className="w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-lg shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-3 animate-pulse"
-                 >
-                     <Square size={24} fill="currentColor" />
-                     Stop Broadcasting
-                 </button>
-             )}
-             
-             {error && (
-                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
-                     {error}
-                 </div>
-             )}
           </div>
 
           <div className="mt-8 text-center">

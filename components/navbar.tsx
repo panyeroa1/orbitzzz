@@ -2,8 +2,6 @@ import { SignedIn, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 
-import { links } from "@/config";
-
 import { MobileNav } from "./mobile-nav";
 
 export const Navbar = () => {

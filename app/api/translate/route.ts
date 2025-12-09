@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   GoogleGenAI,
   LiveServerMessage,
-  MediaResolution,
   Modality,
-  TurnCoverage,
 } from "@google/genai";
 
 // --- WAV Helper Functions (Adapted from User Snippet) ---

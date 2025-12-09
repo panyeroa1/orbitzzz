@@ -38,7 +38,7 @@ IMPORTANT RULES:
 Text to translate: "${text}"`;
 
     const translationResult = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
+      model: "gemini-flash-lite-latest",
       contents: translationPrompt,
     });
 

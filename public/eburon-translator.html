@@ -222,14 +222,13 @@
           }
         }
 
-        // Then, get audio with passionate delivery
-        console.log('🎙️ Generating passionate audio...');
-        const ttsRes = await fetch(`${API_BASE}/api/tts/gemini`, {
+        // Then, get audio with Cartesia TTS
+        console.log('🎙️ Generating audio with Cartesia...');
+        const ttsRes = await fetch(`${API_BASE}/api/tts/cartesia`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            text: translatedText, 
-            voiceName: 'Orus'
+            text: translatedText
           })
         });
 

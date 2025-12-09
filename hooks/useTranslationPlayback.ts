@@ -63,35 +63,39 @@ export function useTranslationPlayback({
   const speechQueueRef = useRef<{ text: string; id: string }[]>([]);
   const isSpeakingRef = useRef(false);
 
-  // Web Speech TTS - speak text
-  const speakText = useCallback((text: string, lang: string, onEnd: () => void) => {
-    if (!("speechSynthesis" in window)) {
-      console.warn("[TTS] Web Speech API not supported");
+  // Gemini Live Audio TTS - speak text
+  const speakText = useCallback(async (text: string, lang: string, onEnd: () => void) => {
+    try {
+      const response = await fetch("/api/tts/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voiceName: "Orus" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("TTS failed");
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        onEnd();
+      };
+
+      audio.onerror = (e) => {
+        console.error("[TTS] Playback error:", e);
+        URL.revokeObjectURL(audioUrl);
+        onEnd();
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error("[TTS] Error:", err);
       onEnd();
-      return;
     }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = LANG_TO_VOICE[lang] || lang || "en-US";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    // Try to find a voice for the language
-    const voices = window.speechSynthesis.getVoices();
-    const targetVoiceLang = LANG_TO_VOICE[lang] || lang;
-    const matchingVoice = voices.find(v => v.lang.startsWith(targetVoiceLang.split("-")[0]));
-    if (matchingVoice) {
-      utterance.voice = matchingVoice;
-    }
-
-    utterance.onend = onEnd;
-    utterance.onerror = (e) => {
-      console.error("[TTS] Speech error:", e);
-      onEnd();
-    };
-
-    window.speechSynthesis.speak(utterance);
   }, []);
 
   // Play next in queue

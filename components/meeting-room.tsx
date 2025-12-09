@@ -27,6 +27,8 @@ import { cn } from "@/lib/utils";
 
 import { EndCallButton } from "./end-call-button";
 import { Loader } from "./loader";
+import { TranslationModal } from "./translation-modal";
+
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -35,6 +37,7 @@ export const MeetingRoom = () => {
   const searchParams = useSearchParams();
   const call = useCall();
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   
   // Transcription State Removed (moved to Broadcast/Translate pages)
@@ -94,13 +97,10 @@ export const MeetingRoom = () => {
           </div>
         </button>
 
-        {/* Translation Button */}
+        {/* Translation Modal Button */}
         <button
-          onClick={() => {
-            const meetingId = call?.id || "unknown";
-            window.open(`/meeting/${meetingId}/translate`, "_blank", "width=800,height=900");
-          }}
-          title="Open Translation"
+          onClick={() => setShowTranslation(true)}
+          title="Live Translation"
           className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"
         >
           <Languages size={20} className="text-white" />
@@ -150,6 +150,13 @@ export const MeetingRoom = () => {
 
         {!isPersonalRoom && <EndCallButton />}
       </div>
+
+      {/* Translation Modal */}
+      <TranslationModal
+        meetingId={call?.id || ""}
+        open={showTranslation}
+        onOpenChange={setShowTranslation}
+      />
     </div>
   );
 };

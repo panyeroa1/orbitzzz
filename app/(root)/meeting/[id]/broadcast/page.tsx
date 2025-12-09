@@ -12,7 +12,7 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
   return (
     <div className="h-screen w-screen overflow-hidden bg-black">
       <iframe
-        src={`https://eburon.ai/transcription/?meeting_id=${meetingId}`}
+        src="https://conversations-omega.vercel.app/"
         className="w-full h-full border-0"
         allow="microphone; camera; display-capture"
         title="Eburon Broadcaster"

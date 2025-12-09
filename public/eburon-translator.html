@@ -207,21 +207,6 @@
         console.log('✅ Translation:', translatedText.substring(0, 50));
         document.getElementById('translated').textContent = translatedText;
 
-        // Save translated text back to the same row in Supabase
-        if (rowId && supabase) {
-          console.log('💾 Saving translation to Supabase row:', rowId);
-          const { error: updateError } = await supabase
-            .from('eburon_tts_current')
-            .update({ translated_text: translatedText })
-            .eq('id', rowId);
-          
-          if (updateError) {
-            console.error('❌ Failed to save translation:', updateError);
-          } else {
-            console.log('✅ Translation saved to Supabase');
-          }
-        }
-
         // Then, get audio with Cartesia TTS
         console.log('🎙️ Generating audio with Cartesia...');
         const ttsRes = await fetch(`${API_BASE}/api/tts/cartesia`, {

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Eburon · Unified Live Translator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #05060a;
+      --card: #0b0f18;
+      --accent: #00e0ff;
+      --accent-soft: rgba(0, 224, 255, 0.14);
+      --text-main: #f7f7f7;
+      --text-soft: #a9b0c2;
+      --danger: #ff4b6a;
+      --border-subtle: rgba(255, 255, 255, 0.14);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top left, #16263f 0, #020308 50%, #000000 100%);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 800px;
+      background: linear-gradient(145deg, rgba(0,0,0,0.92), rgba(6,11,22,0.98));
+      border-radius: 20px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.85);
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    h1 { margin: 0; font-size: 1.5rem; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+    .status-pill {
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      background: rgba(0,0,0,0.3);
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    
+    .card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 200px;
+    }
+    .label { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+    .text-content { font-size: 1.1rem; line-height: 1.5; white-space: pre-wrap; flex-grow: 1; }
+    
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    select, button {
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: var(--card);
+      color: white;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    select:focus { border-color: var(--accent); }
+    button { cursor: pointer; font-weight: bold; transition: all 0.2s; }
+    button.primary { background: var(--accent); color: black; border: none; }
+    button.primary:hover { opacity: 0.8; transform: translateY(-1px); }
+    button.stop { background: var(--danger); border: none; color: white; display: none; }
+    
+    .speaking { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-soft); }
+    .log-area { font-family: monospace; font-size: 0.75rem; color: #666; max-height: 100px; overflow-y: auto; text-align: left; background: #000; padding: 10px; border-radius: 8px; margin-top: 10px;}
+    
+    input[type="checkbox"] { accent-color: var(--accent); transform: scale(1.2); }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>🎙️ Unified Live Translator</h1>
+    <div id="status" class="status-pill">Ready</div>
+  </div>
+
+  <div class="controls">
+    <select id="sourceLang" title="Source Language">
+      <option value="en-US">English (US)</option>
+      <option value="fr-FR">French</option>
+      <option value="es-ES">Spanish</option>
+      <option value="de-DE">German</option>
+      <option value="it-IT">Italian</option>
+      <option value="ja-JP">Japanese</option>
+      <option value="zh-CN">Chinese</option>
+    </select>
+    <span>➡</span>
+    <select id="targetLang" title="Target Language">
+      <option value="es">Spanish</option>
+      <option value="fr">French</option>
+      <option value="de">German</option>
+      <option value="en">English</option>
+      <option value="it">Italian</option>
+      <option value="ja">Japanese</option>
+      <option value="zh">Chinese</option>
+      <option value="ru">Russian</option>
+    </select>
+    
+    <label style="display:flex; align-items:center; gap:5px; font-size:0.8rem; margin-left:auto;">
+      <input type="checkbox" id="muteMicOnTTS" checked>
+      Mute Mic while Speaking
+    </label>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn" class="primary" onclick="start()">▶ Start Live Mode</button>
+    <button id="stopBtn" class="stop" onclick="stop()">⏹ Stop</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">📝 Transcript (Source)</div>
+      <div id="transcript" class="text-content">...</div>
+    </div>
+    <div class="card" id="translationCard">
+      <div class="label">🌐 Translation (Cartesia TTS)</div>
+      <div id="translation" class="text-content">...</div>
+    </div>
+  </div>
+
+  <div class="log-area" id="logs"></div>
+</div>
+
+<audio id="audioPlayer"></audio>
+
+<script>
+  const API_BASE = window.location.origin;
+
+  // State
+  let recognition = null;
+  let isListening = false;
+  let isSpeaking = false;
+  let audioQueue = [];
+  
+  // DOM
+  const transcriptEl = document.getElementById('transcript');
+  const translationEl = document.getElementById('translation');
+  const translationCard = document.getElementById('translationCard');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('logs');
+  const muteMicCheckbox = document.getElementById('muteMicOnTTS');
+  const audioPlayer = document.getElementById('audioPlayer');
+
+  function log(msg) {
+    const time = new Date().toLocaleTimeString();
+    logEl.innerHTML = `<div>[${time}] ${msg}</div>` + logEl.innerHTML;
+  }
+
+  // --- STT Setup (Web Speech API) ---
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+  } else {
+    alert("Web Speech API not supported in this browser. Try Chrome.");
+  }
+
+  if (recognition) {
+    recognition.onstart = () => {
+      isListening = true;
+      statusEl.textContent = "Listening...";
+      statusEl.style.color = "#00ff90";
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'inline-block';
+      log("Microphone started.");
+    };
+
+    recognition.onerror = (event) => {
+      log("STT Error: " + event.error);
+      if (event.error === 'not-allowed') stop();
+    };
+
+    recognition.onend = () => {
+      if (isListening) {
+        // Auto-restart if it stops unexpectedly (unless we paused it intentionally)
+        if (!isSpeaking || !muteMicCheckbox.checked) {
+           log("STT stopped, restarting...");
+           try { recognition.start(); } catch(e){}
+        }
+      } else {
+        statusEl.textContent = "Stopped";
+        statusEl.style.color = "#fff";
+        startBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        log("Microphone stopped.");
+      }
+    };
+
+    recognition.onresult = async (event) => {
+      let interim = '';
+      let final = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+
+      if (final) {
+        transcriptEl.textContent = final;
+        log(`Final Text: "${final}"`);
+        // Trigger Pipeline
+        processText(final);
+      } else {
+        transcriptEl.textContent = final + ' ' + interim; // Show interim
+      }
+    };
+  }
+
+  // --- Pipeline: Translate -> TTS ---
+  async function processText(text) {
+    const targetLang = document.getElementById('targetLang').value;
+    
+    try {
+      // 1. Translate
+      log("Translating...");
+      const res = await fetch(`${API_BASE}/api/translate/text`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text, targetLanguage: targetLang })
+      });
+      const data = await res.json();
+      
+      if (!data.translatedText) throw new Error("Translation failed");
+      
+      const translatedText = data.translatedText;
+      translationEl.textContent = translatedText;
+      log(`Translated: "${translatedText}"`);
+
+      // 2. TTS (Cartesia)
+      log("Generating TTS (Cartesia)...");
+      const ttsRes = await fetch(`${API_BASE}/api/tts/cartesia`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text: translatedText })
+      });
+      
+      if (!ttsRes.ok) throw new Error("TTS failed");
+      
+      const blob = await ttsRes.blob();
+      queueAudio(blob);
+
+    } catch (e) {
+      log("Error: " + e.message);
+    }
+  }
+
+  // --- Audio Queue Management ---
+  function queueAudio(blob) {
+    audioQueue.push(blob);
+    if (!isSpeaking) {
+      playNext();
+    }
+  }
+
+  function playNext() {
+    if (audioQueue.length === 0) {
+      isSpeaking = false;
+      translationCard.classList.remove('speaking');
+      // Resume mic if it was muted
+      if (isListening && muteMicCheckbox.checked) {
+        log("Resuming mic...");
+        try { recognition.start(); } catch(e){}
+      }
+      return;
+    }
+
+    isSpeaking = true;
+    translationCard.classList.add('speaking');
+    
+    // Mute mic if requested
+    if (isListening && muteMicCheckbox.checked) {
+      log("Pausing mic for playback...");
+      recognition.stop(); // We will restart in playNext() when queue empty
+    }
+
+    const blob = audioQueue.shift();
+    const url = URL.createObjectURL(blob);
+    audioPlayer.src = url;
+    
+    audioPlayer.onended = () => {
+      URL.revokeObjectURL(url);
+      playNext();
+    };
+    
+    audioPlayer.onerror = () => {
+      log("Playback error");
+      playNext();
+    };
+
+    audioPlayer.play().catch(e => {
+      log("Play error: " + e.message);
+      playNext();
+    });
+  }
+
+  // --- Controls ---
+  function start() {
+    isListening = true;
+    recognition.lang = document.getElementById('sourceLang').value;
+    try {
+      recognition.start();
+    } catch (e) {
+      log("Start error: " + e.message);
+    }
+  }
+
+  function stop() {
+    isListening = false;
+    isSpeaking = false;
+    recognition.stop();
+    audioPlayer.pause();
+    audioQueue = [];
+    statusEl.textContent = "Stopped";
+  }
+
+</script>
+</body>
+</html>

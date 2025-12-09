@@ -721,7 +721,7 @@
       }
     }
 
-    // Supabase auto-save (5s) - UPSERT to update same row
+    // Supabase auto-save (5s) - Manual Check-Update-Insert to avoid unique constraint errors
     function startSavingLoop() {
       if (saveInterval) clearInterval(saveInterval);
       
@@ -733,17 +733,40 @@
             const nowIso = new Date().toISOString();
             const langCode = sourceLangSelect.value || "auto";
             
-            // Use UPSERT - update if client_id exists, otherwise insert
-            const { error } = await supabase
+            // 1. Check if row exists for this client
+            const { data: existingRows, error: searchError } = await supabase
               .from("eburon_tts_current")
-              .upsert({
-                client_id: anonClientId,
-                source_text: text,
-                source_lang_code: langCode,
-                updated_at: nowIso
-              }, {
-                onConflict: 'client_id'
-              });
+              .select("id")
+              .eq("client_id", anonClientId)
+              .limit(1);
+
+            if (searchError) throw searchError;
+
+            let error;
+
+            if (existingRows && existingRows.length > 0) {
+              // 2. UPDATE existing row
+              const { error: updateError } = await supabase
+                .from("eburon_tts_current")
+                .update({
+                  source_text: text,
+                  source_lang_code: langCode,
+                  updated_at: nowIso
+                })
+                .eq("client_id", anonClientId);
+              error = updateError;
+            } else {
+              // 3. INSERT new row
+              const { error: insertError } = await supabase
+                .from("eburon_tts_current")
+                .insert({
+                  client_id: anonClientId,
+                  source_text: text,
+                  source_lang_code: langCode,
+                  updated_at: nowIso
+                });
+              error = insertError;
+            }
 
             if (error) throw error;
 

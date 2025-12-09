@@ -203,7 +203,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
               • Reads aloud in native accent using Web Speech API
             </li>
             <li>
-              • TTS queue ensures audio doesn't overlap
+              • TTS queue ensures audio doesn&apos;t overlap
             </li>
           </ul>
         </div>

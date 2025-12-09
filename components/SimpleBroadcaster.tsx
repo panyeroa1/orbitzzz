@@ -120,12 +120,13 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = navigator.language || "en-US";
+    // Don't set lang to allow auto-detection by the browser's speech recognition service
+    // recognition.lang is left undefined for automatic language detection
 
     let fullTranscript = "";
 
     recognition.onstart = () => {
-      console.log("Transcription started");
+      console.log("Transcription started (auto-detect mode)");
     };
 
     recognition.onresult = (event: any) => {
@@ -180,7 +181,7 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
           const { error } = await supabase.from("eburon_tts_current").insert({
             client_id: getClientId(),
             source_text: text,
-            source_lang_code: navigator.language || "en-US",
+            source_lang_code: "auto", // Mark as auto-detected
             meeting_id: meetingId || null,
             updated_at: new Date().toISOString(),
           });

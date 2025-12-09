@@ -32,10 +32,11 @@ const LANGUAGES = [
 
 export function TranslationModal({ meetingId, open, onOpenChange }: TranslationModalProps) {
   const [targetLanguage, setTargetLanguage] = useState("es");
+  const [isEnabled, setIsEnabled] = useState(false);
   const { history, status, isPlaying } = useTranslationPlayback({
     meetingId,
     targetLanguage,
-    enabled: open,
+    enabled: open && isEnabled,
   });
 
   return (
@@ -49,7 +50,7 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
         </DialogHeader>
 
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          {/* Language Selector */}
+          {/* Language Selector & Start Button */}
           <div className="flex items-center gap-3">
             <label className="text-sm font-medium">Target Language:</label>
             <select
@@ -57,6 +58,7 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
               onChange={(e) => setTargetLanguage(e.target.value)}
               className="px-3 py-2 rounded-md border border-gray-700 bg-gray-900 text-white"
               aria-label="Select target language"
+              disabled={isEnabled}
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code}>
@@ -64,6 +66,24 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
                 </option>
               ))}
             </select>
+            
+            {/* Start/Stop Button */}
+            {!isEnabled ? (
+              <button
+                onClick={() => setIsEnabled(true)}
+                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+              >
+                Start Translation
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsEnabled(false)}
+                className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+              >
+                Stop
+              </button>
+            )}
+            
             <div className="ml-auto flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${
                 status === "connected" ? "bg-green-500" : 

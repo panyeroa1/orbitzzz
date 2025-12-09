@@ -173,10 +173,10 @@
       statusDiv.className = `status ${type}`;
     }
 
-    async function playAudio(text, targetLang) {
+    async function playAudio(text, targetLang, rowId) {
       if (isPlaying) {
         console.log('🔊 Audio queued:', text.substring(0, 50));
-        audioQueue.push({text, targetLang});
+        audioQueue.push({text, targetLang, rowId});
         return;
       }
 
@@ -206,6 +206,21 @@
         const { translatedText } = await translateRes.json();
         console.log('✅ Translation:', translatedText.substring(0, 50));
         document.getElementById('translated').textContent = translatedText;
+
+        // Save translated text back to the same row in Supabase
+        if (rowId && supabase) {
+          console.log('💾 Saving translation to Supabase row:', rowId);
+          const { error: updateError } = await supabase
+            .from('eburon_tts_current')
+            .update({ translated_text: translatedText })
+            .eq('id', rowId);
+          
+          if (updateError) {
+            console.error('❌ Failed to save translation:', updateError);
+          } else {
+            console.log('✅ Translation saved to Supabase');
+          }
+        }
 
         // Then, get audio with passionate delivery
         console.log('🎙️ Generating passionate audio...');
@@ -238,7 +253,7 @@
           if (audioQueue.length > 0) {
             const next = audioQueue.shift();
             console.log('🔄 Playing next in queue');
-            setTimeout(() => playAudio(next.text, next.targetLang), 500);
+            setTimeout(() => playAudio(next.text, next.targetLang, next.rowId), 500);
           }
         };
 
@@ -278,6 +293,7 @@
           console.log('📨 Received payload:', payload);
           
           const text = payload.new?.source_text;
+          const rowId = payload.new?.id;
           if (!text || text === lastText) {
             console.log('⏭️ Skipping duplicate or empty');
             return;
@@ -288,7 +304,7 @@
           document.getElementById('original').textContent = text;
           document.getElementById('translated').textContent = '🔄 Translating...';
 
-          await playAudio(text, targetLang);
+          await playAudio(text, targetLang, rowId);
         })
         .subscribe((status) => {
           console.log('📡 Subscription status:', status);

@@ -36,12 +36,16 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
-  // Subscribe to transcriptions from Supabase Realtime
+  // Subscribe to transcriptions from Supabase Realtime + Polling Fallback
   useEffect(() => {
     if (!isTranscribing) return;
 
     console.log(`[Broadcast] Subscribing to transcriptions for ${meetingId}`);
 
+    // Track IDs we've already seen to avoid duplicates
+    const seenIds = new Set<string>(transcripts.map(t => t.id));
+
+    // Realtime subscription (works if enabled in Supabase dashboard)
     const channel = supabase
       .channel(`broadcast-transcripts:${meetingId}`)
       .on(
@@ -54,6 +58,9 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
         },
         (payload) => {
           const row = payload.new;
+          if (seenIds.has(row.id)) return; // Skip duplicates
+          seenIds.add(row.id);
+          
           const item: TranscriptItem = {
             id: row.id,
             text: row.text_original,
@@ -64,9 +71,55 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
           setTranscripts((prev) => [...prev.slice(-20), item]); // Keep last 20
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[Broadcast] Realtime status: ${status}`);
+      });
+
+    // Polling fallback (in case Realtime isn't enabled)
+    const pollTranscripts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("transcriptions")
+          .select("id, text_original, source_language, speaker_label, created_at")
+          .eq("meeting_id", meetingId)
+          .order("created_at", { ascending: true })
+          .limit(30);
+
+        if (error) {
+          console.error("[Broadcast] Polling error:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const newItems: TranscriptItem[] = [];
+          for (const row of data) {
+            if (!seenIds.has(row.id)) {
+              seenIds.add(row.id);
+              newItems.push({
+                id: row.id,
+                text: row.text_original,
+                language: row.source_language,
+                speaker: row.speaker_label,
+                timestamp: row.created_at,
+              });
+            }
+          }
+          if (newItems.length > 0) {
+            setTranscripts((prev) => [...prev, ...newItems].slice(-20));
+          }
+        }
+      } catch (err) {
+        console.error("[Broadcast] Polling exception:", err);
+      }
+    };
+
+    // Poll every 2 seconds
+    const pollInterval = setInterval(pollTranscripts, 2000);
+    // Initial poll
+    pollTranscripts();
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [meetingId, isTranscribing]);

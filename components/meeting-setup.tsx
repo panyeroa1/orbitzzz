@@ -4,6 +4,7 @@ import {
   DeviceSettings,
   VideoPreview,
   useCall,
+  useCallStateHooks,
 } from "@stream-io/video-react-sdk";
 import { useEffect, useState } from "react";
 
@@ -17,6 +18,8 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
   const [isMicCamToggledOn, setIsMicCamToggledOn] = useState(false);
 
   const call = useCall();
+  const { useCameraState } = useCallStateHooks();
+  const { camera, hasBrowserPermission } = useCameraState();
 
   if (!call)
     throw new Error("useCall must be used within StreamCall component.");
@@ -31,14 +34,20 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
     }
   }, [isMicCamToggledOn, call?.camera, call?.microphone]);
 
-  // Wait for call to be ready before showing VideoPreview
+  // Wait for call and camera to be fully ready before showing VideoPreview
   const [isCallReady, setIsCallReady] = useState(false);
 
   useEffect(() => {
-    if (call && call.camera) {
-      setIsCallReady(true);
+    // Only set ready when call exists, camera is available, and we have browser permission
+    // or if we've waited long enough for the permission check to complete
+    if (call && camera) {
+      // Small delay to ensure SDK internals are fully initialized
+      const timer = setTimeout(() => {
+        setIsCallReady(true);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [call]);
+  }, [call, camera]);
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center gap-3 text-white">

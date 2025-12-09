@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 interface UseTranslationPlaybackOptions {
@@ -15,6 +15,39 @@ interface TranscriptItem {
   speaker?: string;
 }
 
+// Map language codes to Web Speech API voice language tags
+const LANG_TO_VOICE: Record<string, string> = {
+  "en": "en-US", "en-US": "en-US", "en-GB": "en-GB", "en-AU": "en-AU",
+  "es": "es-ES", "es-ES": "es-ES", "es-MX": "es-MX",
+  "fr": "fr-FR", "fr-FR": "fr-FR", "fr-CA": "fr-CA",
+  "de": "de-DE", "de-DE": "de-DE",
+  "it": "it-IT", "it-IT": "it-IT",
+  "pt": "pt-BR", "pt-BR": "pt-BR", "pt-PT": "pt-PT",
+  "zh": "zh-CN", "zh-CN": "zh-CN", "zh-TW": "zh-TW",
+  "ja": "ja-JP", "ja-JP": "ja-JP",
+  "ko": "ko-KR", "ko-KR": "ko-KR",
+  "ru": "ru-RU", "ru-RU": "ru-RU",
+  "ar": "ar-SA", "ar-SA": "ar-SA",
+  "hi": "hi-IN", "hi-IN": "hi-IN",
+  "tl": "fil-PH", "fil": "fil-PH",
+  "vi": "vi-VN", "vi-VN": "vi-VN",
+  "th": "th-TH", "th-TH": "th-TH",
+  "id": "id-ID", "id-ID": "id-ID",
+  "nl": "nl-NL", "nl-NL": "nl-NL",
+  "pl": "pl-PL", "pl-PL": "pl-PL",
+  "tr": "tr-TR", "tr-TR": "tr-TR",
+  "sv": "sv-SE", "sv-SE": "sv-SE",
+  "da": "da-DK", "da-DK": "da-DK",
+  "no": "no-NO", "nb": "nb-NO",
+  "fi": "fi-FI", "fi-FI": "fi-FI",
+  "el": "el-GR", "el-GR": "el-GR",
+  "he": "he-IL", "he-IL": "he-IL",
+  "uk": "uk-UA", "uk-UA": "uk-UA",
+  "cs": "cs-CZ", "cs-CZ": "cs-CZ",
+  "hu": "hu-HU", "hu-HU": "hu-HU",
+  "ro": "ro-RO", "ro-RO": "ro-RO",
+};
+
 export function useTranslationPlayback({
   meetingId,
   targetLanguage,
@@ -25,42 +58,63 @@ export function useTranslationPlayback({
   const [status, setStatus] = useState<"connecting" | "connected" | "error">("connecting");
   
   const lastIndexRef = useRef<number>(-1);
-  const audioQueueRef = useRef<string[]>([]);
-  const isPlayingRef = useRef(false);
-  
-  // Clean up Blob URLs to avoid memory leaks
-  const activeUrlsRef = useRef<string[]>([]);
+  const speechQueueRef = useRef<{ text: string; id: string }[]>([]);
+  const isSpeakingRef = useRef(false);
+
+  // Web Speech TTS - speak text
+  const speakText = useCallback((text: string, lang: string, onEnd: () => void) => {
+    if (!("speechSynthesis" in window)) {
+      console.warn("[TTS] Web Speech API not supported");
+      onEnd();
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = LANG_TO_VOICE[lang] || lang || "en-US";
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // Try to find a voice for the language
+    const voices = window.speechSynthesis.getVoices();
+    const targetVoiceLang = LANG_TO_VOICE[lang] || lang;
+    const matchingVoice = voices.find(v => v.lang.startsWith(targetVoiceLang.split("-")[0]));
+    if (matchingVoice) {
+      utterance.voice = matchingVoice;
+    }
+
+    utterance.onend = onEnd;
+    utterance.onerror = (e) => {
+      console.error("[TTS] Speech error:", e);
+      onEnd();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   // Play next in queue
-  const playNext = () => {
-    if (audioQueueRef.current.length === 0) {
-      isPlayingRef.current = false;
+  const playNext = useCallback(() => {
+    if (speechQueueRef.current.length === 0) {
+      isSpeakingRef.current = false;
       setIsPlaying(false);
       return;
     }
 
-    isPlayingRef.current = true;
+    isSpeakingRef.current = true;
     setIsPlaying(true);
-    const audioUrl = audioQueueRef.current.shift();
-    if (!audioUrl) return;
+    
+    const item = speechQueueRef.current.shift();
+    if (!item) return;
 
-    const audio = new Audio(audioUrl);
-    audio.onended = () => {
-      // release URL
-      URL.revokeObjectURL(audioUrl);
-      playNext();
-    };
-    audio.onerror = (e) => {
-      console.error("Audio playback error", e);
-      URL.revokeObjectURL(audioUrl);
-      playNext();
-    };
+    // Update status to "Speaking..."
+    setHistory(prev => prev.map(h => 
+      h.id === item.id ? { ...h, translated: h.translated?.replace("Translating...", "") || h.translated } : h
+    ));
 
-    audio.play().catch(e => {
-       console.error("Audio play failed", e);
-       playNext();
+    speakText(item.text, targetLanguage, () => {
+      playNext();
     });
-  };
+  }, [speakText, targetLanguage]);
 
   useEffect(() => {
     if (!enabled || !meetingId) return;
@@ -73,12 +127,11 @@ export function useTranslationPlayback({
 
     // Function to process a new transcription row
     const processTranscription = async (row: any) => {
-      if (processedIds.has(row.id)) return; // Skip duplicates
+      if (processedIds.has(row.id)) return;
       processedIds.add(row.id);
 
       const chunkIndex = row.chunk_index;
 
-      // Deduplication / Ordering check
       if (chunkIndex <= lastIndexRef.current) {
         return;
       }
@@ -98,8 +151,8 @@ export function useTranslationPlayback({
       setHistory(prev => [...prev, newItem]);
 
       try {
-        // Fetch Translation and Audio from Gemini Live Audio TTS
-        const res = await fetch("/api/translate", {
+        // Call translation API (text-only, no audio)
+        const res = await fetch("/api/translate/text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -110,20 +163,19 @@ export function useTranslationPlayback({
         
         if (!res.ok) throw new Error("Translation request failed");
         
-        const blob = await res.blob();
-        const audioUrl = URL.createObjectURL(blob);
-        activeUrlsRef.current.push(audioUrl);
+        const data = await res.json();
+        const translatedText = data.translatedText || originalText;
 
-        // Queue Audio for playback
-        audioQueueRef.current.push(audioUrl);
-        if (!isPlayingRef.current) {
+        // Update history with translated text
+        setHistory(prev => prev.map(item => 
+          item.id === row.id ? { ...item, translated: translatedText } : item
+        ));
+
+        // Queue for Web Speech TTS
+        speechQueueRef.current.push({ text: translatedText, id: row.id });
+        if (!isSpeakingRef.current) {
           playNext();
         }
-        
-        // Update with status
-        setHistory(prev => prev.map(item => 
-          item.id === row.id ? { ...item, translated: "Playing Audio..." } : item
-        ));
 
       } catch (err) {
         console.error("Translation processing error:", err);
@@ -133,7 +185,7 @@ export function useTranslationPlayback({
       }
     };
 
-    // Realtime subscription (works if enabled in Supabase dashboard)
+    // Realtime subscription
     const channel = supabase
       .channel(`transcriptions:${meetingId}`)
       .on(
@@ -157,7 +209,7 @@ export function useTranslationPlayback({
         }
       });
 
-    // Polling fallback (in case Realtime isn't enabled)
+    // Polling fallback
     const pollTranscripts = async () => {
       try {
         const { data, error } = await supabase
@@ -173,14 +225,11 @@ export function useTranslationPlayback({
         }
 
         if (data && data.length > 0) {
-          // Process any new transcriptions
           for (const row of data) {
             if (!processedIds.has(row.id)) {
               await processTranscription(row);
             }
           }
-          
-          // Set connected status if we have data
           setStatus("connected");
         }
       } catch (err) {
@@ -188,20 +237,19 @@ export function useTranslationPlayback({
       }
     };
 
-    // Poll every 2 seconds as fallback
     const pollInterval = setInterval(pollTranscripts, 2000);
-    // Initial poll
     pollTranscripts();
 
     return () => {
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
-      // cleanup blobs
-      activeUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-      activeUrlsRef.current = [];
+      // Cancel any ongoing speech
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
     };
 
-  }, [meetingId, enabled, targetLanguage]);
+  }, [meetingId, enabled, targetLanguage, playNext]);
 
   return {
     history,

@@ -38,9 +38,10 @@ create table if not exists public.eburon_tts_current (
   client_id text not null,
   source_text text not null,
   source_lang_code text null,
-  translated_text text null,  -- NEW: Store translation in same row
+  translated_text text null,  -- Store translation in same row
   updated_at timestamp with time zone not null default now(),
-  constraint eburon_tts_current_pkey primary key (id)
+  constraint eburon_tts_current_pkey primary key (id),
+  constraint eburon_tts_current_client_id_key unique (client_id)  -- UNIQUE for upsert
 );
 
 -- Index for fast client lookup

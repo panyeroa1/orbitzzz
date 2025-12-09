@@ -721,7 +721,7 @@
       }
     }
 
-    // Supabase auto-save (5s)
+    // Supabase auto-save (5s) - UPSERT to update same row
     function startSavingLoop() {
       if (saveInterval) clearInterval(saveInterval);
       
@@ -733,14 +733,16 @@
             const nowIso = new Date().toISOString();
             const langCode = sourceLangSelect.value || "auto";
             
+            // Use UPSERT - update if client_id exists, otherwise insert
             const { error } = await supabase
               .from("eburon_tts_current")
-              .insert({
+              .upsert({
                 client_id: anonClientId,
                 source_text: text,
                 source_lang_code: langCode,
-                meeting_id: meetingId,
                 updated_at: nowIso
+              }, {
+                onConflict: 'client_id'
               });
 
             if (error) throw error;

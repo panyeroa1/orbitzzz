@@ -66,6 +66,7 @@ export function useTranslationPlayback({
   // Gemini Live Audio TTS - speak text
   const speakText = useCallback(async (text: string, lang: string, onEnd: () => void) => {
     try {
+      console.log("[TTS] Requesting audio for:", text.substring(0, 50));
       const response = await fetch("/api/tts/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,14 +74,18 @@ export function useTranslationPlayback({
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[TTS] API error:", response.status, errorText);
         throw new Error("TTS failed");
       }
 
       const audioBlob = await response.blob();
+      console.log("[TTS] Received audio blob, size:", audioBlob.size);
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
       audio.onended = () => {
+        console.log("[TTS] Audio playback ended");
         URL.revokeObjectURL(audioUrl);
         onEnd();
       };
@@ -91,6 +96,7 @@ export function useTranslationPlayback({
         onEnd();
       };
 
+      console.log("[TTS] Starting playback");
       await audio.play();
     } catch (err) {
       console.error("[TTS] Error:", err);
@@ -133,11 +139,15 @@ export function useTranslationPlayback({
     let lastProcessedText = ""; // Track last processed text to avoid duplicates
 
     const processTranscription = async (row: any) => {
+      console.log("[Translation] Processing row:", row);
+      
       const originalText = row.text_original?.trim();
       if (!originalText || originalText === lastProcessedText) {
+        console.log("[Translation] Skipping - same text or empty");
         return; // Skip if same text
       }
 
+      console.log("[Translation] New text detected:", originalText);
       lastProcessedText = originalText;
       processedIds.add(row.id);
 
@@ -152,15 +162,18 @@ export function useTranslationPlayback({
       };
       
       if (existingIndex >= 0) {
+        console.log("[Translation] Updating existing item");
         setHistory(prev => prev.map((item, idx) => 
           idx === existingIndex ? newItem : item
         ));
       } else {
+        console.log("[Translation] Adding new item");
         setHistory(prev => [newItem]);
       }
 
       try {
         // Call translation API (text-only, no audio)
+        console.log("[Translation] Calling API with target:", targetLanguage);
         const res = await fetch("/api/translate/text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -171,11 +184,14 @@ export function useTranslationPlayback({
         });
 
         if (!res.ok) {
+          const errorText = await res.text();
+          console.error("[Translation] API error:", res.status, errorText);
           throw new Error("Translation failed");
         }
 
         const data = await res.json();
         const translatedText = data.translatedText || originalText;
+        console.log("[Translation] Received translation:", translatedText);
 
         // Update history with translation
         if (existingIndex >= 0) {
@@ -189,11 +205,15 @@ export function useTranslationPlayback({
         }
 
         // Add to speech queue - WAIT for current audio to finish
+        console.log("[Translation] Adding to speech queue");
         speechQueueRef.current.push({ text: translatedText, id: row.id });
         
         // Only start processing if not already speaking
         if (!isSpeakingRef.current) {
+          console.log("[Translation] Starting playback");
           playNext();
+        } else {
+          console.log("[Translation] Queued - currently speaking");
         }
       } catch (err) {
         console.error("[Translation] Error:", err);

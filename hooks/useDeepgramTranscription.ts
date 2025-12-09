@@ -86,10 +86,24 @@ export function useDeepgramTranscription(
       return;
     }
 
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      console.log("[Eburon] Already connected");
+      return;
+    }
+
     try {
+      setIsListening(true);
       setError(null);
       isListeningRef.current = true;
-      setIsListening(true);
+
+      // Check if mediaDevices API is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        const errorMsg = "Media Devices API not supported in this browser";
+        console.error("[Eburon]", errorMsg);
+        setError(errorMsg);
+        setIsListening(false);
+        return;
+      }
 
       // Get microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

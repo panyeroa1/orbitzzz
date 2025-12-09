@@ -36,6 +36,24 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
   // Audio visualizer
   const startVisualizer = async () => {
     try {
+      // Check if mediaDevices API is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("Media Devices API not supported");
+        return;
+      }
+
+      async function ensureMicPermission() {
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.error("Media Devices API not supported");
+            return;
+          }
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          console.error("Mic permission blocked:", e);
+        }
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const sourceNode = audioContext.createMediaStreamSource(stream);

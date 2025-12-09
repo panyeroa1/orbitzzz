@@ -54,24 +54,25 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
       console.log("[TTS] Finished speaking");
       setIsSpeaking(false);
       setCurrentText(null);
-      isProcessingRef.current = false;
       
-      // Process next item in queue after a short delay
+      // Enforce 1 second delay before processing next item
+      // Keep isProcessingRef true during this time to prevent immediate playback
       setTimeout(() => {
+        isProcessingRef.current = false;
         processQueue();
-      }, 100);
+      }, 1000);
     };
 
     utterance.onerror = (event) => {
       console.error("[TTS] Error:", event);
       setIsSpeaking(false);
       setCurrentText(null);
-      isProcessingRef.current = false;
       
-      // Try next item
+      // Try next item after delay
       setTimeout(() => {
+        isProcessingRef.current = false;
         processQueue();
-      }, 100);
+      }, 1000);
     };
 
     utteranceRef.current = utterance;

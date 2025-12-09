@@ -16,3 +16,19 @@ create index if not exists idx_transcriptions_meeting_created
 -- Optional: unique per meeting/chunk_index to avoid duplicates
 create unique index if not exists idx_transcriptions_meeting_chunk
   on public.transcriptions (meeting_id, chunk_index);
+
+-- Enable RLS
+alter table public.transcriptions enable row level security;
+
+-- Allow anon (public) users to insert transcriptions
+create policy "Allow anon insert"
+  on public.transcriptions
+  for insert
+  with check (true);
+
+-- Allow anon (public) users to view transcriptions
+create policy "Allow anon select"
+  on public.transcriptions
+  for select
+  using (true);
+

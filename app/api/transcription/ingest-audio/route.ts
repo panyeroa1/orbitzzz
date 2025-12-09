@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
       ]);
 
     if (sbError) {
-      console.error("Supabase Insert Error:", sbError);
-      return NextResponse.json({ error: "Database error" }, { status: 500 });
+      console.error("Supabase Insert Error:", JSON.stringify(sbError, null, 2));
+      return NextResponse.json({ error: "Database error: " + sbError.message, details: sbError }, { status: 500 });
     }
 
     return NextResponse.json({ status: "success", chunk_index: chunkIndex });

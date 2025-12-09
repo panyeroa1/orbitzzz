@@ -82,8 +82,8 @@ export const MeetingRoom = () => {
         <button
             onClick={() => {
             const meetingId = call?.id || "unknown";
-            // Open external broadcaster
-            window.open(`https://eburon.ai/transcription/?meeting_id=${meetingId}`, "_blank", "width=800,height=700");
+            // Open local broadcaster page which embeds the external tool
+            window.open(`/meeting/${meetingId}/broadcast`, "_blank", "width=800,height=700");
           }}
           title="Open Broadcaster (Source)"
           className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"

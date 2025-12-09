@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface UseBroadcastTranscriptionOptions {
   meetingId: string;
@@ -16,6 +17,7 @@ export function useBroadcastTranscription({
 }: UseBroadcastTranscriptionOptions): UseBroadcastTranscriptionReturn {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunkIndexRef = useRef(0);
@@ -131,6 +133,11 @@ export function useBroadcastTranscription({
         console.error("Recorder loop error:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
         setError(`Failed to record: ${errorMessage}`);
+        toast({
+          variant: "destructive",
+          title: "Recording Failed",
+          description: errorMessage,
+        });
         isTranscribingRef.current = false;
         setIsTranscribing(false);
       }

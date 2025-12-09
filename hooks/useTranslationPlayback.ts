@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/use-toast";
 
 interface UseTranslationPlaybackOptions {
   meetingId: string;
@@ -56,6 +57,7 @@ export function useTranslationPlayback({
   const [history, setHistory] = useState<TranscriptItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [status, setStatus] = useState<"connecting" | "connected" | "error">("connecting");
+  const { toast } = useToast();
   
   const lastIndexRef = useRef<number>(-1);
   const speechQueueRef = useRef<{ text: string; id: string }[]>([]);
@@ -206,6 +208,12 @@ export function useTranslationPlayback({
           setStatus("connected");
         } else if (status === "CHANNEL_ERROR") {
           setStatus("error");
+          console.error("[Translator] Supabase channel error");
+          toast({
+            variant: "destructive",
+            title: "Connection Error",
+            description: "Failed to connect to translation service. Check database policies.",
+          });
         }
       });
 

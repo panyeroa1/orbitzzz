@@ -86,7 +86,7 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
           .limit(30);
 
         if (error) {
-          console.error("[Broadcast] Polling error:", error);
+          console.error("[Broadcast] Polling error:", error.message || error.code || JSON.stringify(error));
           return;
         }
 

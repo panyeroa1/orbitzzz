@@ -73,10 +73,10 @@ export async function POST(req: NextRequest) {
         speakerLabel = `speaker_${results.words[0].speaker}`;
     }
 
-    // 2. Insert into Supabase
+    // 2. Upsert into Supabase (update single row per meeting)
     const { error: sbError } = await supabase
       .from("transcriptions")
-      .insert([
+      .upsert(
         {
           meeting_id: meetingId,
           chunk_index: chunkIndex,
@@ -84,10 +84,14 @@ export async function POST(req: NextRequest) {
           source_language: detectedLanguage || "en",
           speaker_label: speakerLabel,
         },
-      ]);
+        {
+          onConflict: 'meeting_id',
+          ignoreDuplicates: false,
+        }
+      );
 
     if (sbError) {
-      console.error("Supabase Insert Error:", JSON.stringify(sbError, null, 2));
+      console.error("Supabase Upsert Error:", JSON.stringify(sbError, null, 2));
       return NextResponse.json({ error: "Database error: " + sbError.message, details: sbError }, { status: 500 });
     }
 

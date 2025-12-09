@@ -191,13 +191,13 @@ export function useTranslationPlayback({
       }
     };
 
-    // Realtime subscription
+    // Realtime subscription - listen for UPDATE on single row
     const channel = supabase
       .channel(`transcriptions:${meetingId}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "UPDATE",
           schema: "public",
           table: "transcriptions",
           filter: `meeting_id=eq.${meetingId}`,
@@ -221,27 +221,24 @@ export function useTranslationPlayback({
         }
       });
 
-    // Polling fallback
+    // Polling fallback - fetch single row
     const pollTranscripts = async () => {
       try {
         const { data, error } = await supabase
           .from("transcriptions")
           .select("*")
           .eq("meeting_id", meetingId)
-          .order("chunk_index", { ascending: true })
-          .limit(50);
+          .single();
 
         if (error) {
-          console.error("[Translator] Polling error:", error);
+          if (error.code !== 'PGRST116') { // Ignore "no rows" error
+            console.error("[Translator] Polling error:", error);
+          }
           return;
         }
 
-        if (data && data.length > 0) {
-          for (const row of data) {
-            if (!processedIds.has(row.id)) {
-              await processTranscription(row);
-            }
-          }
+        if (data && !processedIds.has(data.id)) {
+          await processTranscription(data);
           setStatus("connected");
         }
       } catch (err) {

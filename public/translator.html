@@ -101,6 +101,15 @@
     const SUPABASE_URL = "https://mkmyfdqrejabgnymfmbb.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXlmZHFyZWphYmdueW1mbWJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MzMxMzYsImV4cCI6MjA4MDAwOTEzNn0.x_1VnQ-HWWPwNe9jjafhD_uoH2dyCyjO2RaKOQhYoJw";
     
+    // Read meeting ID from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const meetingFromUrl = urlParams.get('meeting');
+    if (meetingFromUrl) {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('meetingId').value = meetingFromUrl;
+      });
+    }
+    
     let supabase;
     let channel;
     let lastText = "";

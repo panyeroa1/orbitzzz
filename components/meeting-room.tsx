@@ -97,9 +97,12 @@ export const MeetingRoom = () => {
           </div>
         </button>
 
-        {/* Translation Modal Button */}
+        {/* Translation Popup Button */}
         <button
-          onClick={() => setShowTranslation(true)}
+          onClick={() => {
+            const meetingId = call?.id || "unknown";
+            window.open(`/translator.html?meeting=${meetingId}`, "_blank", "width=600,height=700");
+          }}
           title="Live Translation"
           className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"
         >

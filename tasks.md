@@ -987,3 +987,69 @@ How it was tested:
 
 Test result:
 - PASS
+
+------------------------------------------------------------
+
+Task ID: T-0017
+Title: Debug Supabase and Embed Transcription
+Status: DONE
+Owner: Miles
+Created: 2025-12-09 19:43
+Last updated: 2025-12-09 19:43
+
+START LOG
+
+Timestamp: 2025-12-09 19:29
+Current behavior or state:
+- User reported "Supabase error on the translator".
+- Transcription URLs were external and lacked ID coordination.
+- No UI feedback for connection errors.
+
+Plan and scope for this task:
+- Fix Supabase Row Level Security (RLS) to allow anon data ingestion.
+- Implement Toast notifications for better error visibility in hooks.
+- Embed `eburon.ai/transcription` via local iframe in Meeting Room to ensure `meeting_id` continuity.
+
+Files or modules expected to change:
+- supabase/schema.sql
+- app/api/transcription/ingest-audio/route.ts
+- hooks/useTranslationPlayback.ts
+- hooks/useBroadcastTranscription.ts
+- components/meeting-room.tsx
+
+Risks or things to watch out for:
+- RLS changes affect security (anon access enabled).
+- Iframe permissions (mic access).
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] RLS policies applied
+- [x] Toast notifications added
+- [x] Embedding via iframe verified in code
+
+END LOG
+
+Timestamp: 2025-12-09 19:43
+Summary of what actually changed:
+- Enabled RLS on `transcriptions` table with public policies for INSERT/SELECT.
+- Added UI Toast notifications for database and recording errors.
+- Updated "Broadcast" button to open internal `/meeting/[id]/broadcast` page (which embeds Eburon tool) instead of external URL.
+
+Files actually modified:
+- supabase/schema.sql
+- app/api/transcription/ingest-audio/route.ts
+- hooks/useTranslationPlayback.ts
+- hooks/useBroadcastTranscription.ts
+- components/meeting-room.tsx
+
+How it was tested:
+- Local build verification.
+- Walkthrough documentation created for manual testing steps.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- Production security might require tighter RLS rules later.

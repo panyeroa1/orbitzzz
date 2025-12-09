@@ -337,6 +337,23 @@
       document.getElementById('translated').textContent = 'Stopped';
       document.getElementById('translatedBox').classList.remove('speaking');
     }
+
+    async function testAudio() {
+      console.log('🔊 Testing audio...');
+      const testText = 'Hello! This is a test of the Cartesia text to speech system.';
+      const targetLang = document.getElementById('targetLang').value;
+      
+      updateStatus('🔊 Testing audio...', 'connecting');
+      document.getElementById('original').textContent = testText;
+      
+      try {
+        await playAudio(testText, targetLang, null);
+        updateStatus('✅ Audio test complete', 'connected');
+      } catch (err) {
+        console.error('❌ Test audio error:', err);
+        updateStatus('❌ Audio test failed: ' + err.message, 'error');
+      }
+    }
   </script>
 </body>
 </html>

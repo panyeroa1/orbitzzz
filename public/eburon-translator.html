@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Eburon Live Translator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #0a0f1a 0%, #1a2332 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    h1 { 
+      color: #00e0ff; 
+      text-align: center;
+      font-size: 1.8em;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #a0a0a0;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    }
+    .config { 
+      background: rgba(26, 35, 50, 0.8);
+      padding: 25px; 
+      border-radius: 15px; 
+      margin-bottom: 25px;
+      border: 1px solid #00e0ff;
+      box-shadow: 0 4px 20px rgba(0, 224, 255, 0.2);
+    }
+    input, select { 
+      width: 100%; 
+      padding: 12px; 
+      margin: 5px 0 15px; 
+      background: #0a0f1a; 
+      border: 2px solid #00e0ff; 
+      color: #fff;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #00ff90;
+      box-shadow: 0 0 10px rgba(0, 255, 144, 0.5);
+    }
+    button {
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #00e0ff, #00b8d4);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 18px;
+      width: 100%;
+      transition: all 0.3s;
+    }
+    button:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 224, 255, 0.5);
+    }
+    button.stop { 
+      background: linear-gradient(135deg, #ff4b6a, #ff2850);
+    }
+    .status {
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+      font-size: 18px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    .status.connecting { background: rgba(255, 165, 0, 0.3); border: 2px solid #ffa500; }
+    .status.connected { background: rgba(0, 255, 144, 0.3); border: 2px solid #00ff90; animation: none; }
+    .status.error { background: rgba(255, 75, 106, 0.3); border: 2px solid #ff4b6a; }
+    .text-box {
+      background: rgba(26, 35, 50, 0.6);
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 10px;
+      min-height: 80px;
+      border-left: 4px solid #00e0ff;
+    }
+    .label { 
+      color: #00e0ff; 
+      font-weight: bold; 
+      margin-bottom: 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .text-content {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #fff;
+    }
+    .speaking {
+      animation: speaking 0.5s infinite;
+    }
+    @keyframes speaking {
+      0%, 100% { border-left-color: #00e0ff; }
+      50% { border-left-color: #00ff90; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎙️ Eburon Live Translator</h1>
+  <p class="subtitle">Powered by Gemini 2.5 Flash Native Audio</p>
+  
+  <div class="config">
+    <h3>⚙️ Configuration</h3>
+    
+    <label>Target Language:</label>
+    <select id="targetLang" aria-label="Select target language">
+      <option value="es">Spanish</option>
+      <option value="fr">French</option>
+      <option value="de">German</option>
+      <option value="zh">Chinese</option>
+      <option value="ja">Japanese</option>
+      <option value="ko">Korean</option>
+      <option value="pt">Portuguese</option>
+      <option value="it">Italian</option>
+      <option value="ar">Arabic</option>
+      <option value="hi">Hindi</option>
+      <option value="tl">Tagalog</option>
+    </select>
+    
+    <button id="startBtn" onclick="start()">▶️ Start Translation</button>
+    <button id="stopBtn" onclick="stop()" style="display:none" class="stop">⏹️ Stop</button>
+  </div>
+
+  <div id="statusDiv" class="status connecting">⏸️ Not started</div>
+
+  <div class="text-box">
+    <div class="label">📝 Original Text</div>
+    <div id="original" class="text-content">Waiting for broadcast...</div>
+  </div>
+
+  <div class="text-box" id="translatedBox">
+    <div class="label">🌐 Translated Text</div>
+    <div id="translated" class="text-content">Waiting...</div>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <script>
+    const SUPABASE_URL = "https://mkmyfdqrejabgnymfmbb.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXlmZHFyZWphYmdueW1mbWJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MzMxMzYsImV4cCI6MjA4MDAwOTEzNn0.x_1VnQ-HWWPwNe9jjafhD_uoH2dyCyjO2RaKOQhYoJw";
+    const API_BASE = "https://orbitz.eburon.ai";
+    
+    let supabase;
+    let channel;
+    let lastText = "";
+    let isPlaying = false;
+    let audioQueue = [];
+
+    function updateStatus(text, type) {
+      const statusDiv = document.getElementById('statusDiv');
+      statusDiv.textContent = text;
+      statusDiv.className = `status ${type}`;
+    }
+
+    async function playAudio(text, targetLang) {
+      if (isPlaying) {
+        console.log('🔊 Audio queued:', text.substring(0, 50));
+        audioQueue.push({text, targetLang});
+        return;
+      }
+
+      isPlaying = true;
+      const translatedBox = document.getElementById('translatedBox');
+      translatedBox.classList.add('speaking');
+      
+      console.log('🎤 Requesting TTS for:', text.substring(0, 50));
+      console.log('🌐 Language:', targetLang);
+
+      try {
+        // First, translate
+        console.log('📝 Translating...');
+        const translateRes = await fetch(`${API_BASE}/api/translate/text`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text, 
+            targetLanguage: targetLang 
+          })
+        });
+
+        if (!translateRes.ok) {
+          throw new Error(`Translation failed: ${translateRes.status}`);
+        }
+
+        const { translatedText } = await translateRes.json();
+        console.log('✅ Translation:', translatedText.substring(0, 50));
+        document.getElementById('translated').textContent = translatedText;
+
+        // Then, get audio with passionate delivery
+        console.log('🎙️ Generating passionate audio...');
+        const ttsRes = await fetch(`${API_BASE}/api/tts/gemini`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text: translatedText, 
+            voiceName: 'Orus'
+          })
+        });
+
+        if (!ttsRes.ok) {
+          throw new Error(`TTS failed: ${ttsRes.status}`);
+        }
+
+        const blob = await ttsRes.blob();
+        console.log('🔊 Audio received, size:', blob.size);
+        
+        const audio = document.getElementById('audio');
+        audio.src = URL.createObjectURL(blob);
+        
+        audio.onended = () => {
+          console.log('✅ Audio playback completed');
+          URL.revokeObjectURL(audio.src);
+          isPlaying = false;
+          translatedBox.classList.remove('speaking');
+          
+          // Play next in queue
+          if (audioQueue.length > 0) {
+            const next = audioQueue.shift();
+            console.log('🔄 Playing next in queue');
+            setTimeout(() => playAudio(next.text, next.targetLang), 500);
+          }
+        };
+
+        audio.onerror = (e) => {
+          console.error('❌ Audio playback error:', e);
+          isPlaying = false;
+          translatedBox.classList.remove('speaking');
+        };
+
+        await audio.play();
+        console.log('▶️ Audio playback started');
+      } catch (err) {
+        console.error('❌ Error:', err);
+        document.getElementById('translated').textContent = `Error: ${err.message}`;
+        isPlaying = false;
+        translatedBox.classList.remove('speaking');
+      }
+    }
+
+    function start() {
+      const targetLang = document.getElementById('targetLang').value;
+
+      console.log('🚀 Starting translation listener');
+      console.log('🌐 Target language:', targetLang);
+      updateStatus('🔄 Connecting to Supabase...', 'connecting');
+
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Subscribe to eburon_tts_current table updates
+      channel = supabase
+        .channel('tts_current')
+        .on('postgres_changes', {
+          event: '*',  // Listen to all events (INSERT/UPDATE)
+          schema: 'public',
+          table: 'eburon_tts_current'
+        }, async (payload) => {
+          console.log('📨 Received payload:', payload);
+          
+          const text = payload.new?.source_text;
+          if (!text || text === lastText) {
+            console.log('⏭️ Skipping duplicate or empty');
+            return;
+          }
+
+          console.log('✨ New text detected:', text.substring(0, 50));
+          lastText = text;
+          document.getElementById('original').textContent = text;
+          document.getElementById('translated').textContent = '🔄 Translating...';
+
+          await playAudio(text, targetLang);
+        })
+        .subscribe((status) => {
+          console.log('📡 Subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            updateStatus('✅ Connected & Listening', 'connected');
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+          } else if (status === 'CHANNEL_ERROR') {
+            updateStatus('❌ Connection Error - Check RLS policies', 'error');
+          } else {
+            updateStatus(`🔄 ${status}`, 'connecting');
+          }
+        });
+    }
+
+    function stop() {
+      console.log('⏹️ Stopping translation');
+      if (channel) {
+        channel.unsubscribe();
+      }
+      audioQueue = [];
+      if (isPlaying) {
+        const audio = document.getElementById('audio');
+        audio.pause();
+        isPlaying = false;
+      }
+      updateStatus('⏸️ Stopped', 'connecting');
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('stopBtn').style.display = 'none';
+      document.getElementById('original').textContent = 'Stopped';
+      document.getElementById('translated').textContent = 'Stopped';
+      document.getElementById('translatedBox').classList.remove('speaking');
+    }
+  </script>
+</body>
+</html>

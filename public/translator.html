@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Eburon Translation Listener</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #0a0f1a;
+      color: #fff;
+    }
+    h1 { color: #00e0ff; }
+    .config { background: #1a2332; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    input, select { 
+      width: 100%; 
+      padding: 10px; 
+      margin: 5px 0 15px; 
+      background: #0a0f1a; 
+      border: 1px solid #00e0ff; 
+      color: #fff;
+      border-radius: 5px;
+    }
+    button {
+      padding: 12px 24px;
+      background: #00e0ff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover { background: #00b8d4; }
+    button.stop { background: #ff4b6a; }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .status.connecting { background: #ffa500; color: #000; }
+    .status.connected { background: #00ff90; color: #000; }
+    .status.error { background: #ff4b6a; color: #fff; }
+    .text-box {
+      background: #1a2332;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      min-height: 60px;
+    }
+    .label { color: #00e0ff; font-weight: bold; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <h1>🌐 Eburon Translation Listener</h1>
+  
+  <div class="config">
+    <h3>Configuration</h3>
+    <label>Meeting ID:</label>
+    <input type="text" id="meetingId" placeholder="Enter meeting ID" value="bbd357a4-09a1-4f33-b1af-04746522350e">
+    
+    <label>Target Language:</label>
+    <select id="targetLang">
+      <option value="es">Spanish</option>
+      <option value="fr">French</option>
+      <option value="de">German</option>
+      <option value="zh">Chinese</option>
+      <option value="ja">Japanese</option>
+      <option value="ko">Korean</option>
+      <option value="pt">Portuguese</option>
+      <option value="it">Italian</option>
+      <option value="ar">Arabic</option>
+      <option value="hi">Hindi</option>
+      <option value="tl">Tagalog</option>
+    </select>
+    
+    <button id="startBtn" onclick="start()">Start Translation</button>
+    <button id="stopBtn" onclick="stop()" style="display:none" class="stop">Stop</button>
+  </div>
+
+  <div id="statusDiv" class="status connecting">Status: Not started</div>
+
+  <div class="text-box">
+    <div class="label">Original Text:</div>
+    <div id="original">Waiting...</div>
+  </div>
+
+  <div class="text-box">
+    <div class="label">Translated Text:</div>
+    <div id="translated">Waiting...</div>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <script>
+    const SUPABASE_URL = "https://mkmyfdqrejabgnymfmbb.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXlmZHFyZWphYmdueW1mbWJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MzMxMzYsImV4cCI6MjA4MDAwOTEzNn0.x_1VnQ-HWWPwNe9jjafhD_uoH2dyCyjO2RaKOQhYoJw";
+    
+    let supabase;
+    let channel;
+    let lastText = "";
+    let isPlaying = false;
+    let audioQueue = [];
+
+    function updateStatus(text, type) {
+      const statusDiv = document.getElementById('statusDiv');
+      statusDiv.textContent = `Status: ${text}`;
+      statusDiv.className = `status ${type}`;
+    }
+
+    async function playAudio(text) {
+      if (isPlaying) {
+        audioQueue.push(text);
+        console.log('Audio queued:', text.substring(0, 30));
+        return;
+      }
+
+      isPlaying = true;
+      console.log('Playing audio:', text.substring(0, 30));
+
+      try {
+        const response = await fetch('https://orbitz.eburon.ai/api/tts/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voiceName: 'Orus' })
+        });
+
+        if (!response.ok) {
+          throw new Error(`TTS API error: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const audio = document.getElementById('audio');
+        audio.src = URL.createObjectURL(blob);
+        
+        audio.onended = () => {
+          console.log('Audio ended');
+          URL.revokeObjectURL(audio.src);
+          isPlaying = false;
+          
+          // Play next in queue
+          if (audioQueue.length > 0) {
+            const nextText = audioQueue.shift();
+            setTimeout(() => playAudio(nextText), 500);
+          }
+        };
+
+        await audio.play();
+      } catch (err) {
+        console.error('TTS Error:', err);
+        isPlaying = false;
+      }
+    }
+
+    async function translateText(text, targetLang) {
+      console.log('Translating:', text.substring(0, 30), 'to', targetLang);
+      
+      try {
+        const response = await fetch('https://orbitz.eburon.ai/api/translate/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, targetLanguage: targetLang })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Translation API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Translation received:', data.translatedText.substring(0, 30));
+        return data.translatedText;
+      } catch (err) {
+        console.error('Translation Error:', err);
+        return text; // Return original on error
+      }
+    }
+
+    function start() {
+      const meetingId = document.getElementById('meetingId').value.trim();
+      const targetLang = document.getElementById('targetLang').value;
+
+      if (!meetingId) {
+        alert('Please enter a Meeting ID');
+        return;
+      }
+
+      console.log('Starting translation for meeting:', meetingId);
+      updateStatus('Connecting...', 'connecting');
+
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      channel = supabase
+        .channel(`transcriptions:${meetingId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'transcriptions',
+          filter: `meeting_id=eq.${meetingId}`
+        }, async (payload) => {
+          console.log('Received update:', payload);
+          
+          const text = payload.new.text_original;
+          if (!text || text === lastText) {
+            console.log('Skipping duplicate');
+            return;
+          }
+
+          lastText = text;
+          document.getElementById('original').textContent = text;
+          document.getElementById('translated').textContent = 'Translating...';
+
+          const translated = await translateText(text, targetLang);
+          document.getElementById('translated').textContent = translated;
+
+          await playAudio(translated);
+        })
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            updateStatus('Connected & Listening', 'connected');
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+          } else if (status === 'CHANNEL_ERROR') {
+            updateStatus('Connection Error', 'error');
+          } else {
+            updateStatus(status, 'connecting');
+          }
+        });
+    }
+
+    function stop() {
+      console.log('Stopping translation');
+      if (channel) {
+        channel.unsubscribe();
+      }
+      updateStatus('Stopped', 'connecting');
+      document.getElementById('startBtn').style.display = 'inline-block';
+      document.getElementById('stopBtn').style.display = 'none';
+      document.getElementById('original').textContent = 'Stopped';
+      document.getElementById('translated').textContent = 'Stopped';
+    }
+  </script>
+</body>
+</html>

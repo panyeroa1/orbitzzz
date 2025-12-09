@@ -132,21 +132,21 @@ export function useTranslationPlayback({
     const processedIds = new Set<string>(history.map(h => h.id));
 
     // Function to process a new transcription row
+    const processedIds = new Set<string>();
+    let lastProcessedText = ""; // Track last processed text to avoid duplicates
+
     const processTranscription = async (row: any) => {
-      if (processedIds.has(row.id)) return;
+      const originalText = row.text_original?.trim();
+      if (!originalText || originalText === lastProcessedText) {
+        return; // Skip if same text
+      }
+
+      lastProcessedText = originalText;
       processedIds.add(row.id);
 
-      const chunkIndex = row.chunk_index;
-
-      if (chunkIndex <= lastIndexRef.current) {
-        return;
-      }
-      lastIndexRef.current = chunkIndex;
-
-      const originalText = row.text_original;
-      
-      // Update History with placeholder
-      const newItem: TranscriptItem = {
+      // Update or add to history
+      const existingIndex = history.findIndex(item => item.id === row.id);
+      const newItem = {
         id: row.id,
         original: originalText,
         timestamp: row.created_at,
@@ -154,7 +154,13 @@ export function useTranslationPlayback({
         translated: "Translating..."
       };
       
-      setHistory(prev => [...prev, newItem]);
+      if (existingIndex >= 0) {
+        setHistory(prev => prev.map((item, idx) => 
+          idx === existingIndex ? newItem : item
+        ));
+      } else {
+        setHistory(prev => [newItem]);
+      }
 
       try {
         // Call translation API (text-only, no audio)
@@ -163,31 +169,46 @@ export function useTranslationPlayback({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: originalText,
-            targetLanguage
-          })
+            targetLanguage,
+          }),
         });
-        
-        if (!res.ok) throw new Error("Translation request failed");
-        
+
+        if (!res.ok) {
+          throw new Error("Translation failed");
+        }
+
         const data = await res.json();
         const translatedText = data.translatedText || originalText;
 
-        // Update history with translated text
-        setHistory(prev => prev.map(item => 
-          item.id === row.id ? { ...item, translated: translatedText } : item
-        ));
+        // Update history with translation
+        if (existingIndex >= 0) {
+          setHistory(prev => prev.map((item, idx) => 
+            idx === existingIndex ? { ...item, translated: translatedText } : item
+          ));
+        } else {
+          setHistory(prev => prev.map(item => 
+            item.id === row.id ? { ...item, translated: translatedText } : item
+          ));
+        }
 
-        // Queue for Web Speech TTS
+        // Add to speech queue - WAIT for current audio to finish
         speechQueueRef.current.push({ text: translatedText, id: row.id });
+        
+        // Only start processing if not already speaking
         if (!isSpeakingRef.current) {
           playNext();
         }
-
       } catch (err) {
-        console.error("Translation processing error:", err);
-        setHistory(prev => prev.map(item => 
-          item.id === row.id ? { ...item, translated: "Translation Failed" } : item
-        ));
+        console.error("[Translation] Error:", err);
+        if (existingIndex >= 0) {
+          setHistory(prev => prev.map((item, idx) => 
+            idx === existingIndex ? { ...item, translated: "Translation Failed" } : item
+          ));
+        } else {
+          setHistory(prev => prev.map(item => 
+            item.id === row.id ? { ...item, translated: "Translation Failed" } : item
+          ));
+        }
       }
     };
 

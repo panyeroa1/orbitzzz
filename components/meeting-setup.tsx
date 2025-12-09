@@ -39,25 +39,30 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
 
   useEffect(() => {
     // Only set ready when call exists, camera is available, and we have browser permission
-    // or if we've waited long enough for the permission check to complete
-    if (call && camera) {
-      // Small delay to ensure SDK internals are fully initialized
+    if (call && camera && hasBrowserPermission !== undefined) {
+      // Longer delay to ensure SDK internals are fully initialized
       const timer = setTimeout(() => {
         setIsCallReady(true);
-      }, 100);
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [call, camera]);
+  }, [call, camera, hasBrowserPermission]);
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center gap-3 text-white">
       <h1 className="text-2xl font-bold">Setup</h1>
 
-      {isCallReady ? (
-        <VideoPreview />
+      {isCallReady && hasBrowserPermission ? (
+        <div className="flex h-[300px] w-[400px] items-center justify-center">
+          <VideoPreview />
+        </div>
       ) : (
         <div className="flex h-[300px] w-[400px] items-center justify-center bg-dark-3 rounded-lg">
-          <p className="text-white/50">Loading camera...</p>
+          <p className="text-white/50">
+            {hasBrowserPermission === false 
+              ? "Camera permission denied. Please allow camera access."
+              : "Loading camera..."}
+          </p>
         </div>
       )}
 

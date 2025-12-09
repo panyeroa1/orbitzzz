@@ -328,6 +328,14 @@
       color: var(--text-soft);
     }
 
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
     .footer-note {
       font-size: 0.68rem;
       color: rgba(155,165,190,0.9);
@@ -382,14 +390,14 @@
 
         <div class="field-group">
           <div class="label">Input Language</div>
-          <select id="sourceLang"></select>
+          <select id="sourceLang" title="Select input language"></select>
         </div>
 
         <div class="field-group">
           <div class="row">
             <div class="col">
               <div class="label">Audio source</div>
-              <select id="audioSource">
+              <select id="audioSource" title="Select audio source">
                 <option value="screen" selected>Screen / tab + audio</option>
                 <option value="mic">Mic / device</option>
               </select>
@@ -422,7 +430,7 @@
             <span>Live Transcript</span>
           </div>
           <span class="badge">
-            <span style="width:7px;height:7px;border-radius:999px;background:var(--accent);box-shadow:0 0 8px var(--accent);"></span>
+            <span class="badge-dot"></span>
             <span id="dbStatus">Supabase</span>
           </span>
         </div>

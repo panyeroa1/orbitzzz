@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Languages } from "lucide-react";
+import { Languages } from "lucide-react";
 import { useTranslationPlayback } from "@/hooks/useTranslationPlayback";
 import {
   Dialog,

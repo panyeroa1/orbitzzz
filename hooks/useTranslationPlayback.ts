@@ -129,9 +129,6 @@ export function useTranslationPlayback({
     setStatus("connecting");
 
     // Track processed IDs to avoid duplicates
-    const processedIds = new Set<string>(history.map(h => h.id));
-
-    // Function to process a new transcription row
     const processedIds = new Set<string>();
     let lastProcessedText = ""; // Track last processed text to avoid duplicates
 

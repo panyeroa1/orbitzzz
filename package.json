@@ -104,7 +104,7 @@
     "@types/react-dom": "^19",
     "concurrently": "^9.2.1",
     "eslint": "^9",
-    "eslint-config-next": "16.0.6",
+    "eslint-config-next": "15.0.3",
     "eslint-plugin-unused-imports": "^4.3.0",
     "postcss": "^8",
     "prettier": "^3.7.3",

@@ -1053,3 +1053,75 @@ Test result:
 
 Known limitations or follow-up tasks:
 - Production security might require tighter RLS rules later.
+
+Task ID: T-0017
+Title: Update Supabase Configuration
+Status: DONE
+Owner: Miles
+Related repo or service: orbitzzz
+Branch: main
+Created: 2025-12-11 05:44
+Last updated: 2025-12-11 05:44
+
+START LOG
+
+Timestamp: 2025-12-11 05:44
+Current behavior or state:
+- Application was using old Supabase instance (mkmyfdqrejabgnymfmbb.supabase.co)
+- User requested to migrate to new Supabase instance (bridhpobwsfttwalwhih.supabase.co)
+- Need SQL setup script for new database
+
+Plan and scope for this task:
+- Update NEXT_PUBLIC_SUPABASE_URL in .env.local
+- Update NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local
+- Create comprehensive SQL setup script for the new Supabase instance
+- Include all necessary tables: transcriptions and eburon_tts_current
+- Include RLS policies and realtime publications
+
+Files or modules expected to change:
+- .env.local (gitignored)
+- supabase_setup_script.sql (new file)
+
+Risks or things to watch out for:
+- Must not commit .env.local (already in .gitignore)
+- User needs to manually run SQL script in new Supabase instance
+- Realtime features depend on proper publication setup
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Database migrations or scripts documented if they exist
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-11 05:44
+Summary of what actually changed:
+- Updated .env.local with new Supabase credentials
+  - NEXT_PUBLIC_SUPABASE_URL=https://bridhpobwsfttwalwhih.supabase.co
+  - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_fc4iX_EGxN1Pzc4Py_SOog_8KJyvdQU
+- Created supabase_setup_script.sql with complete database schema
+- Included two tables: transcriptions and eburon_tts_current
+- Included all necessary indexes, RLS policies, and realtime publications
+
+Files actually modified:
+- .env.local
+- supabase_setup_script.sql (new)
+
+How it was tested:
+- Verified .env.local updates using grep
+- SQL script validated against existing supabase/schema.sql
+- Script includes verification queries for user to run after setup
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- User must manually execute SQL script in Supabase SQL Editor
+- User should restart dev server after env changes (npm run dev)
+- User should verify that realtime subscriptions work after setup
+
+------------------------------------------------------------
+

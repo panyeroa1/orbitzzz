@@ -10,7 +10,7 @@ import {
   useCallStateHooks,
   useCall,
 } from "@stream-io/video-react-sdk";
-import { LayoutList, Users, Languages } from "lucide-react";
+import { LayoutList, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -95,18 +95,6 @@ export const MeetingRoom = () => {
               <span className="text-red-500 animate-pulse">●</span>
               <span className="text-white text-sm font-medium">Broadcast / Translate</span>
           </div>
-        </button>
-
-        {/* Translation Popup Button */}
-        <button
-          onClick={() => {
-            const meetingId = call?.id || "unknown";
-            window.open(`/translator.html?meeting=${meetingId}`, "_blank", "width=600,height=700");
-          }}
-          title="Live Translation"
-          className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"
-        >
-          <Languages size={20} className="text-white" />
         </button>
 
         <DropdownMenu>

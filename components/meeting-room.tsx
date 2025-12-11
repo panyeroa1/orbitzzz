@@ -61,9 +61,9 @@ export const MeetingRoom = () => {
       <TitleBar />
 
       {/* Main Content Area (Video + Sidebar) */}
-      <div className="flex-1 flex overflow-hidden w-full relative px-24 py-4">
+      <div className="flex-1 flex overflow-hidden w-full relative px-4 py-4">
         <div className="flex-1 flex items-center justify-center">
-            <div className="w-full h-full max-w-[1400px] flex items-center justify-center rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/30 backdrop-blur-md">
+            <div className="w-full h-full flex items-center justify-center rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/30 backdrop-blur-md">
                 <CallLayout />
             </div>
         </div>

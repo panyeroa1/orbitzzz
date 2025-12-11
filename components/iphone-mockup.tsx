@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
 interface IPhoneMockupProps {
@@ -10,44 +10,49 @@ interface IPhoneMockupProps {
 
 export const IPhoneMockup = ({ isOpen, onClose }: IPhoneMockupProps) => {
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ x: "-100%", opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: "-100%", opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="absolute left-0 top-0 bottom-0 z-50 flex items-center p-8"
-        >
-          {/* iPhone Frame */}
-          <div className="relative w-[375px] h-[812px] bg-black rounded-[60px] shadow-2xl border-[14px] border-gray-900 overflow-hidden">
-            {/* Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[180px] h-[30px] bg-black rounded-b-3xl z-10" />
-            
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-20 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-              title="Close translator"
-            >
-              <X size={20} />
-            </button>
+    <motion.div
+      initial={{ x: "-120%" }}
+      animate={{ x: isOpen ? 0 : "-120%" }}
+      transition={{ type: "spring", stiffness: 260, damping: 30 }}
+      className="fixed z-50
+        /* Mobile: Full screen, no rounding */
+        max-md:inset-0 max-md:w-full max-md:h-full max-md:rounded-none
+        /* Desktop: Bottom-left, scaled down, avoiding header/dock */
+        md:left-6 md:bottom-28 md:w-[320px] md:h-[680px] md:origin-bottom-left
+      "
+    >
+      {/* Close Button - Outside frame on Desktop, Top-right on Mobile */}
+      <button
+        onClick={onClose}
+        className="absolute z-50 p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-colors border border-white/20
+          /* Mobile: Inside, top-right */
+          max-md:top-4 max-md:right-4
+          /* Desktop: Outside to the right */
+          md:top-10 md:-right-16
+        "
+        title="Close translator"
+      >
+        <X size={24} />
+      </button>
 
-            {/* Screen */}
-            <div className="w-full h-full bg-white rounded-[46px] overflow-hidden">
-              <iframe
-                src="https://orbits-tr.vercel.app/"
-                className="w-full h-full border-0"
-                title="Orbits Translator"
-                allow="microphone; autoplay"
-              />
-            </div>
+      {/* iPhone Frame */}
+      <div className="relative w-full h-full bg-black md:rounded-[50px] shadow-2xl border-[8px] md:border-[12px] border-gray-900 overflow-hidden flex flex-col">
+        {/* Notch - Desktop only or adjust for mobile */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] md:w-[150px] h-[25px] bg-black rounded-b-3xl z-10" />
 
-            {/* Home Indicator */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[140px] h-[5px] bg-gray-800 rounded-full" />
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        {/* Screen */}
+        <div className="w-full h-full bg-white md:rounded-[38px] overflow-hidden">
+          <iframe
+            src="https://orbits-tr.vercel.app/"
+            className="w-full h-full border-0"
+            title="Orbits Translator"
+            allow="microphone; autoplay"
+          />
+        </div>
+
+        {/* Home Indicator */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[100px] md:w-[120px] h-[4px] bg-gray-800 rounded-full" />
+      </div>
+    </motion.div>
   );
 };

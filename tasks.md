@@ -1188,3 +1188,84 @@ Known limitations or follow-up tasks:
 
 ------------------------------------------------------------
 
+
+Task ID: T-0019
+Title: Setup Eburon Realtime Speech Service
+Status: DONE
+Owner: Miles
+Related repo or service: orbitzzz
+Branch: aorbits-tts
+Created: 2025-12-11 11:18
+Last updated: 2025-12-11 12:08
+
+START LOG
+
+Timestamp: 2025-12-11 11:18
+Current behavior or state:
+- No speech/TTS service infrastructure in the project
+- User requested to add Docker-based Eburon Realtime Speech service
+- Service should run on port 3456 instead of default 7860
+
+Plan and scope for this task:
+- Create speech directory in project root
+- Add README.md with Docker configuration and documentation
+- Create start.sh script for easy service launch
+- Configure port mapping to 3456:7860
+- Create new branch 'aorbits-tts' for this feature
+- Commit all changes to the new branch
+
+Files or modules expected to change:
+- speech/README.md (new)
+- speech/start.sh (new)
+- tasks.md
+
+Risks or things to watch out for:
+- Docker Desktop must be running to test the service
+- First run will download large container image
+- Port 3456 must be available on host machine
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Documentation created for service usage
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-11 12:08
+Summary of what actually changed:
+- Created speech directory with comprehensive setup
+- Added README.md with Docker configuration, usage instructions, and troubleshooting
+- Created executable start.sh script for quick service launch (chmod +x applied)
+- Configured Docker to use port 3456 (host) mapped to 7860 (container)
+- Created new branch 'aorbits-tts' and committed changes
+- Container: registry.hf.space/aitekphsoftware-eburon-realtime:latest
+- Platform: linux/amd64 for M1/M2 Mac compatibility
+
+Files actually modified:
+- speech/README.md (new)
+- speech/start.sh (new)
+- tasks.md
+
+How it was tested:
+- Created speech directory successfully
+- Made start.sh executable with chmod +x
+- Created branch 'aorbits-tts' successfully
+- Committed files successfully (commit 25e7d63)
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- User must install and run Docker Desktop to use the service
+- First run will download container image (may take several minutes)
+- Service must be manually started when needed using ./speech/start.sh
+- To test: Ensure Docker Desktop is running, then run ./speech/start.sh
+- Service will be available at http://localhost:3456
+- Consider adding docker-compose.yml for easier orchestration
+- May need to integrate this service with existing translator/TTS hooks
+
+------------------------------------------------------------
+

@@ -82,3 +82,21 @@ create table public.transcripts (
 ) TABLESPACE pg_default;
 
 create index IF not exists idx_transcripts_session on public.transcripts using btree (session_id) TABLESPACE pg_default;
+
+-- Table: users (synced from Clerk)
+create table if not exists public.users (
+  id text primary key, -- Use Clerk User ID (string) as PK
+  email text not null,
+  first_name text,
+  last_name text,
+  image_url text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Enable RLS for users
+alter table public.users enable row level security;
+
+-- Policy: Allow service role (server) full access, or public read
+create policy "Allow public read users" on public.users for select using (true);
+create policy "Allow service role full access users" on public.users using (true) with check (true);

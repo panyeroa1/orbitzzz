@@ -57,7 +57,7 @@ export const MeetingRoom = () => {
       <TitleBar />
 
       {/* Main Content Area (Video + Sidebar) */}
-      <div className="flex-1 flex overflow-hidden w-full relative px-14 py-4">
+      <div className="flex-1 flex overflow-hidden w-full relative px-24 py-4">
         <div className="flex-1 flex items-center justify-center">
             <div className="w-full h-full max-w-[1400px] flex items-center justify-center rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/30 backdrop-blur-md">
                 <CallLayout />
@@ -80,8 +80,8 @@ export const MeetingRoom = () => {
                   onClick={() => setShowParticipants(false)}
                   className="text-white/50 hover:text-white transition-colors"
                   title="Close sidebar"
-                  aria-label="Close sidebar"
                 >
+                  <span className="sr-only">Close sidebar</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
               </div>

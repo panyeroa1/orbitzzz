@@ -1125,3 +1125,66 @@ Known limitations or follow-up tasks:
 
 ------------------------------------------------------------
 
+
+Task ID: T-0018
+Title: Add Taglish Language Support to Translator
+Status: DONE
+Owner: Miles
+Related repo or service: orbitzzz
+Branch: main
+Created: 2025-12-11 08:10
+Last updated: 2025-12-11 08:17
+
+START LOG
+
+Timestamp: 2025-12-11 08:10
+Current behavior or state:
+- Translator page has Filipino (tl) language option but no Taglish (Filipino-English mixture)
+- User requested to add Taglish support for code-switching between Tagalog and English
+
+Plan and scope for this task:
+- Add Taglish language entry to LANGUAGES array in lib/languages.ts
+- Use code 'tl-en' to represent Tagalog-English mixture
+- Display as "Taglish (Filipino-English)" in native format
+- Verify build passes after change
+
+Files or modules expected to change:
+- lib/languages.ts
+
+Risks or things to watch out for:
+- None - simple language addition to existing array
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Build verification completed successfully
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-11 08:17
+Summary of what actually changed:
+- Added new language entry: { code: "tl-en", name: "Taglish", native: "Taglish (Filipino-English)" }
+- Placed in Asian Languages section after Filipino (tl)
+- Language now appears in Translator page dropdown selector
+
+Files actually modified:
+- lib/languages.ts
+
+How it was tested:
+- npm run build - passed successfully (exit code 0)
+- Build output shows all routes compiled correctly
+- Language selector will now include Taglish option in dropdown
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- Manual testing recommended: Navigate to /meeting/[id]/translate and verify Taglish appears in language selector
+- User should test translation functionality with Taglish selected
+- SimpleBroadcaster uses auto-detection mode, no changes needed there
+
+------------------------------------------------------------
+

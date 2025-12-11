@@ -36,6 +36,7 @@ export const LANGUAGES = [
   { code: "id", name: "Indonesian", native: "Bahasa Indonesia" },
   { code: "ms", name: "Malay", native: "Bahasa Melayu" },
   { code: "tl", name: "Filipino", native: "Filipino" },
+  { code: "tl-en", name: "Taglish", native: "Taglish (Filipino-English)" },
   { code: "bn", name: "Bengali", native: "বাংলা" },
   { code: "ta", name: "Tamil", native: "தமிழ்" },
   { code: "te", name: "Telugu", native: "తెలుగు" },

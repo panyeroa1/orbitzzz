@@ -23,14 +23,14 @@
       color: var(--text-main);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 20px;
+      align-items: stretch;
+      padding: 18px 5px 120px;
+      box-sizing: border-box;
     }
     .shell {
       width: 100%;
-      max-width: 800px;
       background: linear-gradient(145deg, rgba(0,0,0,0.92), rgba(6,11,22,0.98));
-      border-radius: 20px;
+      border-radius: 18px;
       border: 1px solid var(--border-subtle);
       box-shadow: 0 18px 40px rgba(0,0,0,0.85);
       padding: 25px;
@@ -47,8 +47,13 @@
       color: var(--text-soft);
       background: rgba(0,0,0,0.3);
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+    @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
     
     .card {
       background: rgba(255,255,255,0.03);
@@ -75,14 +80,101 @@
     }
     select:focus { border-color: var(--accent); }
     button { cursor: pointer; font-weight: bold; transition: all 0.2s; }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
     button.primary { background: var(--accent); color: black; border: none; }
     button.primary:hover { opacity: 0.8; transform: translateY(-1px); }
-    button.stop { background: var(--danger); border: none; color: white; display: none; }
+    button.stop { background: var(--danger); border: none; color: white; }
     
     .speaking { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-soft); }
     .log-area { font-family: monospace; font-size: 0.75rem; color: #666; max-height: 100px; overflow-y: auto; text-align: left; background: #000; padding: 10px; border-radius: 8px; margin-top: 10px;}
     
     input[type="checkbox"] { accent-color: var(--accent); transform: scale(1.2); }
+
+    /* Dock-inspired bottom navbar */
+    .dock {
+      position: fixed;
+      left: 5px;
+      right: 5px;
+      bottom: 15px;
+      display: flex;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .dock-bar {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: linear-gradient(140deg, rgba(6, 10, 18, 0.92), rgba(8, 16, 30, 0.82));
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.05);
+      backdrop-filter: blur(16px);
+      pointer-events: auto;
+    }
+    .dock-item {
+      width: 68px;
+      height: 68px;
+      box-sizing: border-box;
+      padding: 10px 8px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: radial-gradient(140% 140% at 20% 15%, rgba(0,224,255,0.26), rgba(255,255,255,0.04));
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transform-origin: 50% 100%;
+      transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.2s ease, background 0.2s ease, border 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .dock-item::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(155deg, rgba(255,255,255,0.16), transparent);
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .dock-item:hover {
+      transform: translateY(-10px) scale(1.12);
+      box-shadow: 0 18px 35px rgba(0,0,0,0.55), 0 0 0 1px var(--accent-soft);
+      filter: saturate(1.15);
+    }
+    .dock-item:hover::after { opacity: 1; }
+    .dock-item:active { animation: dockBounce 0.55s cubic-bezier(.17,.67,.35,1.25); }
+    .dock-item .dock-icon { font-size: 1.4rem; line-height: 1; }
+    .dock-item .dock-label { font-size: 0.72rem; color: var(--text-soft); letter-spacing: 0.2px; }
+    .dock-item.active {
+      background: linear-gradient(155deg, rgba(0,224,255,0.36), rgba(0,224,255,0.12));
+      border-color: rgba(0,224,255,0.5);
+      box-shadow: 0 12px 28px rgba(0,224,255,0.2), 0 0 0 1px rgba(0,224,255,0.45);
+    }
+    .dock-item:disabled {
+      transform: none;
+      box-shadow: none;
+      filter: saturate(0.6);
+    }
+    .dock-item.danger {
+      background: linear-gradient(155deg, rgba(255,75,106,0.3), rgba(255,75,106,0.12));
+      border-color: rgba(255,75,106,0.55);
+    }
+    @media (max-width: 540px) {
+      .dock-bar { gap: 10px; padding: 10px 12px; }
+      .dock-item { width: 56px; height: 56px; padding: 8px 6px; border-radius: 14px; }
+      .dock-item .dock-label { font-size: 0.65rem; }
+    }
+    @keyframes dockBounce {
+      0% { transform: translateY(-4px) scale(1.05); }
+      40% { transform: translateY(-14px) scale(1.18); }
+      70% { transform: translateY(-7px) scale(1.08); }
+      100% { transform: translateY(0) scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -121,11 +213,6 @@
     </label>
   </div>
 
-  <div class="controls">
-    <button id="startBtn" class="primary" onclick="start()">▶ Start Live Mode</button>
-    <button id="stopBtn" class="stop" onclick="stop()">⏹ Stop</button>
-  </div>
-
   <div class="grid">
     <div class="card">
       <div class="label">📝 Transcript (Source)</div>
@@ -142,6 +229,31 @@
 
 <audio id="audioPlayer"></audio>
 
+<nav class="dock" aria-label="Live translator controls">
+  <div class="dock-bar">
+    <button id="startBtn" class="dock-item" type="button" onclick="start()">
+      <span class="dock-icon">🎙️</span>
+      <span class="dock-label">Start</span>
+    </button>
+    <button id="stopBtn" class="dock-item danger" type="button" onclick="stop()" disabled>
+      <span class="dock-icon">⏹</span>
+      <span class="dock-label">Stop</span>
+    </button>
+    <button id="dockMute" class="dock-item" type="button" onclick="toggleMute()">
+      <span class="dock-icon" id="dockMuteIcon">🔇</span>
+      <span class="dock-label" id="dockMuteLabel">Mic muted</span>
+    </button>
+    <button id="dockClear" class="dock-item" type="button" onclick="clearPanels()">
+      <span class="dock-icon">🧹</span>
+      <span class="dock-label">Clear</span>
+    </button>
+    <button id="dockLogs" class="dock-item" type="button" onclick="scrollToLogs()">
+      <span class="dock-icon">📜</span>
+      <span class="dock-label">Logs</span>
+    </button>
+  </div>
+</nav>
+
 <script>
   const API_BASE = window.location.origin;
 
@@ -157,6 +269,9 @@
   const translationCard = document.getElementById('translationCard');
   const startBtn = document.getElementById('startBtn');
   const stopBtn = document.getElementById('stopBtn');
+  const dockMute = document.getElementById('dockMute');
+  const dockMuteIcon = document.getElementById('dockMuteIcon');
+  const dockMuteLabel = document.getElementById('dockMuteLabel');
   const statusEl = document.getElementById('status');
   const logEl = document.getElementById('logs');
   const muteMicCheckbox = document.getElementById('muteMicOnTTS');
@@ -166,6 +281,37 @@
     const time = new Date().toLocaleTimeString();
     logEl.innerHTML = `<div>[${time}] ${msg}</div>` + logEl.innerHTML;
   }
+
+  function updateDockState() {
+    const micMuted = muteMicCheckbox.checked;
+    startBtn.disabled = isListening;
+    stopBtn.disabled = !(isListening || isSpeaking);
+    startBtn.classList.toggle('active', isListening && !isSpeaking);
+    stopBtn.classList.toggle('active', isListening || isSpeaking);
+    dockMute?.classList.toggle('active', micMuted);
+    if (dockMuteIcon && dockMuteLabel) {
+      dockMuteIcon.textContent = micMuted ? '🔇' : '🔊';
+      dockMuteLabel.textContent = micMuted ? 'Mic muted' : 'Mic live';
+    }
+  }
+
+  function toggleMute() {
+    muteMicCheckbox.checked = !muteMicCheckbox.checked;
+    updateDockState();
+    log(muteMicCheckbox.checked ? "Mic will mute during playback." : "Mic will stay live during playback.");
+  }
+
+  function clearPanels() {
+    transcriptEl.textContent = '...';
+    translationEl.textContent = '...';
+    log("Cleared transcript and translation.");
+  }
+
+  function scrollToLogs() {
+    logEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+
+  muteMicCheckbox.addEventListener('change', updateDockState);
 
   // --- STT Setup (Web Speech API) ---
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -182,9 +328,8 @@
       isListening = true;
       statusEl.textContent = "Listening...";
       statusEl.style.color = "#00ff90";
-      startBtn.style.display = 'none';
-      stopBtn.style.display = 'inline-block';
       log("Microphone started.");
+      updateDockState();
     };
 
     recognition.onerror = (event) => {
@@ -202,10 +347,9 @@
       } else {
         statusEl.textContent = "Stopped";
         statusEl.style.color = "#fff";
-        startBtn.style.display = 'inline-block';
-        stopBtn.style.display = 'none';
         log("Microphone stopped.");
       }
+      updateDockState();
     };
 
     recognition.onresult = async (event) => {
@@ -286,11 +430,13 @@
         log("Resuming mic...");
         try { recognition.start(); } catch(e){}
       }
+      updateDockState();
       return;
     }
 
     isSpeaking = true;
     translationCard.classList.add('speaking');
+    updateDockState();
     
     // Mute mic if requested
     if (isListening && muteMicCheckbox.checked) {
@@ -320,24 +466,36 @@
 
   // --- Controls ---
   function start() {
+    if (!recognition) {
+      alert("Speech recognition not available in this browser.");
+      return;
+    }
     isListening = true;
+    updateDockState();
     recognition.lang = document.getElementById('sourceLang').value;
     try {
       recognition.start();
     } catch (e) {
       log("Start error: " + e.message);
+      isListening = false;
+      updateDockState();
     }
   }
 
   function stop() {
+    if (!recognition) return;
     isListening = false;
     isSpeaking = false;
     recognition.stop();
     audioPlayer.pause();
     audioQueue = [];
     statusEl.textContent = "Stopped";
+    translationCard.classList.remove('speaking');
+    log("Stopped by user.");
+    updateDockState();
   }
 
+  updateDockState();
 </script>
 </body>
 </html>

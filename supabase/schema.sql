@@ -90,8 +90,8 @@ create table if not exists public.users (
   first_name text,
   last_name text,
   image_url text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
 );
 
 -- Enable RLS for users

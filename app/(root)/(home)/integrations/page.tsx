@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Mic, MicOff, CheckCircle2, XCircle } from "lucide-react";
 import { useDeepgramTranscription } from "@/hooks/useDeepgramTranscription";
+import { getSpeakerLabel, getSpeakerColor } from "@/lib/speaker-utils";
 
 
 const IntegrationsPage = () => {
@@ -202,7 +203,21 @@ const IntegrationsPage = () => {
                 >
                   <p className="text-white/90 leading-relaxed">{segment.text}</p>
                   <div className="flex items-center justify-between mt-2 text-xs text-white/40">
-                    <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{new Date(segment.timestamp).toLocaleTimeString()}</span>
+                      {segment.speaker !== undefined && (
+                        <span 
+                          className="px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{ 
+                            backgroundColor: getSpeakerColor(segment.speaker) + '20',
+                            color: getSpeakerColor(segment.speaker),
+                            border: `1px solid ${getSpeakerColor(segment.speaker)}40`
+                          }}
+                        >
+                          👤 {getSpeakerLabel(segment.speaker)}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       {segment.language && (
                         <span className="text-blue-400">{segment.language.toUpperCase()}</span>

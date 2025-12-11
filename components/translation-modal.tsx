@@ -30,7 +30,11 @@ const LANGUAGES = [
   { code: "tl", label: "Tagalog" },
 ];
 
-export function TranslationModal({ meetingId, open, onOpenChange }: TranslationModalProps) {
+export function TranslationModal({
+  meetingId,
+  open,
+  onOpenChange,
+}: TranslationModalProps) {
   const [targetLanguage, setTargetLanguage] = useState("es");
   const [isEnabled, setIsEnabled] = useState(false);
   const { history, status, isPlaying } = useTranslationPlayback({
@@ -41,7 +45,7 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Languages className="h-5 w-5" />
@@ -49,14 +53,14 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden">
           {/* Language Selector & Start Button */}
           <div className="flex items-center gap-3">
             <label className="text-sm font-medium">Target Language:</label>
             <select
               value={targetLanguage}
               onChange={(e) => setTargetLanguage(e.target.value)}
-              className="px-3 py-2 rounded-md border border-gray-700 bg-gray-900 text-white"
+              className="rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white"
               aria-label="Select target language"
               disabled={isEnabled}
             >
@@ -66,58 +70,71 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
                 </option>
               ))}
             </select>
-            
+
             {/* Start/Stop Button */}
             {!isEnabled ? (
               <button
                 onClick={() => setIsEnabled(true)}
-                className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
               >
                 Start Translation
               </button>
             ) : (
               <button
                 onClick={() => setIsEnabled(false)}
-                className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition-colors"
+                className="rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700"
               >
                 Stop
               </button>
             )}
-            
+
             <div className="ml-auto flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                status === "connected" ? "bg-green-500" : 
-                status === "error" ? "bg-red-500" : "bg-yellow-500"
-              }`} />
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  status === "connected"
+                    ? "bg-green-500"
+                    : status === "error"
+                      ? "bg-red-500"
+                      : "bg-yellow-500"
+                }`}
+              />
               <span className="text-sm text-gray-400">{status}</span>
-              {isPlaying && <span className="text-xs text-blue-400">🔊 Speaking...</span>}
+              {isPlaying && (
+                <span className="text-xs text-blue-400">🔊 Speaking...</span>
+              )}
             </div>
           </div>
 
           {/* Transcript History */}
-          <div className="flex-1 overflow-y-auto border border-gray-700 rounded-md p-4 bg-gray-900/50 space-y-3">
+          <div className="flex-1 space-y-3 overflow-y-auto rounded-md border border-gray-700 bg-gray-900/50 p-4">
             {history.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="py-8 text-center text-gray-500">
                 Waiting for transcriptions...
               </div>
             ) : (
               history.map((item) => (
-                <div key={item.id} className="border-b border-gray-800 pb-3 last:border-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
+                <div
+                  key={item.id}
+                  className="border-b border-gray-800 pb-3 last:border-0"
+                >
+                  <div className="mb-1 flex items-start justify-between gap-2">
                     <span className="text-xs text-gray-500">
                       {new Date(item.timestamp).toLocaleTimeString()}
                     </span>
                     {item.speaker && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-300">
+                      <span className="rounded bg-blue-900/30 px-2 py-0.5 text-xs text-blue-300">
                         {item.speaker}
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-300 mb-1">
-                    <span className="font-medium text-gray-400">Original:</span> {item.original}
+                  <div className="mb-1 text-sm text-gray-300">
+                    <span className="font-medium text-gray-400">Original:</span>{" "}
+                    {item.original}
                   </div>
                   <div className="text-sm text-white">
-                    <span className="font-medium text-blue-400">Translation:</span>{" "}
+                    <span className="font-medium text-blue-400">
+                      Translation:
+                    </span>{" "}
                     {item.translated || "..."}
                   </div>
                 </div>
@@ -125,7 +142,7 @@ export function TranslationModal({ meetingId, open, onOpenChange }: TranslationM
             )}
           </div>
 
-          <div className="text-xs text-gray-500 text-center">
+          <div className="text-center text-xs text-gray-500">
             Translations are automatically read aloud using Text-to-Speech
           </div>
         </div>

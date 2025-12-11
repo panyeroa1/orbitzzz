@@ -21,82 +21,97 @@ export default function DocsPage() {
   ];
 
   return (
-    <section className="flex size-full flex-col gap-6 text-white px-4 py-6 sm:px-6 sm:gap-8">
+    <section className="flex size-full flex-col gap-6 px-4 py-6 text-white sm:gap-8 sm:px-6">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-apple-tight">Live Transcription</h1>
-        <p className="text-sm sm:text-base text-white/60 tracking-apple-normal">
-          Real-time speech-to-text powered by Web Speech API - works everywhere, no server required.
+        <h1 className="text-2xl font-semibold tracking-apple-tight sm:text-3xl">
+          Live Transcription
+        </h1>
+        <p className="text-sm tracking-apple-normal text-white/60 sm:text-base">
+          Real-time speech-to-text powered by Web Speech API - works everywhere,
+          no server required.
         </p>
       </div>
 
       {/* Features */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="apple-card p-4 sm:p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-purple-1/20 rounded-apple">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rounded-apple bg-purple-1/20 p-2">
               <Globe size={20} className="text-purple-1" />
             </div>
-            <h3 className="font-semibold text-base sm:text-lg">Works in Production</h3>
+            <h3 className="text-base font-semibold sm:text-lg">
+              Works in Production
+            </h3>
           </div>
           <p className="text-sm text-white/60">
-            No backend server required. Runs entirely in the browser using the Web Speech API.
+            No backend server required. Runs entirely in the browser using the
+            Web Speech API.
           </p>
         </div>
 
         <div className="apple-card p-4 sm:p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-500/20 rounded-apple">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rounded-apple bg-green-500/20 p-2">
               <Zap size={20} className="text-green-500" />
             </div>
-            <h3 className="font-semibold text-base sm:text-lg">Real-time</h3>
+            <h3 className="text-base font-semibold sm:text-lg">Real-time</h3>
           </div>
           <p className="text-sm text-white/60">
-            Instant transcription with interim results as you speak. Low latency and highly accurate.
+            Instant transcription with interim results as you speak. Low latency
+            and highly accurate.
           </p>
         </div>
 
         <div className="apple-card p-4 sm:p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-500/20 rounded-apple">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rounded-apple bg-blue-500/20 p-2">
               <Mic size={20} className="text-blue-500" />
             </div>
-            <h3 className="font-semibold text-base sm:text-lg">Multi-language</h3>
+            <h3 className="text-base font-semibold sm:text-lg">
+              Multi-language
+            </h3>
           </div>
           <p className="text-sm text-white/60">
-            Support for 10+ languages including English, Spanish, French, German, Japanese, and more.
+            Support for 10+ languages including English, Spanish, French,
+            German, Japanese, and more.
           </p>
         </div>
 
         <div className="apple-card p-4 sm:p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-orange-500/20 rounded-apple">
+          <div className="mb-2 flex items-center gap-3">
+            <div className="rounded-apple bg-orange-500/20 p-2">
               <Shield size={20} className="text-orange-500" />
             </div>
-            <h3 className="font-semibold text-base sm:text-lg">Privacy First</h3>
+            <h3 className="text-base font-semibold sm:text-lg">
+              Privacy First
+            </h3>
           </div>
           <p className="text-sm text-white/60">
-            Audio processed locally in your browser. No data sent to external servers.
+            Audio processed locally in your browser. No data sent to external
+            servers.
           </p>
         </div>
       </div>
 
       {/* Supported Languages */}
       <div className="apple-card p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold tracking-apple-tight mb-4">Supported Languages</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <h2 className="mb-4 text-lg font-semibold tracking-apple-tight sm:text-xl">
+          Supported Languages
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {SUPPORTED_LANGUAGES.map((lang) => (
             <div
               key={lang.code}
-              className={`p-3 rounded-apple border transition-all cursor-pointer ${
+              className={`cursor-pointer rounded-apple border p-3 transition-all ${
                 selectedLanguage === lang.code
-                  ? "bg-purple-1/20 border-purple-1"
-                  : "bg-dark-3/50 border-white/5 hover:border-white/10"
+                  ? "border-purple-1 bg-purple-1/20"
+                  : "border-white/5 bg-dark-3/50 hover:border-white/10"
               }`}
               onClick={() => setSelectedLanguage(lang.code)}
             >
               <div className="text-sm font-medium">{lang.name}</div>
-              <div className="text-xs text-white/40 mt-1">{lang.code}</div>
+              <div className="mt-1 text-xs text-white/40">{lang.code}</div>
             </div>
           ))}
         </div>
@@ -104,41 +119,51 @@ export default function DocsPage() {
 
       {/* How to Use */}
       <div className="apple-card p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold tracking-apple-tight mb-4">How to Use</h2>
-        
+        <h2 className="mb-4 text-lg font-semibold tracking-apple-tight sm:text-xl">
+          How to Use
+        </h2>
+
         <div className="flex flex-col gap-4">
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-1 flex items-center justify-center text-sm font-bold">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-1 text-sm font-bold">
               1
             </div>
             <div>
-              <h3 className="text-white/90 font-medium mb-1 text-sm sm:text-base">Join a Meeting</h3>
-              <p className="text-xs sm:text-sm text-white/60">
+              <h3 className="mb-1 text-sm font-medium text-white/90 sm:text-base">
+                Join a Meeting
+              </h3>
+              <p className="text-xs text-white/60 sm:text-sm">
                 Start or join any video meeting in Orbitzzz.
               </p>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-1 flex items-center justify-center text-sm font-bold">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-1 text-sm font-bold">
               2
             </div>
             <div>
-              <h3 className="text-white/90 font-medium mb-1 text-sm sm:text-base">Enable Transcription</h3>
-              <p className="text-xs sm:text-sm text-white/60">
-                Click the message icon in the meeting controls to start live transcription.
+              <h3 className="mb-1 text-sm font-medium text-white/90 sm:text-base">
+                Enable Transcription
+              </h3>
+              <p className="text-xs text-white/60 sm:text-sm">
+                Click the message icon in the meeting controls to start live
+                transcription.
               </p>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-1 flex items-center justify-center text-sm font-bold">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-1 text-sm font-bold">
               3
             </div>
             <div>
-              <h3 className="text-white/90 font-medium mb-1 text-sm sm:text-base">View Transcript</h3>
-              <p className="text-xs sm:text-sm text-white/60">
-                See real-time captions on screen and access the full transcript panel.
+              <h3 className="mb-1 text-sm font-medium text-white/90 sm:text-base">
+                View Transcript
+              </h3>
+              <p className="text-xs text-white/60 sm:text-sm">
+                See real-time captions on screen and access the full transcript
+                panel.
               </p>
             </div>
           </div>
@@ -147,37 +172,46 @@ export default function DocsPage() {
 
       {/* Browser Support */}
       <div className="apple-card p-4 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold tracking-apple-tight mb-4">Browser Support</h2>
-        
+        <h2 className="mb-4 text-lg font-semibold tracking-apple-tight sm:text-xl">
+          Browser Support
+        </h2>
+
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between p-3 bg-dark-3/50 rounded-apple">
+          <div className="flex items-center justify-between rounded-apple bg-dark-3/50 p-3">
             <div className="flex items-center gap-3">
               <div className="text-2xl">🌐</div>
               <span className="text-sm sm:text-base">Chrome / Edge</span>
             </div>
-            <span className="text-green-500 text-xs sm:text-sm font-medium">✓ Fully Supported</span>
+            <span className="text-xs font-medium text-green-500 sm:text-sm">
+              ✓ Fully Supported
+            </span>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-dark-3/50 rounded-apple">
+          <div className="flex items-center justify-between rounded-apple bg-dark-3/50 p-3">
             <div className="flex items-center gap-3">
               <div className="text-2xl">🧭</div>
               <span className="text-sm sm:text-base">Safari (iOS 14.5+)</span>
             </div>
-            <span className="text-green-500 text-xs sm:text-sm font-medium">✓ Supported</span>
+            <span className="text-xs font-medium text-green-500 sm:text-sm">
+              ✓ Supported
+            </span>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-dark-3/50 rounded-apple">
+          <div className="flex items-center justify-between rounded-apple bg-dark-3/50 p-3">
             <div className="flex items-center gap-3">
               <div className="text-2xl">🦊</div>
               <span className="text-sm sm:text-base">Firefox</span>
             </div>
-            <span className="text-orange-500 text-xs sm:text-sm font-medium">⚠ Limited Support</span>
+            <span className="text-xs font-medium text-orange-500 sm:text-sm">
+              ⚠ Limited Support
+            </span>
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-apple">
-          <p className="text-xs sm:text-sm text-blue-400">
-            💡 <strong>Note:</strong> HTTPS is required in production. Localhost works for development.
+        <div className="mt-4 rounded-apple border border-blue-500/30 bg-blue-500/10 p-3">
+          <p className="text-xs text-blue-400 sm:text-sm">
+            💡 <strong>Note:</strong> HTTPS is required in production. Localhost
+            works for development.
           </p>
         </div>
       </div>

@@ -31,13 +31,23 @@ export const MeetingCard = ({
   const { toast } = useToast();
 
   return (
-    <section className="flex min-h-[258px] w-full flex-col justify-between rounded-apple-lg apple-card px-5 py-8 xl:max-w-[568px]">
+    <section className="apple-card flex min-h-[258px] w-full flex-col justify-between rounded-apple-lg px-5 py-8 xl:max-w-[568px]">
       <article className="flex flex-col gap-4">
-        <Image src={icon} alt="upcoming" width={26} height={26} className="opacity-80" />
+        <Image
+          src={icon}
+          alt="upcoming"
+          width={26}
+          height={26}
+          className="opacity-80"
+        />
         <div className="flex justify-between">
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-xl font-semibold tracking-apple-tight">{title}</h1>
-            <p className="text-[15px] font-normal text-white/60 tracking-apple-normal">{date}</p>
+            <h1 className="text-xl font-semibold tracking-apple-tight">
+              {title}
+            </h1>
+            <p className="text-[15px] font-normal tracking-apple-normal text-white/60">
+              {date}
+            </p>
           </div>
         </div>
       </article>
@@ -60,7 +70,10 @@ export const MeetingCard = ({
         </div>
         {!isPreviousMeeting && (
           <div className="flex gap-2">
-            <Button onClick={handleClick} className="rounded-apple bg-blue-1 px-6 font-medium transition-all duration-apple hover:bg-blue-1/90">
+            <Button
+              onClick={handleClick}
+              className="rounded-apple bg-blue-1 px-6 font-medium transition-all duration-apple hover:bg-blue-1/90"
+            >
               {buttonIcon1 && (
                 <Image src={buttonIcon1} alt="feature" width={20} height={20} />
               )}

@@ -26,7 +26,9 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
   useEffect(() => {
     // Check for Secure Context (required for getUserMedia)
     if (typeof window !== "undefined" && !window.isSecureContext) {
-      setErrorMsg("Camera access requires a Secure Context (HTTPS or localhost). You are currently using HTTP.");
+      setErrorMsg(
+        "Camera access requires a Secure Context (HTTPS or localhost). You are currently using HTTP."
+      );
     }
   }, []);
 
@@ -44,16 +46,22 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
           } catch (err: any) {
             console.error("Failed to enable media:", err);
             // Check if it's a permission/secure context issue
-             if (err.message && (err.message.includes("permission") || err.message.includes("secure"))) {
-               setErrorMsg("Failed to access camera/microphone. Please check permissions and ensure you are using HTTPS.");
-             }
+            if (
+              err.message &&
+              (err.message.includes("permission") ||
+                err.message.includes("secure"))
+            ) {
+              setErrorMsg(
+                "Failed to access camera/microphone. Please check permissions and ensure you are using HTTPS."
+              );
+            }
           }
         }
       } catch (e) {
         console.error("Error toggling media:", e);
       }
     };
-    
+
     toggleMedia();
   }, [isMicCamToggledOn, call?.camera, call?.microphone]);
 
@@ -77,9 +85,9 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
 
       {/* Error Banner */}
       {errorMsg && (
-        <div className="bg-red-500/90 text-white px-4 py-2 rounded-md mb-4 max-w-md text-center">
-            <p className="font-bold">Media Error</p>
-            <p className="text-sm">{errorMsg}</p>
+        <div className="mb-4 max-w-md rounded-md bg-red-500/90 px-4 py-2 text-center text-white">
+          <p className="font-bold">Media Error</p>
+          <p className="text-sm">{errorMsg}</p>
         </div>
       )}
 
@@ -88,9 +96,9 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
           <VideoPreview />
         </div>
       ) : (
-        <div className="flex h-[300px] w-[400px] items-center justify-center bg-dark-3 rounded-lg">
+        <div className="flex h-[300px] w-[400px] items-center justify-center rounded-lg bg-dark-3">
           <p className="text-white/50">
-            {hasBrowserPermission === false 
+            {hasBrowserPermission === false
               ? "Camera permission denied. Please allow camera access."
               : "Loading camera..."}
           </p>
@@ -120,9 +128,9 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
                 waiting_room: {
                   enabled: true,
                   join_policy: "request_to_join",
-                }
-              } as any
-            }
+                },
+              } as any,
+            },
           });
 
           setIsSetupComplete(true);

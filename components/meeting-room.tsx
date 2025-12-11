@@ -1,4 +1,3 @@
-
 import {
   CallParticipantsList,
   CallingState,
@@ -7,37 +6,37 @@ import {
   useCallStateHooks,
   useCall,
 } from "@stream-io/video-react-sdk";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
 
 import { Loader } from "./loader";
 import { TranslationModal } from "./translation-modal";
 import { DonationSidebar } from "./donation-sidebar";
 
-
-import { MeetingBottomBar } from "./meeting-bottom-bar"; // Updated import
+import { MeetingBottomBar } from "./meeting-bottom-bar";
 import { AnimatedBackground } from "./animated-background";
-import { TitleBar } from "./title-bar";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
 export const MeetingRoom = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const call = useCall();
-  const [activeSidebar, setActiveSidebar] = useState<"participants" | "broadcaster" | "translator" | "donation" | null>(null);
+  const [activeSidebar, setActiveSidebar] = useState<
+    "participants" | "broadcaster" | "translator" | "donation" | null
+  >(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
 
   // Call State Hooks
-  const { useCallCallingState, useMicrophoneState, useCameraState } = useCallStateHooks();
+  const { useCallCallingState, useMicrophoneState, useCameraState } =
+    useCallStateHooks();
   const callingState = useCallCallingState();
   const { isEnabled: isMicEnabled } = useMicrophoneState();
   const { isEnabled: isCamEnabled } = useCameraState();
 
   if (callingState !== CallingState.JOINED) return <Loader />;
+
   /* Sidebar Content Renderer */
   const SidebarContent = () => {
     switch (activeSidebar) {
@@ -45,10 +44,10 @@ export const MeetingRoom = () => {
         return <CallParticipantsList onClose={() => setActiveSidebar(null)} />;
       case "broadcaster":
         return (
-          <div className="w-full h-full bg-[#0d0f18]">
+          <div className="h-full w-full bg-[#0d0f18]">
             <iframe
               src="https://eburon.ai/broadcaster/"
-              className="w-full h-full border-0"
+              className="h-full w-full border-0"
               title="Eburon Broadcaster"
               allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen; speaker; audio *; screen-wake-lock; web-share"
             />
@@ -56,10 +55,10 @@ export const MeetingRoom = () => {
         );
       case "translator":
         return (
-          <div className="w-full h-full bg-[#0d0f18]">
+          <div className="h-full w-full bg-[#0d0f18]">
             <iframe
               src="https://eburon.ai/translate"
-              className="w-full h-full border-0"
+              className="h-full w-full border-0"
               title="Eburon Translator"
               allow="microphone; autoplay; clipboard-write; fullscreen; speaker; audio *"
             />
@@ -67,7 +66,7 @@ export const MeetingRoom = () => {
         );
       case "donation":
         return (
-          <div className="p-6">
+          <div className="h-full bg-[#0d0f18] p-6">
             <DonationSidebar />
           </div>
         );
@@ -88,41 +87,53 @@ export const MeetingRoom = () => {
   };
 
   return (
-    <AnimatedBackground className="flex flex-col h-screen overflow-hidden">
-      {/* MacOS Title Bar */}
-      <TitleBar />
-
-      {/* Main Content Area (Video + Sidebar) - Full height minus title bar */}
-      <div className="flex-1 flex overflow-hidden w-full relative bg-black">
-        <div className="flex-1 min-w-0 flex flex-col">
-            <CallLayout />
+    <AnimatedBackground className="flex h-screen w-screen overflow-hidden bg-[#0d0f18]">
+      {/* Main Content Area - Full screen video + sidebar */}
+      <div className="absolute inset-0 flex">
+        {/* Video Area - Full screen */}
+        <div className="relative h-full flex-1 bg-black [&_.str-video]:h-full [&_.str-video]:w-full [&_.str-video__video]:h-full [&_.str-video__video]:w-full">
+          <CallLayout />
         </div>
 
-        {/* Unified Pinned Right Sidebar */}
+        {/* Right Sidebar - Full height */}
         <AnimatePresence mode="wait">
           {activeSidebar && (
             <motion.div
-              initial={{ width: 0, opacity: 0, marginLeft: 0 }}
-              animate={{ width: 380, opacity: 1, marginLeft: 0 }}
-              exit={{ width: 0, opacity: 0, marginLeft: 0 }}
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 400, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="h-full border-l border-white/10 bg-[#1e1e1e]/80 backdrop-blur-xl flex flex-col z-40 overflow-hidden shrink-0"
+              className="z-40 flex h-full shrink-0 flex-col overflow-hidden border-l border-white/10 bg-[#0d0f18]"
             >
-              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 h-[60px]">
-                <h2 className="text-sm font-medium text-white/90 capitalize">
+              {/* Sidebar Header */}
+              <div className="flex h-[56px] shrink-0 items-center justify-between border-b border-white/10 bg-[#0d0f18] p-4">
+                <h2 className="text-sm font-medium capitalize text-white/90">
                   {activeSidebar}
                 </h2>
-                <button 
+                <button
                   onClick={() => setActiveSidebar(null)}
-                  className="text-white/50 hover:text-white transition-colors"
+                  className="rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
                   title="Close sidebar"
                 >
                   <span className="sr-only">Close sidebar</span>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
                 </button>
               </div>
-              
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/20">
+
+              {/* Sidebar Content - Full remaining height */}
+              <div className="flex-1 overflow-hidden bg-[#0d0f18]">
                 <SidebarContent />
               </div>
             </motion.div>
@@ -130,18 +141,32 @@ export const MeetingRoom = () => {
         </AnimatePresence>
       </div>
 
-      {/* Fixed Bottom Control Bar */}
-      <MeetingBottomBar 
+      {/* Floating Bottom Control Bar - Auto-hides after 12s */}
+      <MeetingBottomBar
         isMicEnabled={isMicEnabled}
         isCamEnabled={isCamEnabled}
         onLeave={() => router.push("/")}
-        onToggleParticipants={() => setActiveSidebar(prev => prev === "participants" ? null : "participants")}
-        onToggleBroadcast={() => setActiveSidebar(prev => prev === "broadcaster" ? null : "broadcaster")}
-        onToggleTranslator={() => setActiveSidebar(prev => prev === "translator" ? null : "translator")}
-        onToggleDonation={() => setActiveSidebar(prev => prev === "donation" ? null : "donation")}
+        onToggleParticipants={() =>
+          setActiveSidebar((prev) =>
+            prev === "participants" ? null : "participants"
+          )
+        }
+        onToggleBroadcast={() =>
+          setActiveSidebar((prev) =>
+            prev === "broadcaster" ? null : "broadcaster"
+          )
+        }
+        onToggleTranslator={() =>
+          setActiveSidebar((prev) =>
+            prev === "translator" ? null : "translator"
+          )
+        }
+        onToggleDonation={() =>
+          setActiveSidebar((prev) => (prev === "donation" ? null : "donation"))
+        }
       />
 
-      {/* Translation Modal (Hidden logic for generic meeting room, can be re-enabled) */}
+      {/* Translation Modal */}
       <TranslationModal
         meetingId={call?.id || ""}
         open={showTranslation}

@@ -1,9 +1,22 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
-import { 
-  Mic, MicOff, Video, VideoOff, Users, 
-  PhoneOff, Radio, LayoutList, Heart
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  MotionValue,
+} from "framer-motion";
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Users,
+  PhoneOff,
+  Radio,
+  LayoutList,
+  Heart,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCall, useCallStateHooks } from "@stream-io/video-react-sdk";
@@ -20,7 +33,14 @@ interface ControlIconProps {
   onClick: () => void;
 }
 
-function ControlIcon({ icon: Icon, label, isActive, isDestructive, mouseX, onClick }: ControlIconProps) {
+function ControlIcon({
+  icon: Icon,
+  label,
+  isActive,
+  isDestructive,
+  mouseX,
+  onClick,
+}: ControlIconProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -38,7 +58,7 @@ function ControlIcon({ icon: Icon, label, isActive, isDestructive, mouseX, onCli
   });
 
   return (
-    <button onClick={onClick} className="focus:outline-none relative group">
+    <button onClick={onClick} className="group relative focus:outline-none">
       <motion.div
         ref={ref}
         style={{ width }}
@@ -53,7 +73,7 @@ function ControlIcon({ icon: Icon, label, isActive, isDestructive, mouseX, onCli
             opacity: isHovered ? 1 : 0,
             y: isHovered ? 0 : 10,
           }}
-          className="absolute -top-10 px-2 py-1 bg-black/80 backdrop-blur-md rounded-md text-white text-xs font-medium whitespace-nowrap pointer-events-none z-50"
+          className="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-xs font-medium text-white backdrop-blur-md"
         >
           {label}
         </motion.div>
@@ -61,15 +81,21 @@ function ControlIcon({ icon: Icon, label, isActive, isDestructive, mouseX, onCli
         {/* Icon Container */}
         <motion.div
           className={cn(
-            "aspect-square w-full rounded-xl flex items-center justify-center transition-all duration-200 shadow-md border border-white/10",
-            isDestructive 
-              ? "bg-red-500/80 hover:bg-red-500" 
-              : isActive 
-                ? "bg-white text-black shadow-lg shadow-white/20" 
-                : "bg-black/40 hover:bg-black/60 text-white"
+            "flex aspect-square w-full items-center justify-center rounded-xl border border-white/10 shadow-md transition-all duration-200",
+            isDestructive
+              ? "bg-red-500/80 hover:bg-red-500"
+              : isActive
+                ? "bg-white text-black shadow-lg shadow-white/20"
+                : "bg-black/40 text-white hover:bg-black/60"
           )}
         >
-          <Icon size={20} className={cn(isDestructive ? "text-white" : "", isActive ? "text-black" : "text-white")} />
+          <Icon
+            size={20}
+            className={cn(
+              isDestructive ? "text-white" : "",
+              isActive ? "text-black" : "text-white"
+            )}
+          />
         </motion.div>
       </motion.div>
     </button>
@@ -78,7 +104,7 @@ function ControlIcon({ icon: Icon, label, isActive, isDestructive, mouseX, onCli
 
 // Divider
 function DockDivider() {
-  return <div className="w-px h-8 bg-white/20 mx-1" />;
+  return <div className="mx-1 h-8 w-px bg-white/20" />;
 }
 
 interface MeetingDockProps {
@@ -89,29 +115,35 @@ interface MeetingDockProps {
   onToggleDonation: () => void;
 }
 
-export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, onToggleLayout, onToggleDonation }: MeetingDockProps) {
+export function MeetingDock({
+  onLeave,
+  onToggleParticipants,
+  onToggleBroadcast,
+  onToggleLayout,
+  onToggleDonation,
+}: MeetingDockProps) {
   const call = useCall();
   const router = useRouter();
   const { useMicrophoneState, useCameraState } = useCallStateHooks();
   const { isEnabled: isMicEnabled } = useMicrophoneState();
   const { isEnabled: isCamEnabled } = useCameraState();
-  
+
   const mouseX = useMotionValue<number>(Infinity);
 
   if (!call) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center w-full pointer-events-none">
+    <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 flex w-full -translate-x-1/2 items-center justify-center">
       <motion.div
         onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
         onMouseLeave={() => mouseX.set(Infinity)}
-        className="flex items-end gap-3 px-4 py-3 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[24px] shadow-2xl pointer-events-auto"
+        className="pointer-events-auto flex items-end gap-3 rounded-[24px] border border-white/20 bg-white/10 px-4 py-3 shadow-2xl backdrop-blur-2xl"
       >
         {/* Microphone */}
         <ControlIcon
           icon={isMicEnabled ? Mic : MicOff}
           label={isMicEnabled ? "Mute" : "Unmute"}
-          isActive={isMicEnabled} 
+          isActive={isMicEnabled}
           mouseX={mouseX}
           onClick={() => call.microphone.toggle()}
         />
@@ -132,7 +164,7 @@ export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, 
              mouseX={mouseX} 
              onClick={() => call.screenShare.toggle()} 
            /> */}
-           {/* Screen share usually needs state to show active. Skipping for simplicity or add later.*/}
+        {/* Screen share usually needs state to show active. Skipping for simplicity or add later.*/}
 
         <DockDivider />
 
@@ -144,7 +176,7 @@ export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, 
           onClick={onToggleParticipants}
           isActive={false} // Would need state passed down
         />
-        
+
         {/* Layout */}
         <ControlIcon
           icon={LayoutList}

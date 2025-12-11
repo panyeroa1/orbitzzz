@@ -19,7 +19,7 @@ export const HomeCard = ({
   return (
     <button
       className={cn(
-        "premium-card flex min-h-[260px] w-full cursor-pointer flex-col justify-between rounded-apple-lg p-0 px-5 py-7 text-left xl:max-w-[270px] animate-scale-in",
+        "premium-card flex min-h-[260px] w-full animate-scale-in cursor-pointer flex-col justify-between rounded-apple-lg p-0 px-5 py-7 text-left xl:max-w-[270px]",
         className
       )}
       onClick={handleClick}
@@ -31,7 +31,9 @@ export const HomeCard = ({
       <div className="flex flex-col gap-1.5">
         <h1 className="text-xl font-semibold tracking-apple-tight">{title}</h1>
 
-        <p className="text-[15px] font-normal text-white/60 tracking-apple-normal">{description}</p>
+        <p className="text-[15px] font-normal tracking-apple-normal text-white/60">
+          {description}
+        </p>
       </div>
     </button>
   );

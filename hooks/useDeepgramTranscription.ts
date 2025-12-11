@@ -67,7 +67,10 @@ export function useDeepgramTranscription(
       socketRef.current.close();
       socketRef.current = null;
     }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
     }
@@ -101,7 +104,8 @@ export function useDeepgramTranscription(
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         let errorMsg = "Media Devices API not supported in this browser.";
         if (typeof window !== "undefined" && !window.isSecureContext) {
-           errorMsg = "Microphone access requires a Secure Context (HTTPS or localhost). You are currently using HTTP.";
+          errorMsg =
+            "Microphone access requires a Secure Context (HTTPS or localhost). You are currently using HTTP.";
         }
         console.error("[Eburon]", errorMsg);
         setError(errorMsg);
@@ -116,13 +120,12 @@ export function useDeepgramTranscription(
 
       // Create Deepgram WebSocket connection
       // For auto-detection, use detect_language=true instead of language=auto
-      const languageParam = language === "auto" 
-        ? "detect_language=true" 
-        : `language=${language}`;
-      
+      const languageParam =
+        language === "auto" ? "detect_language=true" : `language=${language}`;
+
       // Enable diarize=true for speaker detection and tag with meetingId
       const deepgramUrl = `wss://api.deepgram.com/v1/listen?model=${model}&${languageParam}&smart_format=true&interim_results=true&endpointing=300&diarize=true${meetingId ? `&tag=${meetingId}` : ""}`;
-      
+
       const socket = new WebSocket(deepgramUrl, ["token", apiKey]);
       socketRef.current = socket;
 
@@ -149,11 +152,11 @@ export function useDeepgramTranscription(
       socket.onmessage = async (message) => {
         try {
           const data = JSON.parse(message.data);
-          
+
           if (data.channel?.alternatives?.[0]) {
             const alternative = data.channel.alternatives[0];
             const transcriptText = alternative.transcript;
-            
+
             if (transcriptText && transcriptText.trim()) {
               const isFinal = data.is_final === true;
               const confidence = alternative.confidence;
@@ -162,7 +165,7 @@ export function useDeepgramTranscription(
               // Extract speaker from the first word if available
               let speakerId: number | undefined = undefined;
               if (alternative.words && alternative.words.length > 0) {
-                 speakerId = alternative.words[0].speaker;
+                speakerId = alternative.words[0].speaker;
               }
 
               if (isFinal) {
@@ -179,7 +182,7 @@ export function useDeepgramTranscription(
                 setSegments((prev) => [...prev, segment]);
                 setTranscript((prev) => prev + transcriptText + " ");
                 setInterimTranscript("");
-                
+
                 // Update detected language
                 if (detectedLang && detectedLang !== "auto") {
                   setDetectedLanguage(detectedLang);
@@ -189,26 +192,34 @@ export function useDeepgramTranscription(
                 if (meetingId) {
                   try {
                     const { error: supabaseError } = await supabase
-                      .from('transcriptions')
+                      .from("transcriptions")
                       .insert([
-                        { 
+                        {
                           text: transcriptText,
                           is_final: true,
                           confidence: confidence,
                           language: detectedLang,
                           meeting_id: meetingId,
-                          speaker_id: speakerId !== undefined ? speakerId.toString() : null
-                        }
+                          speaker_id:
+                            speakerId !== undefined
+                              ? speakerId.toString()
+                              : null,
+                        },
                       ]);
-                    
+
                     if (supabaseError) {
-                      console.error("[Supabase] Error saving transcript:", supabaseError);
+                      console.error(
+                        "[Supabase] Error saving transcript:",
+                        supabaseError
+                      );
                     }
                   } catch (sbErr) {
-                    console.error("[Supabase] Exception saving transcript:", sbErr);
+                    console.error(
+                      "[Supabase] Exception saving transcript:",
+                      sbErr
+                    );
                   }
                 }
-
               } else {
                 // Interim transcript
                 setInterimTranscript(transcriptText);
@@ -229,7 +240,7 @@ export function useDeepgramTranscription(
       socket.onclose = () => {
         console.log("[Eburon] Disconnected");
         setIsConnected(false);
-        
+
         if (isListeningRef.current) {
           cleanup();
         }

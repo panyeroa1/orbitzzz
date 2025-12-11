@@ -25,18 +25,14 @@ interface UseTTSReturn {
 }
 
 export function useTTS(options: UseTTSOptions = {}): UseTTSReturn {
-  const {
-    language = "en-US",
-    rate = 1,
-    pitch = 1,
-    volume = 1,
-  } = options;
+  const { language = "en-US", rate = 1, pitch = 1, volume = 1 } = options;
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [selectedVoice, setSelectedVoice] =
+    useState<SpeechSynthesisVoice | null>(null);
   const [currentRate, setCurrentRate] = useState(rate);
   const [currentPitch, setCurrentPitch] = useState(pitch);
   const [currentVolume, setCurrentVolume] = useState(volume);
@@ -114,7 +110,14 @@ export function useTTS(options: UseTTSOptions = {}): UseTTSReturn {
       utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
     },
-    [isSupported, language, currentRate, currentPitch, currentVolume, selectedVoice]
+    [
+      isSupported,
+      language,
+      currentRate,
+      currentPitch,
+      currentVolume,
+      selectedVoice,
+    ]
   );
 
   const stop = useCallback(() => {

@@ -3,7 +3,11 @@
 import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function DebugTranscriptionsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function DebugTranscriptionsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id: meetingId } = use(params);
   const [rows, setRows] = useState<any[]>([]);
 
@@ -24,9 +28,14 @@ export default function DebugTranscriptionsPage({ params }: { params: Promise<{ 
       .channel("debug-view")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "transcriptions", filter: `meeting_id=eq.${meetingId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "transcriptions",
+          filter: `meeting_id=eq.${meetingId}`,
+        },
         (payload) => {
-          setRows(prev => [payload.new, ...prev]);
+          setRows((prev) => [payload.new, ...prev]);
         }
       )
       .subscribe();
@@ -37,24 +46,34 @@ export default function DebugTranscriptionsPage({ params }: { params: Promise<{ 
   }, [meetingId]);
 
   return (
-    <div className="p-8 bg-gray-900 min-h-screen text-white font-mono text-sm">
-      <h1 className="text-xl mb-4 font-bold">Debug: Transcriptions for {meetingId}</h1>
-      <table className="w-full text-left border-collapse">
+    <div className="min-h-screen bg-gray-900 p-8 font-mono text-sm text-white">
+      <h1 className="mb-4 text-xl font-bold">
+        Debug: Transcriptions for {meetingId}
+      </h1>
+      <table className="w-full border-collapse text-left">
         <thead className="bg-gray-800 text-gray-400">
           <tr>
-            <th className="p-2 border-b border-gray-700">Chunk</th>
-            <th className="p-2 border-b border-gray-700">Time</th>
-            <th className="p-2 border-b border-gray-700">Speaker</th>
-            <th className="p-2 border-b border-gray-700">Text</th>
+            <th className="border-b border-gray-700 p-2">Chunk</th>
+            <th className="border-b border-gray-700 p-2">Time</th>
+            <th className="border-b border-gray-700 p-2">Speaker</th>
+            <th className="border-b border-gray-700 p-2">Text</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} className="hover:bg-gray-800/50">
-              <td className="p-2 border-b border-gray-800">{row.chunk_index}</td>
-              <td className="p-2 border-b border-gray-800">{new Date(row.created_at).toLocaleTimeString()}</td>
-              <td className="p-2 border-b border-gray-800 text-purple-400">{row.speaker_label}</td>
-              <td className="p-2 border-b border-gray-800">{row.text_original}</td>
+              <td className="border-b border-gray-800 p-2">
+                {row.chunk_index}
+              </td>
+              <td className="border-b border-gray-800 p-2">
+                {new Date(row.created_at).toLocaleTimeString()}
+              </td>
+              <td className="border-b border-gray-800 p-2 text-purple-400">
+                {row.speaker_label}
+              </td>
+              <td className="border-b border-gray-800 p-2">
+                {row.text_original}
+              </td>
             </tr>
           ))}
         </tbody>

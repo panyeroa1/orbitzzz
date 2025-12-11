@@ -18,7 +18,9 @@ interface UseTranslationReturn {
 // LibreTranslate public instance (free, no API key required)
 const DEFAULT_API_URL = "https://libretranslate.com/translate";
 
-export function useTranslation(options: UseTranslationOptions): UseTranslationReturn {
+export function useTranslation(
+  options: UseTranslationOptions
+): UseTranslationReturn {
   const {
     sourceLanguage = "auto",
     targetLanguage,
@@ -56,17 +58,18 @@ export function useTranslation(options: UseTranslationOptions): UseTranslationRe
 
         const data = await response.json();
         const translatedText = data.translatedText || "";
-        
+
         setLastTranslation(translatedText);
         setIsTranslating(false);
-        
+
         return translatedText;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
         console.error("[Translation] Error:", errorMessage);
         setError(errorMessage);
         setIsTranslating(false);
-        
+
         // Return original text on error
         return text;
       }

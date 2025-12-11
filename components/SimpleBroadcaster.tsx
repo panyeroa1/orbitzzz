@@ -10,7 +10,10 @@ interface SimpleBroadcasterProps {
   className?: string;
 }
 
-export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterProps) {
+export function SimpleBroadcaster({
+  meetingId,
+  className,
+}: SimpleBroadcasterProps) {
   const [isActive, setIsActive] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [segmentedText, setSegmentedText] = useState("");
@@ -32,7 +35,9 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
     const key = "eburon_anon_client_id";
     let id = localStorage.getItem(key);
     if (!id) {
-      id = crypto.randomUUID?.() || `client-${Math.random().toString(36).slice(2)}`;
+      id =
+        crypto.randomUUID?.() ||
+        `client-${Math.random().toString(36).slice(2)}`;
       localStorage.setItem(key, id);
     }
     return id;
@@ -60,7 +65,9 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
       const sourceNode = audioContext.createMediaStreamSource(stream);
       const analyzer = audioContext.createAnalyser();
       analyzer.fftSize = 256;
@@ -90,7 +97,12 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
 
         for (let i = 0; i < bufferLength; i++) {
           barHeight = dataArray[i] / 2;
-          const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
+          const gradient = ctx.createLinearGradient(
+            0,
+            canvas.height - barHeight,
+            0,
+            canvas.height
+          );
           gradient.addColorStop(0, "#00e0ff");
           gradient.addColorStop(1, "#006dff");
           ctx.fillStyle = gradient;
@@ -116,7 +128,8 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
 
   // Web Speech API
   const startTranscription = () => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       console.error("Speech recognition not supported");
       return;
@@ -208,12 +221,14 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
                 speaker_label: seg.voice,
                 source_language: "auto",
               });
-              
+
               if (error) {
                 console.error("Supabase insert error:", error);
               }
             }
-            console.log(`Segmented and saved ${data.segments.length} chunks to Supabase`);
+            console.log(
+              `Segmented and saved ${data.segments.length} chunks to Supabase`
+            );
           }
         } catch (err) {
           console.error("Segmentation error:", err);
@@ -276,10 +291,10 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
       <button
         onClick={toggleBroadcaster}
         className={cn(
-          "w-full px-6 py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-3 shadow-lg",
+          "flex w-full items-center justify-center gap-3 rounded-xl px-6 py-4 text-lg font-semibold shadow-lg transition-all",
           isActive
-            ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/20 animate-pulse"
-            : "bg-gradient-to-r from-[#00e0ff] to-[#006dff] hover:opacity-90 text-white shadow-blue-500/20"
+            ? "animate-pulse bg-red-500 text-white shadow-red-500/20 hover:bg-red-600"
+            : "bg-gradient-to-r from-[#00e0ff] to-[#006dff] text-white shadow-blue-500/20 hover:opacity-90"
         )}
       >
         <Radio size={24} className={isActive ? "animate-pulse" : ""} />
@@ -288,28 +303,32 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
 
       {/* Audio Visualizer */}
       {isActive && (
-        <div className="bg-dark-3/50 rounded-xl p-4 border border-white/10 backdrop-blur-xl">
+        <div className="rounded-xl border border-white/10 bg-dark-3/50 p-4 backdrop-blur-xl">
           <canvas
             ref={canvasRef}
             width={600}
             height={80}
-            className="w-full h-20 rounded-lg"
+            className="h-20 w-full rounded-lg"
           />
         </div>
       )}
 
       {/* Live Transcript - Web Speech (Fast Local) */}
       {isActive && (
-        <div className="bg-dark-3/50 rounded-xl p-4 border border-white/10 backdrop-blur-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm font-semibold text-white/80">Live Transcript (Local)</span>
+        <div className="rounded-xl border border-white/10 bg-dark-3/50 p-4 backdrop-blur-xl">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+            <span className="text-sm font-semibold text-white/80">
+              Live Transcript (Local)
+            </span>
           </div>
-          <div className="min-h-[100px] max-h-[200px] overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/5">
-            <p className={cn(
-              "text-white/90 text-sm leading-relaxed",
-              transcript && "animate-pulse"
-            )}>
+          <div className="max-h-[200px] min-h-[100px] overflow-y-auto rounded-lg border border-white/5 bg-black/30 p-3">
+            <p
+              className={cn(
+                "text-sm leading-relaxed text-white/90",
+                transcript && "animate-pulse"
+              )}
+            >
               {transcript || "Listening..."}
             </p>
           </div>
@@ -318,18 +337,21 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
 
       {/* Gemini Speaker Segmentation */}
       {isActive && (
-        <div className="bg-dark-3/50 rounded-xl p-4 border border-white/10 backdrop-blur-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              isProcessing ? "bg-yellow-500 animate-pulse" : "bg-blue-500"
-            )} />
+        <div className="rounded-xl border border-white/10 bg-dark-3/50 p-4 backdrop-blur-xl">
+          <div className="mb-3 flex items-center gap-2">
+            <div
+              className={cn(
+                "h-2 w-2 rounded-full",
+                isProcessing ? "animate-pulse bg-yellow-500" : "bg-blue-500"
+              )}
+            />
             <span className="text-sm font-semibold text-white/80">
-              Speaker Segmentation {isProcessing ? "(Processing...)" : "(Ready)"}
+              Speaker Segmentation{" "}
+              {isProcessing ? "(Processing...)" : "(Ready)"}
             </span>
           </div>
-          <div className="min-h-[100px] max-h-[200px] overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/5">
-            <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
+          <div className="max-h-[200px] min-h-[100px] overflow-y-auto rounded-lg border border-white/5 bg-black/30 p-3">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/90">
               {segmentedText || "Waiting for speech..."}
             </p>
           </div>

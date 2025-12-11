@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-
 interface UseWebSocketOptions {
   url: string;
   sessionId?: string;
@@ -21,9 +20,7 @@ interface UseWebSocketReturn {
   reconnect: () => void;
 }
 
-export function useWebSocket(
-  options: UseWebSocketOptions
-): UseWebSocketReturn {
+export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   const {
     url,
     sessionId = "default",
@@ -92,7 +89,16 @@ export function useWebSocket(
     } catch (err) {
       console.error("[WebSocket] Connection error:", err);
     }
-  }, [url, sessionId, apiKey, enabled, onMessage, onConnect, onDisconnect, onError]);
+  }, [
+    url,
+    sessionId,
+    apiKey,
+    enabled,
+    onMessage,
+    onConnect,
+    onDisconnect,
+    onError,
+  ]);
 
   const disconnect = useCallback(() => {
     shouldConnectRef.current = false;

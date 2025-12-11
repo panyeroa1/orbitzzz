@@ -21,29 +21,29 @@ function getVoiceName(language: string, explicitVoice?: string): string {
   if (explicitVoice) return explicitVoice;
 
   const languageToVoice: Record<string, string> = {
-    'en': 'Orus',
-    'es': 'Orus',
-    'fr': 'Orus',
-    'de': 'Orus',
-    'it': 'Orus',
-    'pt': 'Orus',
-    'tl': 'Orus',      // Filipino/Tagalog
-    'tl-en': 'Orus',   // Taglish
-    'ja': 'Orus',
-    'ko': 'Orus',
-    'zh': 'Orus',
-    'ar': 'Orus',
-    'hi': 'Orus',
+    en: "Orus",
+    es: "Orus",
+    fr: "Orus",
+    de: "Orus",
+    it: "Orus",
+    pt: "Orus",
+    tl: "Orus", // Filipino/Tagalog
+    "tl-en": "Orus", // Taglish
+    ja: "Orus",
+    ko: "Orus",
+    zh: "Orus",
+    ar: "Orus",
+    hi: "Orus",
   };
-  
-  return languageToVoice[language] || 'Orus';
+
+  return languageToVoice[language] || "Orus";
 }
 
 export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [queueSize, setQueueSize] = useState(0);
   const [currentText, setCurrentText] = useState<string | null>(null);
-  
+
   const queueRef = useRef<TTSQueueItem[]>([]);
   const isProcessingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -65,15 +65,17 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
     }
 
     const voiceName = getVoiceName(item.language, item.voiceName);
-    console.log(`[Gemini TTS] Speaking: "${item.text.substring(0, 50)}..." in ${item.language} using ${voiceName}`);
+    console.log(
+      `[Gemini TTS] Speaking: "${item.text.substring(0, 50)}..." in ${item.language} using ${voiceName}`
+    );
     setCurrentText(item.text);
     setIsSpeaking(true);
 
     try {
       // Call Gemini TTS API
-      const response = await fetch('/api/tts/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tts/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: item.text,
           voiceName: voiceName,
@@ -94,17 +96,17 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
       // Event listener: When audio ends, process next item
       audio.onended = () => {
         console.log("[Gemini TTS] Finished speaking");
-        
+
         // Cleanup
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
         }
         audioRef.current = null;
-        
+
         setIsSpeaking(false);
         setCurrentText(null);
-        
+
         // Enforce 1 second delay before processing next item
         setTimeout(() => {
           isProcessingRef.current = false;
@@ -114,17 +116,17 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
 
       audio.onerror = (event) => {
         console.error("[Gemini TTS] Playback error:", event);
-        
+
         // Cleanup
         if (audioUrlRef.current) {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
         }
         audioRef.current = null;
-        
+
         setIsSpeaking(false);
         setCurrentText(null);
-        
+
         // Try next item after delay
         setTimeout(() => {
           isProcessingRef.current = false;
@@ -134,20 +136,19 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
 
       // Start playback
       await audio.play();
-      
     } catch (error) {
       console.error("[Gemini TTS] Error:", error);
-      
+
       // Cleanup on error
       if (audioUrlRef.current) {
         URL.revokeObjectURL(audioUrlRef.current);
         audioUrlRef.current = null;
       }
       audioRef.current = null;
-      
+
       setIsSpeaking(false);
       setCurrentText(null);
-      
+
       // Try next item after delay
       setTimeout(() => {
         isProcessingRef.current = false;
@@ -157,26 +158,31 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
   }, []);
 
   // Add text to queue
-  const speak = useCallback((text: string, language: string, voiceName?: string) => {
-    if (!text.trim()) return;
+  const speak = useCallback(
+    (text: string, language: string, voiceName?: string) => {
+      if (!text.trim()) return;
 
-    const item: TTSQueueItem = {
-      text,
-      language,
-      voiceName,
-      id: `${Date.now()}-${Math.random()}`,
-    };
+      const item: TTSQueueItem = {
+        text,
+        language,
+        voiceName,
+        id: `${Date.now()}-${Math.random()}`,
+      };
 
-    queueRef.current.push(item);
-    setQueueSize(queueRef.current.length);
-    
-    console.log(`[Gemini TTS] Added to queue (${queueRef.current.length} items): "${text.substring(0, 30)}..."`);
-    
-    // Start processing if not already
-    if (!isProcessingRef.current) {
-      processQueue();
-    }
-  }, [processQueue]);
+      queueRef.current.push(item);
+      setQueueSize(queueRef.current.length);
+
+      console.log(
+        `[Gemini TTS] Added to queue (${queueRef.current.length} items): "${text.substring(0, 30)}..."`
+      );
+
+      // Start processing if not already
+      if (!isProcessingRef.current) {
+        processQueue();
+      }
+    },
+    [processQueue]
+  );
 
   // Stop current speech and clear queue
   const stop = useCallback(() => {
@@ -185,18 +191,18 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    
+
     if (audioUrlRef.current) {
       URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = null;
     }
-    
+
     queueRef.current = [];
     setQueueSize(0);
     setIsSpeaking(false);
     setCurrentText(null);
     isProcessingRef.current = false;
-    
+
     console.log("[Gemini TTS] Stopped and cleared queue");
   }, []);
 

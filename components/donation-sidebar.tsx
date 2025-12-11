@@ -32,7 +32,7 @@ export function DonationSidebar({ onActiveChange }: DonationSidebarProps) {
 
   const handleDonate = async () => {
     const donationAmount = parseInt(amount);
-    
+
     if (!donationAmount || donationAmount < 1) {
       setStatus("error");
       setMessage("Please enter a valid amount");
@@ -75,9 +75,9 @@ export function DonationSidebar({ onActiveChange }: DonationSidebarProps) {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="text-center space-y-2">
+      <div className="space-y-2 text-center">
         <div className="flex items-center justify-center gap-2">
-          <Heart className="w-6 h-6 text-red-400" fill="currentColor" />
+          <Heart className="h-6 w-6 text-red-400" fill="currentColor" />
           <h2 className="text-xl font-bold text-white">Support Our Church</h2>
         </div>
         <p className="text-sm text-white/60">
@@ -87,17 +87,19 @@ export function DonationSidebar({ onActiveChange }: DonationSidebarProps) {
 
       {/* Preset Amounts */}
       <div>
-        <label className="text-sm text-white/60 block mb-3">Select Amount</label>
+        <label className="mb-3 block text-sm text-white/60">
+          Select Amount
+        </label>
         <div className="grid grid-cols-3 gap-3">
           {PRESET_AMOUNTS.map((preset) => (
             <button
               key={preset}
               onClick={() => handlePresetClick(preset)}
               className={cn(
-                "px-4 py-3 rounded-apple font-semibold transition-all border",
+                "rounded-apple border px-4 py-3 font-semibold transition-all",
                 amount === preset.toString()
-                  ? "bg-gradient-to-r from-[#00e0ff] to-[#006dff] text-white border-[#00e0ff]"
-                  : "bg-dark-3/80 text-white/70 border-white/10 hover:bg-dark-3 hover:text-white"
+                  ? "border-[#00e0ff] bg-gradient-to-r from-[#00e0ff] to-[#006dff] text-white"
+                  : "border-white/10 bg-dark-3/80 text-white/70 hover:bg-dark-3 hover:text-white"
               )}
             >
               ${preset}
@@ -108,16 +110,17 @@ export function DonationSidebar({ onActiveChange }: DonationSidebarProps) {
 
       {/* Custom Amount */}
       <div>
-        <label className="text-sm text-white/60 block mb-2">Custom Amount</label>
+        <label className="mb-2 block text-sm text-white/60">
+          Custom Amount
+        </label>
         <div className="relative">
-          <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+          <DollarSign className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/40" />
           <input
             type="text"
             value={customAmount}
             onChange={handleCustomAmountChange}
             placeholder="Enter amount"
-            className="w-full bg-dark-3/80 border border-white/10 rounded-apple pl-12 pr-4 py-3 text-white
-              focus:outline-none focus:border-[#00e0ff] transition-colors placeholder:text-white/30"
+            className="w-full rounded-apple border border-white/10 bg-dark-3/80 py-3 pl-12 pr-4 text-white transition-colors placeholder:text-white/30 focus:border-[#00e0ff] focus:outline-none"
           />
         </div>
       </div>
@@ -126,9 +129,11 @@ export function DonationSidebar({ onActiveChange }: DonationSidebarProps) {
       {message && (
         <div
           className={cn(
-            "p-3 rounded-apple text-sm",
-            status === "success" && "bg-green-500/20 text-green-400 border border-green-500/30",
-            status === "error" && "bg-red-500/20 text-red-400 border border-red-500/30"
+            "rounded-apple p-3 text-sm",
+            status === "success" &&
+              "border border-green-500/30 bg-green-500/20 text-green-400",
+            status === "error" &&
+              "border border-red-500/30 bg-red-500/20 text-red-400"
           )}
         >
           {message}
@@ -140,21 +145,23 @@ export function DonationSidebar({ onActiveChange }: DonationSidebarProps) {
         onClick={handleDonate}
         disabled={isProcessing || !amount}
         className={cn(
-          "w-full px-6 py-4 rounded-apple font-semibold text-lg transition-all",
+          "w-full rounded-apple px-6 py-4 text-lg font-semibold transition-all",
           "flex items-center justify-center gap-3 shadow-lg",
           isProcessing || !amount
-            ? "bg-dark-3/80 text-white/40 cursor-not-allowed"
-            : "bg-gradient-to-r from-[#00e0ff] to-[#006dff] hover:opacity-90 text-white shadow-blue-500/20"
+            ? "cursor-not-allowed bg-dark-3/80 text-white/40"
+            : "bg-gradient-to-r from-[#00e0ff] to-[#006dff] text-white shadow-blue-500/20 hover:opacity-90"
         )}
       >
         <CreditCard size={20} />
-        {isProcessing ? "Processing..." : `Donate ${amount ? `$${amount}` : ""}`}
+        {isProcessing
+          ? "Processing..."
+          : `Donate ${amount ? `$${amount}` : ""}`}
       </button>
 
       {/* Secure Payment Badge */}
-      <div className="text-center space-y-2">
+      <div className="space-y-2 text-center">
         <div className="flex items-center justify-center gap-2 text-xs text-white/40">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
               d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z"

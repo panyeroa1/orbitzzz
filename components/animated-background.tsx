@@ -3,16 +3,27 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-export const AnimatedBackground = ({ children, className }: { children?: React.ReactNode; className?: string }) => {
+export const AnimatedBackground = ({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) => {
   return (
-    <div className={cn("relative w-full h-screen overflow-hidden bg-black", className)}>
-       {/* Background Gradient to ensure depth */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-[#050505] z-0" />
+    <div
+      className={cn(
+        "relative h-screen w-full overflow-hidden bg-black",
+        className
+      )}
+    >
+      {/* Background Gradient to ensure depth */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black via-gray-900 to-[#050505]" />
 
       {/* Waves Container */}
       <div className="absolute inset-x-0 bottom-0 top-0 z-0 opacity-50">
         <svg
-          className="absolute bottom-0 w-full h-[50vh] min-h-[400px]"
+          className="absolute bottom-0 h-[50vh] min-h-[400px] w-full"
           viewBox="0 24 150 28"
           preserveAspectRatio="none"
           shapeRendering="auto"
@@ -55,7 +66,8 @@ export const AnimatedBackground = ({ children, className }: { children?: React.R
         {/* Styles for animation */}
         <style jsx>{`
           .parallax-waves > use {
-            animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+            animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5)
+              infinite;
           }
           .parallax-waves > use:nth-child(1) {
             animation-delay: -2s;
@@ -85,7 +97,7 @@ export const AnimatedBackground = ({ children, className }: { children?: React.R
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full h-full flex flex-col">
+      <div className="relative z-10 flex h-full w-full flex-col">
         {children}
       </div>
     </div>

@@ -24,8 +24,9 @@ export function useAnonymousUser() {
       }
 
       // Generate new anonymous user
-      userId = crypto.randomUUID?.() || `anon-${Math.random().toString(36).slice(2)}`;
-      
+      userId =
+        crypto.randomUUID?.() || `anon-${Math.random().toString(36).slice(2)}`;
+
       try {
         const { error } = await supabase.from("users").insert({
           id: userId,

@@ -104,7 +104,9 @@ export function useTranslationListener({
 
           const { translatedText } = await response.json();
 
-          console.log(`[Translation] Translated: "${translatedText.substring(0, 50)}..."`);
+          console.log(
+            `[Translation] Translated: "${translatedText.substring(0, 50)}..."`
+          );
 
           // Add to TTS queue (will speak when ready)
           speak(translatedText, targetLanguage);
@@ -137,7 +139,9 @@ export function useTranslationListener({
       pollTranscriptions();
       pollingIntervalRef.current = setInterval(pollTranscriptions, 5000);
 
-      console.log(`[Translation] Started polling for meeting ${meetingId}, target: ${targetLanguage}`);
+      console.log(
+        `[Translation] Started polling for meeting ${meetingId}, target: ${targetLanguage}`
+      );
     } else {
       setIsActive(false);
       if (pollingIntervalRef.current) {

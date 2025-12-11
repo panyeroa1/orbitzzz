@@ -1,23 +1,23 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 
 export const TitleBar = () => {
   return (
-    <div className="w-full h-10 flex items-center justify-between px-4 select-none z-50">
+    <div className="z-50 flex h-10 w-full select-none items-center justify-between px-4">
       {/* Traffic Lights */}
-      <div className="flex items-center gap-2 group">
-        <div className="w-3 h-3 rounded-full bg-[#FF5F57] border border-black/10 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {/* Close Icon (X) can go here if actionable */}
-            </div>
+      <div className="group flex items-center gap-2">
+        <div className="flex h-3 w-3 items-center justify-center rounded-full border border-black/10 bg-[#FF5F57]">
+          <div className="h-1.5 w-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+            {/* Close Icon (X) can go here if actionable */}
+          </div>
         </div>
-        <div className="w-3 h-3 rounded-full bg-[#FEBC2E] border border-black/10" />
-        <div className="w-3 h-3 rounded-full bg-[#28C840] border border-black/10" />
+        <div className="h-3 w-3 rounded-full border border-black/10 bg-[#FEBC2E]" />
+        <div className="h-3 w-3 rounded-full border border-black/10 bg-[#28C840]" />
       </div>
 
       {/* App Title */}
-      <div className="text-sm font-medium text-white/50 tracking-wide font-sans">
+      <div className="font-sans text-sm font-medium tracking-wide text-white/50">
         Orbits
       </div>
 

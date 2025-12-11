@@ -1,6 +1,12 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  MotionValue,
+} from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 // Individual Dock Icon with magnification (for navigation)
 interface DockIconProps {
-  item: typeof SIDEBAR_LINKS[number];
+  item: (typeof SIDEBAR_LINKS)[number];
   mouseX: MotionValue<number>;
 }
 
@@ -20,7 +26,8 @@ function DockIcon({ item, mouseX }: DockIconProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
+  const isActive =
+    pathname === item.route || pathname.startsWith(`${item.route}/`);
 
   const distance = useTransform(mouseX, (val: number) => {
     const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
@@ -42,7 +49,7 @@ function DockIcon({ item, mouseX }: DockIconProps) {
         style={{ width }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="relative flex flex-col items-center justify-center group"
+        className="group relative flex flex-col items-center justify-center"
       >
         {/* Tooltip */}
         <motion.div
@@ -52,16 +59,16 @@ function DockIcon({ item, mouseX }: DockIconProps) {
             y: isHovered ? 0 : 10,
           }}
           transition={{ duration: 0.2 }}
-          className="absolute -top-12 px-3 py-1.5 bg-black/80 backdrop-blur-md rounded-lg text-white text-sm font-medium whitespace-nowrap pointer-events-none z-50"
+          className="pointer-events-none absolute -top-12 z-50 whitespace-nowrap rounded-lg bg-black/80 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-md"
         >
           {item.label}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-black/80 rotate-45" />
+          <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 bg-black/80" />
         </motion.div>
 
         {/* Icon Container */}
         <motion.div
           className={cn(
-            "aspect-square w-full rounded-xl flex items-center justify-center transition-all duration-200 relative overflow-hidden",
+            "relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl transition-all duration-200",
             isActive
               ? "bg-white/10 shadow-lg shadow-blue-500/20"
               : "bg-white/5 hover:bg-white/10"
@@ -69,7 +76,7 @@ function DockIcon({ item, mouseX }: DockIconProps) {
         >
           {/* Active Indicator Glow */}
           {isActive && (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-pulse" />
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-blue-500/20 to-purple-500/20" />
           )}
 
           <Image
@@ -89,7 +96,7 @@ function DockIcon({ item, mouseX }: DockIconProps) {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50"
+            className="absolute -bottom-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50"
           />
         )}
       </motion.div>
@@ -99,13 +106,18 @@ function DockIcon({ item, mouseX }: DockIconProps) {
 
 // Dock Action Icon with magnification (for sidebar triggers)
 interface DockActionIconProps {
-  item: typeof SIDEBAR_ACTIONS[number];
+  item: (typeof SIDEBAR_ACTIONS)[number];
   mouseX: MotionValue<number>;
   onClick: (action: string) => void;
   isActive?: boolean;
 }
 
-function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionIconProps) {
+function DockActionIcon({
+  item,
+  mouseX,
+  onClick,
+  isActive = false,
+}: DockActionIconProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -123,16 +135,13 @@ function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionI
   });
 
   return (
-    <button
-      onClick={() => onClick(item.action)}
-      className="focus:outline-none"
-    >
+    <button onClick={() => onClick(item.action)} className="focus:outline-none">
       <motion.div
         ref={ref}
         style={{ width }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="relative flex flex-col items-center justify-center group"
+        className="group relative flex flex-col items-center justify-center"
       >
         {/* Tooltip */}
         <motion.div
@@ -142,16 +151,16 @@ function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionI
             y: isHovered ? 0 : 10,
           }}
           transition={{ duration: 0.2 }}
-          className="absolute -top-12 px-3 py-1.5 bg-black/80 backdrop-blur-md rounded-lg text-white text-sm font-medium whitespace-nowrap pointer-events-none z-50"
+          className="pointer-events-none absolute -top-12 z-50 whitespace-nowrap rounded-lg bg-black/80 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-md"
         >
           {item.label}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-black/80 rotate-45" />
+          <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 bg-black/80" />
         </motion.div>
 
         {/* Icon Container */}
         <motion.div
           className={cn(
-            "aspect-square w-full rounded-2xl flex items-center justify-center transition-all duration-200 relative overflow-hidden",
+            "relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl transition-all duration-200",
             isActive
               ? "bg-gradient-to-br from-[#00e0ff]/20 to-[#006dff]/20 shadow-lg shadow-[#00e0ff]/30"
               : "bg-white/5 hover:bg-white/10"
@@ -159,7 +168,7 @@ function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionI
         >
           {/* Active Indicator Glow */}
           {isActive && (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00e0ff]/30 to-[#006dff]/30 animate-pulse" />
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#00e0ff]/30 to-[#006dff]/30" />
           )}
 
           <Image
@@ -179,7 +188,7 @@ function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionI
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#00e0ff] to-[#006dff] shadow-lg shadow-[#00e0ff]/50"
+            className="absolute -bottom-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#00e0ff] to-[#006dff] shadow-lg shadow-[#00e0ff]/50"
           />
         )}
       </motion.div>
@@ -189,9 +198,7 @@ function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionI
 
 // Dock Divider
 function DockDivider() {
-  return (
-    <div className="w-px h-10 bg-white/10 mx-2" />
-  );
+  return <div className="mx-2 h-10 w-px bg-white/10" />;
 }
 
 // Props for main Dock
@@ -209,11 +216,11 @@ export function Dock({ onSidebarAction, activeSidebar }: DockProps = {}) {
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-lg:hidden">
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 max-lg:hidden">
       <motion.div
         onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
         onMouseLeave={() => mouseX.set(Infinity)}
-        className="flex items-end gap-3 px-6 py-3 bg-[#1a1a1a]/80 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-2xl"
+        className="flex items-end gap-3 rounded-[32px] border border-white/10 bg-[#1a1a1a]/80 px-6 py-3 shadow-2xl backdrop-blur-2xl"
         style={{
           height: "80px", // Match MeetingBottomBar height constraint if appropriate, or let it grow. MeetingBottomBar has h-[80px]. Dock relies on icons. Let's keep it flexible but styled similarly.
         }}

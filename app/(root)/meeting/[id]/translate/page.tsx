@@ -46,13 +46,13 @@ export default function TranslatePage({ params }: TranslatePageProps) {
   }, [lastTranslation]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-1 via-dark-2 to-dark-1 text-white p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-dark-1 via-dark-2 to-dark-1 p-6 text-white">
+      <div className="mx-auto max-w-4xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-white/60 transition-colors hover:text-white"
           >
             <ArrowLeft size={20} />
             Back to Meeting
@@ -61,10 +61,8 @@ export default function TranslatePage({ params }: TranslatePageProps) {
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                "w-2 h-2 rounded-full",
-                isActive
-                  ? "bg-green-500 animate-pulse"
-                  : "bg-gray-500"
+                "h-2 w-2 rounded-full",
+                isActive ? "animate-pulse bg-green-500" : "bg-gray-500"
               )}
             />
             <span className="text-sm font-medium text-white/60">
@@ -74,33 +72,33 @@ export default function TranslatePage({ params }: TranslatePageProps) {
         </div>
 
         {/* Main Card */}
-        <div className="apple-card p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 rounded-full bg-purple-1/20">
+        <div className="apple-card mb-6 p-6">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="rounded-full bg-purple-1/20 p-3">
               <Globe size={24} className="text-purple-1" />
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold tracking-apple-tight">
                 Eburon Translator
               </h1>
-              <p className="text-white/60 text-sm">Meeting: {meetingId}</p>
+              <p className="text-sm text-white/60">Meeting: {meetingId}</p>
             </div>
 
             <div className="flex items-center gap-2">
               {isSpeaking && (
-                <div className="px-3 py-1 bg-purple-1/20 rounded-full text-purple-1 text-xs font-bold animate-pulse flex items-center gap-2">
+                <div className="flex animate-pulse items-center gap-2 rounded-full bg-purple-1/20 px-3 py-1 text-xs font-bold text-purple-1">
                   <Volume2 size={12} /> Speaking
                 </div>
               )}
               {queueSize > 0 && (
-                <div className="px-3 py-1 bg-blue-500/20 rounded-full text-blue-400 text-xs font-bold">
+                <div className="rounded-full bg-blue-500/20 px-3 py-1 text-xs font-bold text-blue-400">
                   Queue: {queueSize}
                 </div>
               )}
               <button
                 onClick={() => setEnabled(!enabled)}
                 className={cn(
-                  "p-3 rounded-full transition-all",
+                  "rounded-full p-3 transition-all",
                   enabled
                     ? "bg-purple-1 text-white"
                     : "bg-dark-3 text-white/40 hover:text-white"
@@ -114,10 +112,10 @@ export default function TranslatePage({ params }: TranslatePageProps) {
 
           <div className="flex flex-col gap-4">
             <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-              <SelectTrigger className="w-full bg-dark-3 border-white/10">
+              <SelectTrigger className="w-full border-white/10 bg-dark-3">
                 <SelectValue placeholder="Select Language" />
               </SelectTrigger>
-              <SelectContent className="bg-dark-1 border-white/10 max-h-[300px]">
+              <SelectContent className="max-h-[300px] border-white/10 bg-dark-1">
                 {LANGUAGES.map((lang) => (
                   <SelectItem
                     key={lang.code}
@@ -140,18 +138,18 @@ export default function TranslatePage({ params }: TranslatePageProps) {
         </div>
 
         {/* Translation Display */}
-        <div className="apple-card p-6 min-h-[400px]">
-          <h2 className="text-lg font-semibold mb-4 tracking-apple-tight">
+        <div className="apple-card min-h-[400px] p-6">
+          <h2 className="mb-4 text-lg font-semibold tracking-apple-tight">
             Live Translation
           </h2>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+            <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
               Error: {error}
             </div>
           )}
 
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="custom-scrollbar max-h-[500px] space-y-4 overflow-y-auto pr-2">
             {!enabled ? (
               <div className="flex flex-col items-center justify-center py-20 text-white/20">
                 <VolumeX size={48} className="mb-4 opacity-50" />
@@ -159,15 +157,15 @@ export default function TranslatePage({ params }: TranslatePageProps) {
               </div>
             ) : !lastTranslation ? (
               <div className="flex flex-col items-center justify-center py-20 text-white/40">
-                <Loader2 size={48} className="mb-4 opacity-50 animate-spin" />
+                <Loader2 size={48} className="mb-4 animate-spin opacity-50" />
                 <p>Waiting for broadcast...</p>
-                <p className="text-sm text-white/20 mt-2">
+                <p className="mt-2 text-sm text-white/20">
                   Make sure broadcaster is active
                 </p>
               </div>
             ) : (
-              <div className="p-6 bg-gradient-to-br from-purple-1/10 to-blue-1/10 rounded-apple border border-purple-1/20 animate-fade-in">
-                <div className="flex justify-between text-xs text-white/40 mb-3">
+              <div className="animate-fade-in rounded-apple border border-purple-1/20 bg-gradient-to-br from-purple-1/10 to-blue-1/10 p-6">
+                <div className="mb-3 flex justify-between text-xs text-white/40">
                   <span>{new Date().toLocaleTimeString()}</span>
                   <span className="flex items-center gap-2">
                     {isSpeaking && (
@@ -178,7 +176,7 @@ export default function TranslatePage({ params }: TranslatePageProps) {
                     )}
                   </span>
                 </div>
-                <p className="text-white font-medium text-xl leading-relaxed">
+                <p className="text-xl font-medium leading-relaxed text-white">
                   {lastTranslation}
                 </p>
               </div>
@@ -188,23 +186,15 @@ export default function TranslatePage({ params }: TranslatePageProps) {
         </div>
 
         {/* Instructions */}
-        <div className="mt-4 p-4 bg-dark-3/30 rounded-lg border border-white/5">
-          <h3 className="text-sm font-semibold text-white/80 mb-2">
+        <div className="mt-4 rounded-lg border border-white/5 bg-dark-3/30 p-4">
+          <h3 className="mb-2 text-sm font-semibold text-white/80">
             How it works:
           </h3>
-          <ul className="text-xs text-white/50 space-y-1">
-            <li>
-              • Polls Supabase every 5 seconds for new transcriptions
-            </li>
-            <li>
-              • Translates using Gemini Flash 2.0
-            </li>
-            <li>
-              • Reads aloud in native accent using Web Speech API
-            </li>
-            <li>
-              • TTS queue ensures audio doesn&apos;t overlap
-            </li>
+          <ul className="space-y-1 text-xs text-white/50">
+            <li>• Polls Supabase every 5 seconds for new transcriptions</li>
+            <li>• Translates using Gemini Flash 2.0</li>
+            <li>• Reads aloud in native accent using Web Speech API</li>
+            <li>• TTS queue ensures audio doesn&apos;t overlap</li>
           </ul>
         </div>
       </div>

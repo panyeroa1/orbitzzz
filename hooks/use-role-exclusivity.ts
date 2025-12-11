@@ -21,10 +21,11 @@ const CLIENT_ID_KEY = "eburon_anon_client_id";
 
 function getClientId(): string {
   if (typeof window === "undefined") return "";
-  
+
   let id = localStorage.getItem(CLIENT_ID_KEY);
   if (!id) {
-    id = crypto.randomUUID?.() || `client-${Math.random().toString(36).slice(2)}`;
+    id =
+      crypto.randomUUID?.() || `client-${Math.random().toString(36).slice(2)}`;
     localStorage.setItem(CLIENT_ID_KEY, id);
   }
   return id;
@@ -51,14 +52,14 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
   // Persist role to localStorage and Supabase
   const persistRole = useCallback(async (role: Role) => {
     const clientId = getClientId();
-    
+
     // Save to localStorage for device persistence
     if (role) {
       localStorage.setItem(ROLE_STORAGE_KEY, role);
     } else {
       localStorage.removeItem(ROLE_STORAGE_KEY);
     }
-    
+
     // Save to Supabase for account-level persistence
     try {
       if (role) {
@@ -69,7 +70,7 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
           .eq("client_id", clientId)
           .limit(1)
           .single();
-        
+
         if (existing) {
           // Update existing row
           await supabase
@@ -78,13 +79,11 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
             .eq("client_id", clientId);
         } else {
           // Insert new row
-          await supabase
-            .from("eburon_roles")
-            .insert({ 
-              client_id: clientId, 
-              active_role: role,
-              updated_at: new Date().toISOString()
-            });
+          await supabase.from("eburon_roles").insert({
+            client_id: clientId,
+            active_role: role,
+            updated_at: new Date().toISOString(),
+          });
         }
       } else {
         // Clear role in Supabase
@@ -94,7 +93,10 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
           .eq("client_id", clientId);
       }
     } catch (err) {
-      console.warn("[RoleExclusivity] Supabase persistence failed (table may not exist):", err);
+      console.warn(
+        "[RoleExclusivity] Supabase persistence failed (table may not exist):",
+        err
+      );
       // Continue without Supabase - localStorage still works for device-level
     }
   }, []);
@@ -103,15 +105,17 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
   const activateBroadcaster = useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
     setErrorMessage(null);
-    
+
     try {
       // Check if translator is already active
       if (activeRole === "translator") {
-        setErrorMessage("Please stop the Translator first before starting Broadcaster.");
+        setErrorMessage(
+          "Please stop the Translator first before starting Broadcaster."
+        );
         setIsLoading(false);
         return false;
       }
-      
+
       setActiveRole("broadcaster");
       await persistRole("broadcaster");
       setIsLoading(false);
@@ -127,15 +131,17 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
   const activateTranslator = useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
     setErrorMessage(null);
-    
+
     try {
       // Check if broadcaster is already active
       if (activeRole === "broadcaster") {
-        setErrorMessage("Broadcaster is active on this device. Please use a different device or account for translation.");
+        setErrorMessage(
+          "Broadcaster is active on this device. Please use a different device or account for translation."
+        );
         setIsLoading(false);
         return false;
       }
-      
+
       setActiveRole("translator");
       await persistRole("translator");
       setIsLoading(false);
@@ -151,7 +157,7 @@ export function useRoleExclusivity(): UseRoleExclusivityReturn {
   const deactivateRole = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     setErrorMessage(null);
-    
+
     try {
       setActiveRole(null);
       await persistRole(null);

@@ -16,7 +16,7 @@ export default function BroadcastPage({ params }: BroadcastPageProps) {
     <div className="h-screen w-screen overflow-hidden bg-black">
       <iframe
         src={broadcasterUrl}
-        className="w-full h-full border-0"
+        className="h-full w-full border-0"
         allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen"
         title="Eburon Broadcaster"
       />

@@ -13,8 +13,8 @@ const HomeLayout = ({ children }: PropsWithChildren) => {
       <Navbar />
 
       {/* Full-screen content area with consistent padding */}
-      <section className="min-h-screen w-full pt-20 pb-28 px-4 sm:px-6 overflow-y-auto">
-        <div className="w-full h-full max-w-7xl mx-auto">{children}</div>
+      <section className="min-h-screen w-full overflow-y-auto px-4 pb-28 pt-20 sm:px-6">
+        <div className="mx-auto h-full w-full max-w-7xl">{children}</div>
       </section>
 
       {/* macOS-style Dock at bottom */}

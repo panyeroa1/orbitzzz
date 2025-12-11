@@ -39,7 +39,9 @@ export const MeetingModal = ({
             </div>
           )}
 
-          <DialogTitle className={cn("text-3xl font-bold leading-[42px]", className)}>
+          <DialogTitle
+            className={cn("text-3xl font-bold leading-[42px]", className)}
+          >
             {title}
           </DialogTitle>
 

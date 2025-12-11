@@ -20,6 +20,7 @@ interface MeetingBottomBarProps {
   onLeave: () => void;
   onToggleParticipants: () => void;
   onToggleBroadcast: () => void;
+  onToggleTranslator: () => void;
   isMicEnabled: boolean;
   isCamEnabled: boolean;
 }
@@ -28,6 +29,7 @@ export const MeetingBottomBar = ({
   onLeave,
   onToggleParticipants,
   onToggleBroadcast,
+  onToggleTranslator,
   isMicEnabled,
   isCamEnabled
 }: MeetingBottomBarProps) => {
@@ -99,7 +101,7 @@ export const MeetingBottomBar = ({
         
         {/* Broadcast & Translate - Key Features */}
         <ControlButton icon={Radio} label="Broadcast" onClick={onToggleBroadcast} showArrow={false} />
-        <ControlButton icon={Languages} label="Translator" showArrow={false} />
+        <ControlButton icon={Languages} label="Translator" onClick={onToggleTranslator} showArrow={false} />
         
         <ControlButton icon={Disc} label="Record" showArrow={false} />
         <ControlButton icon={Smile} label="Reactions" showArrow={false} />

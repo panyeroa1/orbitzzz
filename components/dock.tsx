@@ -187,7 +187,7 @@ function DockActionIcon({ item, mouseX, onClick, isActive = false }: DockActionI
   );
 }
 
-// Divider between navigation icons and action icons
+// Dock Divider
 function DockDivider() {
   return (
     <div className="w-px h-10 bg-white/10 mx-2" />
@@ -197,11 +197,11 @@ function DockDivider() {
 // Props for main Dock
 interface DockProps {
   onSidebarAction?: (action: string) => void;
-  activeSidebar?: string | null;
+  activeSidebar?: "broadcaster" | "translator" | null;
 }
 
 // Main Dock Component
-export function Dock({ onSidebarAction, activeSidebar }: DockProps) {
+export function Dock({ onSidebarAction, activeSidebar }: DockProps = {}) {
   const mouseX = useMotionValue<number>(Infinity);
 
   const handleAction = (action: string) => {

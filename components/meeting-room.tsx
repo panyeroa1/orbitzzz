@@ -19,6 +19,8 @@ import { TranslationModal } from "./translation-modal";
 import { MeetingBottomBar } from "./meeting-bottom-bar"; // Updated import
 import { AnimatedBackground } from "./animated-background";
 import { TitleBar } from "./title-bar";
+import { IPhoneMockup } from "./iphone-mockup";
+import { BroadcasterMockup } from "./broadcaster-mockup";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -28,6 +30,8 @@ export const MeetingRoom = () => {
   const call = useCall();
   const [showParticipants, setShowParticipants] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
+  const [showTranslator, setShowTranslator] = useState(false);
+  const [showBroadcaster, setShowBroadcaster] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   
   // Call State Hooks
@@ -95,16 +99,27 @@ export const MeetingRoom = () => {
       </div>
 
       
+      {/* iPhone Translator Mockup */}
+      <IPhoneMockup 
+        isOpen={showTranslator}
+        onClose={() => setShowTranslator(false)}
+      />
+
+      {/* iPhone Broadcaster Mockup */}
+      <BroadcasterMockup 
+        isOpen={showBroadcaster}
+        onClose={() => setShowBroadcaster(false)}
+        meetingId={call?.id || "unknown"}
+      />
+
       {/* Fixed Bottom Control Bar */}
       <MeetingBottomBar 
         isMicEnabled={isMicEnabled}
         isCamEnabled={isCamEnabled}
         onLeave={() => router.push("/")}
         onToggleParticipants={() => setShowParticipants((prev) => !prev)}
-        onToggleBroadcast={() => {
-            const meetingId = call?.id || "unknown";
-            window.open(`/meeting/${meetingId}/broadcast`, "_blank", "width=800,height=700");
-        }}
+        onToggleBroadcast={() => setShowBroadcaster((prev) => !prev)}
+        onToggleTranslator={() => setShowTranslator((prev) => !prev)}
       />
 
       {/* Translation Modal (Hidden logic for generic meeting room, can be re-enabled) */}

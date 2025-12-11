@@ -1,5 +1,3 @@
-"use client";
-
 import {
   DeviceSettings,
   VideoPreview,
@@ -16,6 +14,7 @@ type MeetingSetupProps = {
 
 export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
   const [isMicCamToggledOn, setIsMicCamToggledOn] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const call = useCall();
   const { useCameraState } = useCallStateHooks();
@@ -25,13 +24,37 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
     throw new Error("useCall must be used within StreamCall component.");
 
   useEffect(() => {
-    if (isMicCamToggledOn) {
-      call?.camera.disable();
-      call?.microphone.disable();
-    } else {
-      call?.camera.enable();
-      call?.microphone.enable();
+    // Check for Secure Context (required for getUserMedia)
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setErrorMsg("Camera access requires a Secure Context (HTTPS or localhost). You are currently using HTTP.");
     }
+  }, []);
+
+  useEffect(() => {
+    const toggleMedia = async () => {
+      try {
+        if (isMicCamToggledOn) {
+          await call?.camera.disable();
+          await call?.microphone.disable();
+        } else {
+          try {
+            await call?.camera.enable();
+            await call?.microphone.enable();
+            setErrorMsg(null); // Clear error if successful
+          } catch (err: any) {
+            console.error("Failed to enable media:", err);
+            // Check if it's a permission/secure context issue
+             if (err.message && (err.message.includes("permission") || err.message.includes("secure"))) {
+               setErrorMsg("Failed to access camera/microphone. Please check permissions and ensure you are using HTTPS.");
+             }
+          }
+        }
+      } catch (e) {
+        console.error("Error toggling media:", e);
+      }
+    };
+    
+    toggleMedia();
   }, [isMicCamToggledOn, call?.camera, call?.microphone]);
 
   // Wait for call and camera to be fully ready before showing VideoPreview
@@ -51,6 +74,14 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center gap-3 text-white">
       <h1 className="text-2xl font-bold">Setup</h1>
+
+      {/* Error Banner */}
+      {errorMsg && (
+        <div className="bg-red-500/90 text-white px-4 py-2 rounded-md mb-4 max-w-md text-center">
+            <p className="font-bold">Media Error</p>
+            <p className="text-sm">{errorMsg}</p>
+        </div>
+      )}
 
       {isCallReady && hasBrowserPermission ? (
         <div className="flex h-[300px] w-[400px] items-center justify-center">
@@ -81,8 +112,18 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
 
       <Button
         className="rounded-md bg-green-500 px-4 py-2.5"
-        onClick={() => {
-          call.join();
+        onClick={async () => {
+          await call.join({
+            create: true,
+            data: {
+              settings_override: {
+                waiting_room: {
+                  enabled: true,
+                  join_policy: "request_to_join",
+                }
+              } as any
+            }
+          });
 
           setIsSetupComplete(true);
         }}

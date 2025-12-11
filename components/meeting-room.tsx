@@ -1,34 +1,24 @@
-"use client";
 
 import {
-  CallControls,
   CallParticipantsList,
-  CallStatsButton,
   CallingState,
   PaginatedGridLayout,
   SpeakerLayout,
   useCallStateHooks,
   useCall,
 } from "@stream-io/video-react-sdk";
-import { LayoutList, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-
-import { EndCallButton } from "./end-call-button";
 import { Loader } from "./loader";
 import { TranslationModal } from "./translation-modal";
 
+
+import { MeetingDock } from "./meeting-dock";
+import { AnimatedBackground } from "./animated-background";
+import { TitleBar } from "./title-bar";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -60,87 +50,62 @@ export const MeetingRoom = () => {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden pt-4 text-white">
-      <div className="relative flex size-full items-center justify-center">
-        <div className="flex size-full max-w-[1000px] items-center">
-          <CallLayout />
-        </div>
+    <AnimatedBackground>
+      {/* MacOS Title Bar */}
+      <TitleBar />
 
-        <div
-          className={cn("ml-2 hidden h-[calc(100vh_-_86px)]", {
-            "show-block": showParticipants,
-          })}
-        >
-          <CallParticipantsList onClose={() => setShowParticipants(false)} />
+      <div className="relative flex-1 w-full overflow-hidden text-white flex flex-col">
+        <div className="relative flex size-full items-center justify-center">
+          <div className="flex size-full max-w-[1000px] items-center">
+            <CallLayout />
+          </div>
+
+          {/* Right Sidebar (Glassmorphism) */}
+          <AnimatePresence>
+            {showParticipants && (
+              <motion.div
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute right-4 top-4 bottom-24 w-[350px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-40 flex flex-col"
+              >
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                  <h2 className="text-lg font-semibold text-white/90">Participants</h2>
+                  <button 
+                    onClick={() => setShowParticipants(false)}
+                    className="text-white/50 hover:text-white transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                  <CallParticipantsList onClose={() => setShowParticipants(false)} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-
-
-
-      {/* Controls */}
-      <div className="fixed bottom-0 flex w-full flex-wrap items-center justify-center gap-3 pb-4">
-        <CallControls onLeave={() => router.push("/")} />
-
-        {/* Broadcast Button */}
-        <button
-            onClick={() => {
+      
+      {/* Meeting Dock Controls */}
+      <MeetingDock 
+        onLeave={() => router.push("/")}
+        onToggleParticipants={() => setShowParticipants((prev) => !prev)}
+        onToggleLayout={() => {
+            setLayout((prev) => {
+              if (prev === "speaker-left") return "grid";
+              if (prev === "grid") return "speaker-right";
+              return "speaker-left";
+            });
+        }}
+        onToggleBroadcast={() => {
             const meetingId = call?.id || "unknown";
             // Open local broadcaster page which embeds the external tool
             window.open(`/meeting/${meetingId}/broadcast`, "_blank", "width=800,height=700");
-          }}
-          title="Open Broadcaster (Source)"
-          className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"
-        >
-          <div className="flex items-center gap-2">
-              <span className="text-red-500 animate-pulse">●</span>
-              <span className="text-white text-sm font-medium">Broadcast / Translate</span>
-          </div>
-        </button>
-
-        <DropdownMenu>
-          <div className="flex items-center">
-            <DropdownMenuTrigger
-              className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B]"
-              title="Call layout"
-            >
-              <LayoutList size={20} className="text-white" />
-            </DropdownMenuTrigger>
-          </div>
-          <DropdownMenuContent className="border-dark-1 bg-dark-1 text-white">
-            {["Grid", "Speaker Left", "Speaker Right"].map((item, i) => (
-              <div key={item + "-" + i}>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() =>
-                    setLayout(
-                      item.toLowerCase().replace(" ", "-") as CallLayoutType
-                    )
-                  }
-                >
-                  {item}
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator className="border-dark-1" />
-              </div>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <CallStatsButton />
-
-        <button
-          onClick={() =>
-            setShowParticipants((prevShowParticipants) => !prevShowParticipants)
-          }
-          title="Show participants"
-        >
-          <div className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B]">
-            <Users size={20} className="text-white" />
-          </div>
-        </button>
-
-        {!isPersonalRoom && <EndCallButton />}
-      </div>
+        }}
+      />
 
       {/* Translation Modal */}
       <TranslationModal
@@ -148,6 +113,6 @@ export const MeetingRoom = () => {
         open={showTranslation}
         onOpenChange={setShowTranslation}
       />
-    </div>
+    </AnimatedBackground>
   );
 };

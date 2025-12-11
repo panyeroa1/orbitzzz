@@ -24,7 +24,7 @@ export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTrans
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
 
-    const connect = useCallback(async () => {
+    const connect = useCallback(async (externalStream?: MediaStream) => {
         try {
             // Check for API Key indirectly by checking if server connects (Server validates key)
             // Ideally we check if NEXT_PUBLIC_GEMINI_API_KEY exists if we were connecting directly, 
@@ -42,12 +42,25 @@ export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTrans
                 
                 // Start Audio
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: { sampleRate: 16000, channelCount: 1 } 
-                    });
+                    let stream = externalStream;
+                    
+                    if (!stream) {
+                         stream = await navigator.mediaDevices.getUserMedia({ 
+                            audio: { sampleRate: 16000, channelCount: 1 } 
+                        });
+                    }
+                    
                     streamRef.current = stream;
                     
-                    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                    // MimeType fallback for different browsers
+                    let mimeType = 'audio/webm';
+                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                        mimeType = 'audio/webm;codecs=opus';
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                         mimeType = 'audio/mp4';
+                    }
+
+                    const mediaRecorder = new MediaRecorder(stream, { mimeType });
                     mediaRecorderRef.current = mediaRecorder;
 
                     mediaRecorder.ondataavailable = async (event) => {
@@ -59,8 +72,8 @@ export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTrans
 
                     mediaRecorder.start(100); // Send chunk every 100ms
                 } catch (err: any) {
-                    console.error("Microphone Error:", err);
-                    setState(prev => ({ ...prev, error: `Microphone Error: ${err.message}` }));
+                    console.error("Audio Capture Error:", err);
+                    setState(prev => ({ ...prev, error: `Audio Capture Error: ${err.message}` }));
                     ws.close();
                 }
             };

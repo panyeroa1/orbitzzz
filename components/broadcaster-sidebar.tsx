@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Radio, Mic, Monitor, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
+import { useGeminiLiveTranscription } from "@/hooks/use-gemini-live-transcription";
 
 interface BroadcasterSidebarProps {
   onActiveChange?: (isActive: boolean) => void;
@@ -114,151 +115,59 @@ export function BroadcasterSidebar({ onActiveChange }: BroadcasterSidebarProps) 
     }
   }, []);
 
-  // Web Speech API
-  const startTranscription = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setStatusMessage("Speech recognition not supported");
-      return;
+  // Gemini Live Transcription Hook
+  const { 
+    startTranscription: startGemini, 
+    stopTranscription: stopGemini, 
+    transcript: geminiTranscript,
+    isConnected,
+    error: geminiError 
+  } = useGeminiLiveTranscription({
+    sessionId: currentSessionId.current || `session-${Date.now()}`,
+    userId: getClientId()
+  });
+
+  // Sync Gemini transcript to local state
+  useEffect(() => {
+    if (geminiTranscript) {
+      setTranscript(geminiTranscript);
     }
+  }, [geminiTranscript]);
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = sourceLang || navigator.language || "en-US";
-
-    let fullTranscript = "";
-
-    recognition.onstart = () => {
-      setStatusMessage("Listening...");
-    };
-
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const res = event.results[i];
-        if (res.isFinal) {
-          fullTranscript += (fullTranscript ? " " : "") + res[0].transcript;
-        } else {
-          interim += res[0].transcript;
-        }
-      }
-      setTranscript((fullTranscript + (interim ? " " + interim : "")).trim());
-    };
-
-    recognition.onerror = (e: any) => {
-      console.error("Speech recognition error:", e.error);
-      if (e.error === "not-allowed") {
-        setIsActive(false);
-        setStatusMessage("Microphone access denied");
-      }
-    };
-
-    recognition.onend = () => {
-      if (isActive && recognitionRef.current) {
-        try {
-          recognition.start();
-        } catch (err) {
-          console.error("Restart error:", err);
-        }
-      }
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-  }, [sourceLang, isActive]);
-
-  const stopTranscription = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
+  // Error handling
+  useEffect(() => {
+    if (geminiError) {
+      setStatusMessage(`Error: ${geminiError}`);
+      setIsActive(false);
     }
-  }, []);
+  }, [geminiError]);
 
-  // Supabase auto-save every 5 seconds
-  const startAutoSave = useCallback(() => {
-    if (saveIntervalRef.current) return;
-
-    saveIntervalRef.current = setInterval(async () => {
-      const text = transcript.trim();
-      // We save even if text is empty to establish the session, or at least if text exists
-      if (text) { // Simple check, or check vs lastSaved
-        try {
-          const clientId = getClientId();
-          const nowIso = new Date().toISOString();
-          const langCode = sourceLang || "en-US";
-
-          // 1. Update eburon_tts_current (existing logic)
-          // We only update if text changed to avoid redundant writes for TTS
-          if (text !== lastSaved) {
-            const { data: existing } = await supabase
-              .from("eburon_tts_current")
-              .select("id")
-              .eq("client_id", clientId)
-              .limit(1);
-
-            if (existing && existing.length > 0) {
-              await supabase
-                .from("eburon_tts_current")
-                .update({
-                  source_text: text,
-                  source_lang_code: langCode,
-                  updated_at: nowIso,
-                })
-                .eq("client_id", clientId);
-            } else {
-              await supabase.from("eburon_tts_current").insert({
-                client_id: clientId,
-                source_text: text,
-                source_lang_code: langCode,
-                updated_at: nowIso,
-              });
-            }
-            setLastSaved(text);
-          }
-
-          // 2. Update transcripts table (new logic)
-          // Uses the stable record ID and session ID generated at start
-          if (currentRecordId.current && currentSessionId.current) {
-             const { error: upsertError } = await supabase
-              .from("transcripts")
-              .upsert({
-                id: currentRecordId.current,
-                session_id: currentSessionId.current,
-                user_id: clientId,
-                source_language: langCode,
-                full_transcript_text: text,
-                updated_at: nowIso,
-                // We preserve created_at if it's an update, or helpful defaults
-              }, { onConflict: 'id' });
-              
-              if (upsertError) {
-                console.error("Error saving transcript:", upsertError);
-              }
-          }
-
-          setStatusMessage(`Saved ${new Date().toLocaleTimeString()}`);
-        } catch (err) {
-          console.error("Save error:", err);
-        }
-      }
-    }, 5000);
-  }, [transcript, lastSaved, sourceLang]);
-
-  const stopAutoSave = useCallback(() => {
-    if (saveIntervalRef.current) {
-      clearInterval(saveIntervalRef.current);
-      saveIntervalRef.current = null;
-    }
-  }, []);
+  // Note: Web Speech API logic removed in favor of Server-Side Gemini
+  
+  // Supabase auto-save every 5 seconds (Still relevant if we want client-side backup, 
+  // BUT Server is now also saving. To avoid duplicates, we might want to disable client save 
+  // OR rely solely on server. User asked for "reliable saving" and we implemented server saving.
+  // HOWEVER, the UI expects 'transcript' state to update.
+  // We will keep the UI update but DISABLE client-side saving to avoid double-writes 
+  // if the server is doing it.
+  // But wait, server might fail? Let's rely on server for "saving" as per recent tasks.
+  // I will comment out client-side saving to prevent conflicts, or keep it as "local backup" if needed.
+  // User said "nothing was saved", so they rely on THIS logic? 
+  // NO, they asked to refactor server to use tools for saving. So Server is primary.
+  // I'll leave the auto-save commented out or removed to avoid conflict.
+  
+  /* 
+  Client-side auto-save disabled in favor of Server-Side Tool Saving 
+  to prevent Race Conditions and Duplicates.
+  */
 
   // Toggle broadcaster
   const toggleBroadcaster = useCallback(async () => {
     if (isActive) {
       // Stop
-      stopTranscription();
+      stopGemini();
       stopVisualizer();
-      stopAutoSave();
+      // stopAutoSave(); // Disabled client side save
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -278,27 +187,48 @@ export function BroadcasterSidebar({ onActiveChange }: BroadcasterSidebarProps) 
       currentSessionId.current = crypto.randomUUID?.() || `session-${Date.now()}`;
       currentRecordId.current = crypto.randomUUID?.() || `record-${Date.now()}`;
 
+      let mediaStream = null;
+
       if (audioSource === "screen") {
         try {
-          const stream = await navigator.mediaDevices.getDisplayMedia({
+          mediaStream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
-            audio: true,
+            audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false
+            }
           });
-          streamRef.current = stream;
-          startVisualizer(stream);
         } catch (err) {
           setStatusMessage("Screen share cancelled");
           return;
         }
       } else {
-        startVisualizer();
+        try {
+             mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { 
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                } 
+            });
+        } catch (err) {
+             setStatusMessage("Microphone denied");
+             return;
+        }
       }
       
-      startTranscription();
+      streamRef.current = mediaStream;
+      startVisualizer(mediaStream);
+      
+      // Start Gemini with this stream
+      startGemini(mediaStream);
+      
       setIsActive(true);
+      setStatusMessage("Connecting to Gemini...");
       onActiveChange?.(true);
     }
-  }, [isActive, audioSource, stopTranscription, stopVisualizer, stopAutoSave, startVisualizer, startTranscription, onActiveChange]);
+  }, [isActive, audioSource, stopGemini, stopVisualizer, startVisualizer, startGemini, onActiveChange]);
 
   // Start auto-save when transcript changes and is active
   useEffect(() => {

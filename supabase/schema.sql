@@ -68,3 +68,16 @@ create policy "Allow anon select eburon_tts"
   on public.eburon_tts_current
   for select
   using (true);
+
+create table public.transcripts (
+  id uuid not null default gen_random_uuid (),
+  session_id text not null,
+  user_id text not null,
+  source_language text null default 'auto'::text,
+  full_transcript_text text null default ''::text,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint transcripts_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_transcripts_session on public.transcripts using btree (session_id) TABLESPACE pg_default;

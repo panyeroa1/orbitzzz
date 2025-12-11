@@ -20,19 +20,46 @@ const MODEL = "models/gemini-2.5-flash-native-audio-preview-09-2025"; // Using e
 // Note: Node SDK Live client might default to a specific model.
 
 // Config for Live Session
-// Dynamic config function
-const getConfig = (targetLang) => ({
-    responseModalities: ["AUDIO"],
-    speechConfig: {
-        voiceConfig: {
-            prebuiltVoiceConfig: {
-                voiceName: "Orus", 
+// Config for Live Session
+const getConfig = (targetLang, mode) => {
+    if (mode === 'transcription') {
+        return {
+            responseModalities: ["TEXT"], // No audio response
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: {
+                        voiceName: "Zephyr", // Placeholder, not used for TEXT output
+                    },
+                },
+            },
+            systemInstruction: {
+                parts: [{
+                    text: `You are a professional transcriptionist. Your task is to generate a verbatim transcript of the audio.
+                    
+IMPORTANT RULES:
+- Output ONLY the transcript. Do not add any conversational text, introductions, or commentary.
+- Label distinct speakers as "Speaker 1", "Speaker 2", etc. if you can identify them.
+- If there is no speech, output nothing.
+- Punctuate the transcript correctly.
+- Do not translate. Keep the text in the original language of the speaker.`
+                }],
+            },
+        };
+    }
+
+    // Default: Translation Mode
+    return {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+            voiceConfig: {
+                prebuiltVoiceConfig: {
+                    voiceName: "Orus", 
+                },
             },
         },
-    },
-    systemInstruction: {
-        parts: [{ 
-            text: `You are a professional translator and voice actor. Your task is to translate spoken content into ${targetLang}.
+        systemInstruction: {
+            parts: [{ 
+                text: `You are a professional translator and voice actor. Your task is to translate spoken content into ${targetLang}.
 
 IMPORTANT RULES:
 - Wait for complete sentences or natural speech pauses before translating.
@@ -45,44 +72,95 @@ IMPORTANT RULES:
 - Never introduce yourself or add commentary. Just speak the translation.
 - If there is silence, remain completely silent.
 - Aim for clear, expressive, human-like speech that sounds like a professional voice actor from a ${targetLang}-speaking country.` 
-        }],
-    },
-});
+            }],
+        },
+    };
+};
 
 wss.on('connection', async (ws, req) => {
     console.log("[Gemini Server] Client connected");
     
-    // Parse Query Params for Language
+const { createClient } = require('@supabase/supabase-js');
+
+// ... existing imports
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// ... inside upsert logic
+
+    // Parse Query Params for Language, Mode, Session, User
     const url = new URL(req.url, `http://${req.headers.host}`);
     const targetLang = url.searchParams.get('lang') || 'Spanish';
-    console.log(`[Gemini Server] Target Language: ${targetLang}`);
+    const mode = url.searchParams.get('mode') || 'translation';
+    const sessionId = url.searchParams.get('session_id') || `session_${Date.now()}`;
+    const userId = url.searchParams.get('user_id') || 'anonymous';
+    
+    console.log(`[Gemini Server] Target Language: ${targetLang}, Mode: ${mode}, Session: ${sessionId}`);
 
-    // Initialize Gemini Session
-    let currentSession = null;
+    // Track full transcript for this session in memory
+    let fullTranscript = "";
+    let lastSave = Date.now();
 
-    try {
-        currentSession = await ai.live.connect({
-            model: MODEL,
-            config: getConfig(targetLang),
-            callbacks: {
-                onopen: () => {
-                    console.log("[Gemini Server] Gemini Session Open");
-                },
-                onmessage: (msg) => {
-                    // msg contains serverContent. 
-                    // We look for modelTurn -> parts -> inlineData (audio)
-                    if (msg.serverContent?.modelTurn?.parts) {
-                        for (const part of msg.serverContent.modelTurn.parts) {
-                            if (part.inlineData && part.inlineData.mimeType.startsWith('audio/')) {
+    // ... inside onmessage
+
+                            // Text Response (Transcription)
+                            if (part.text) {
+                                const text = part.text;
+                                fullTranscript += text;
+                                
                                 const payload = {
-                                    type: 'audio',
-                                    data: part.inlineData.data 
+                                    type: 'text',
+                                    text: text
                                 };
                                 ws.send(JSON.stringify(payload));
+                                
+                                // Save to Supabase (debounced/periodic or on every chunk?)
+                                // For real-time feel, maybe every chunk or throttle.
+                                // Given strictly "save the transcription", let's update.
+                                // To avoid spamming DB, let's throttle to 2 seconds or if significant content.
+                                if (Date.now() - lastSave > 2000) {
+                                    lastSave = Date.now();
+                                    saveTranscript(sessionId, userId, fullTranscript);
+                                }
                             }
-                        }
-                    }
-                },
+
+// ... helper function
+
+async function saveTranscript(sessionId, userId, text) {
+    // Check if row exists for sessionUrl to update, else insert.
+    // Since we don't have a unique constraint on session_id in schema provided technically,
+    // we should try to find latest `id` for this session or just assume 1 row per session logic.
+    // User schema: create index ... (session_id).
+    
+    // Strategy: Try selecting ID for this session.
+    const { data: existing } = await supabase
+        .from('transcripts')
+        .select('id')
+        .eq('session_id', sessionId)
+        .limit(1)
+        .single();
+        
+    if (existing) {
+        await supabase
+            .from('transcripts')
+            .update({ 
+                full_transcript_text: text,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+    } else {
+        await supabase
+            .from('transcripts')
+            .insert({
+                session_id: sessionId,
+                user_id: userId,
+                full_transcript_text: text,
+                source_language: 'auto' // or detect
+            });
+    }
+}
                 onclose: () => {
                     console.log("[Gemini Server] Gemini Session Closed");
                 },

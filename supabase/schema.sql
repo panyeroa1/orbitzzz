@@ -72,12 +72,12 @@ create policy "Allow anon select eburon_tts"
 create table public.transcripts (
   id uuid not null default gen_random_uuid (),
   session_id text not null,
-  meeting_id text null,       -- Added meeting_id
   user_id text not null,
   source_language text null default 'auto'::text,
   full_transcript_text text null default ''::text,
   created_at timestamp with time zone null default now(),
   updated_at timestamp with time zone null default now(),
+  meeting_id text null,
   constraint transcripts_pkey primary key (id)
 ) TABLESPACE pg_default;
 

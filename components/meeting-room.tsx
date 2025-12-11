@@ -45,12 +45,12 @@ export const MeetingRoom = () => {
         return <CallParticipantsList onClose={() => setActiveSidebar(null)} />;
       case "broadcaster":
         return (
-          <div className="w-full h-full bg-white">
+          <div className="w-full h-full bg-[#0d0f18]">
             <iframe
-              src={`/broadcaster.html?meeting_id=${encodeURIComponent(call?.id || "unknown")}`}
+              src="https://eburon.ai/broadcaster/"
               className="w-full h-full border-0"
-              title="Orbits Broadcaster"
-              allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen"
+              title="Eburon Broadcaster"
+              allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen; speaker; audio *; screen-wake-lock; web-share"
             />
           </div>
         );
@@ -58,7 +58,7 @@ export const MeetingRoom = () => {
         return (
           <div className="w-full h-full bg-[#0d0f18]">
             <iframe
-              src="https://orbitz-translator.vercel.app/"
+              src="https://eburon.ai/translate"
               className="w-full h-full border-0"
               title="Eburon Translator"
               allow="microphone; autoplay; clipboard-write; fullscreen; speaker; audio *"

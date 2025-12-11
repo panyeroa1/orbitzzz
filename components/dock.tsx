@@ -61,7 +61,7 @@ function DockIcon({ item, mouseX }: DockIconProps) {
         {/* Icon Container */}
         <motion.div
           className={cn(
-            "aspect-square w-full rounded-2xl flex items-center justify-center transition-all duration-200 relative overflow-hidden",
+            "aspect-square w-full rounded-xl flex items-center justify-center transition-all duration-200 relative overflow-hidden",
             isActive
               ? "bg-white/10 shadow-lg shadow-blue-500/20"
               : "bg-white/5 hover:bg-white/10"
@@ -221,20 +221,6 @@ export function Dock({ onSidebarAction, activeSidebar }: DockProps = {}) {
         {/* Navigation Icons */}
         {SIDEBAR_LINKS.map((item) => (
           <DockIcon key={item.route} item={item} mouseX={mouseX} />
-        ))}
-
-        {/* Divider */}
-        <DockDivider />
-
-        {/* Action Icons (Broadcaster, Translator) */}
-        {SIDEBAR_ACTIONS.map((item) => (
-          <DockActionIcon
-            key={item.action}
-            item={item}
-            mouseX={mouseX}
-            onClick={handleAction}
-            isActive={activeSidebar === item.action}
-          />
         ))}
       </motion.div>
     </div>

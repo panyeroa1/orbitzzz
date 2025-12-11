@@ -19,8 +19,6 @@ import { TranslationModal } from "./translation-modal";
 import { MeetingBottomBar } from "./meeting-bottom-bar"; // Updated import
 import { AnimatedBackground } from "./animated-background";
 import { TitleBar } from "./title-bar";
-import { IPhoneMockup } from "./iphone-mockup";
-import { BroadcasterMockup } from "./broadcaster-mockup";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -28,12 +26,10 @@ export const MeetingRoom = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const call = useCall();
-  const [showParticipants, setShowParticipants] = useState(false);
+  const [activeSidebar, setActiveSidebar] = useState<"participants" | "broadcaster" | "translator" | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
-  const [showTranslator, setShowTranslator] = useState(false);
-  const [showBroadcaster, setShowBroadcaster] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
-  
+
   // Call State Hooks
   const { useCallCallingState, useMicrophoneState, useCameraState } = useCallStateHooks();
   const callingState = useCallCallingState();
@@ -41,8 +37,37 @@ export const MeetingRoom = () => {
   const { isEnabled: isCamEnabled } = useCameraState();
 
   if (callingState !== CallingState.JOINED) return <Loader />;
-
-  const isPersonalRoom = !!searchParams.get("personal");
+  /* Sidebar Content Renderer */
+  const SidebarContent = () => {
+    switch (activeSidebar) {
+      case "participants":
+        return <CallParticipantsList onClose={() => setActiveSidebar(null)} />;
+      case "translator":
+        return (
+          <div className="w-full h-full bg-white">
+            <iframe
+              src="https://orbits-tr.vercel.app/"
+              className="w-full h-full border-0"
+              title="Orbits Translator"
+              allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen"
+            />
+          </div>
+        );
+      case "broadcaster":
+        return (
+          <div className="w-full h-full bg-white">
+            <iframe
+              src={`/meeting/${call?.id || "unknown"}/broadcast`}
+              className="w-full h-full border-0"
+              title="Orbits Broadcaster"
+              allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen"
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   const CallLayout = () => {
     switch (layout) {
@@ -61,27 +86,29 @@ export const MeetingRoom = () => {
       <TitleBar />
 
       {/* Main Content Area (Video + Sidebar) */}
-      <div className="flex-1 flex overflow-hidden w-full relative px-4 py-4">
-        <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex overflow-hidden w-full relative px-4 py-4 gap-4">
+        <div className="flex-1 flex items-center justify-center min-w-0">
             <div className="w-full h-full flex items-center justify-center rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/30 backdrop-blur-md">
                 <CallLayout />
             </div>
         </div>
 
-        {/* Pinned Right Sidebar */}
+        {/* Unified Pinned Right Sidebar */}
         <AnimatePresence mode="wait">
-          {showParticipants && (
+          {activeSidebar && (
             <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 380, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
+              initial={{ width: 0, opacity: 0, marginLeft: 0 }}
+              animate={{ width: 380, opacity: 1, marginLeft: 16 }}
+              exit={{ width: 0, opacity: 0, marginLeft: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="h-full ml-4 rounded-2xl border border-white/10 bg-[#1e1e1e]/80 backdrop-blur-xl flex flex-col z-40 overflow-hidden"
+              className="h-full rounded-2xl border border-white/10 bg-[#1e1e1e]/80 backdrop-blur-xl flex flex-col z-40 overflow-hidden shrink-0"
             >
               <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 h-[60px]">
-                <h2 className="text-sm font-medium text-white/90">Participants</h2>
+                <h2 className="text-sm font-medium text-white/90 capitalize">
+                  {activeSidebar}
+                </h2>
                 <button 
-                  onClick={() => setShowParticipants(false)}
+                  onClick={() => setActiveSidebar(null)}
                   className="text-white/50 hover:text-white transition-colors"
                   title="Close sidebar"
                 >
@@ -90,36 +117,22 @@ export const MeetingRoom = () => {
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <CallParticipantsList onClose={() => setShowParticipants(false)} />
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/20">
+                <SidebarContent />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      
-      {/* iPhone Translator Mockup */}
-      <IPhoneMockup 
-        isOpen={showTranslator}
-        onClose={() => setShowTranslator(false)}
-      />
-
-      {/* iPhone Broadcaster Mockup */}
-      <BroadcasterMockup 
-        isOpen={showBroadcaster}
-        onClose={() => setShowBroadcaster(false)}
-        meetingId={call?.id || "unknown"}
-      />
-
       {/* Fixed Bottom Control Bar */}
       <MeetingBottomBar 
         isMicEnabled={isMicEnabled}
         isCamEnabled={isCamEnabled}
         onLeave={() => router.push("/")}
-        onToggleParticipants={() => setShowParticipants((prev) => !prev)}
-        onToggleBroadcast={() => setShowBroadcaster((prev) => !prev)}
-        onToggleTranslator={() => setShowTranslator((prev) => !prev)}
+        onToggleParticipants={() => setActiveSidebar(prev => prev === "participants" ? null : "participants")}
+        onToggleBroadcast={() => setActiveSidebar(prev => prev === "broadcaster" ? null : "broadcaster")}
+        onToggleTranslator={() => setActiveSidebar(prev => prev === "translator" ? null : "translator")}
       />
 
       {/* Translation Modal (Hidden logic for generic meeting room, can be re-enabled) */}

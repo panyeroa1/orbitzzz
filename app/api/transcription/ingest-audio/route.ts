@@ -9,7 +9,7 @@ async function transcribeAudio(audioBuffer: Buffer, mimetype: string) {
     throw new Error("Deepgram API Key is missing");
   }
 
-  const url = "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true";
+  const url = "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true&punctuate=true&utterances=true";
 
   const response = await fetch(url, {
     method: "POST",
@@ -69,23 +69,65 @@ export async function POST(req: NextRequest) {
     const confidence = results.confidence;
     const detectedLanguage = dgResponse.results?.channels?.[0]?.detected_language;
     
-    // Extract speaker from first word if available and map to label
-    let speakerLabel = null;
-    let formattedTranscript = transcript;
+    // Advanced Multi-Speaker Processing
+    let formattedTranscript = transcript; // fallback
+    let dominantSpeakerLabel: string | null = null;
 
     if (results.words && results.words.length > 0) {
-        // Get numeric speaker ID (e.g. 0, 1)
-        const speakerId = Number(results.words[0].speaker);
-        // Map to "Male 1", "Female 1" etc.
-        const readableLabel = getSpeakerLabel(speakerId);
-        
-        if (readableLabel) {
-            speakerLabel = readableLabel;
-            // Format as "Male 1: Text content"
-            formattedTranscript = `${readableLabel}: ${transcript}`;
-        } else {
-             // Fallback if no label found
-            speakerLabel = `speaker_${speakerId}`;
+        // 1. Group words by speaker turns
+        const turns: { speakerId: number, text: string }[] = [];
+        let currentSpeakerId = -1;
+        let currentText: string[] = [];
+
+        // Track word counts to find dominant speaker
+        const speakerWordCounts: Record<number, number> = {};
+
+        for (const wordObj of results.words) {
+            const spk = Number(wordObj.speaker);
+            const word = wordObj.word;
+            const punctuated_word = wordObj.punctuated_word || word;
+
+            // Update stats
+            speakerWordCounts[spk] = (speakerWordCounts[spk] || 0) + 1;
+
+            if (spk !== currentSpeakerId) {
+                // Determine if we push previous turn
+                if (currentSpeakerId !== -1 && currentText.length > 0) {
+                    turns.push({ speakerId: currentSpeakerId, text: currentText.join(" ") });
+                }
+                // Start new turn
+                currentSpeakerId = spk;
+                currentText = [punctuated_word];
+            } else {
+                currentText.push(punctuated_word);
+            }
+        }
+        // Push final turn
+        if (currentSpeakerId !== -1 && currentText.length > 0) {
+            turns.push({ speakerId: currentSpeakerId, text: currentText.join(" ") });
+        }
+
+        // 2. Build Formatted Transcript
+        // Format: "Male 1: Hello world. \n Female 1: Hi there."
+        if (turns.length > 0) {
+            formattedTranscript = turns.map(t => {
+                const label = getSpeakerLabel(t.speakerId) || `Speaker ${t.speakerId}`;
+                return `${label}: ${t.text}`;
+            }).join("\n");
+        }
+
+        // 3. Find Dominant Speaker (for metadata column)
+        let maxWords = -1;
+        let bestSpkId = -1;
+        for (const [spkIdStr, count] of Object.entries(speakerWordCounts)) {
+            const countNum = count as number;
+            if (countNum > maxWords) {
+                maxWords = countNum;
+                bestSpkId = parseInt(spkIdStr);
+            }
+        }
+        if (bestSpkId !== -1) {
+            dominantSpeakerLabel = getSpeakerLabel(bestSpkId) || `speaker_${bestSpkId}`;
         }
     }
 
@@ -96,9 +138,9 @@ export async function POST(req: NextRequest) {
         {
           meeting_id: meetingId,
           chunk_index: chunkIndex,
-          text_original: formattedTranscript, // Saved as "Male 1: Hello..."
+          text_original: formattedTranscript, // Now contains newline-separated speaker turns
           source_language: detectedLanguage || "en",
-          speaker_label: speakerLabel, // Saved as "Male 1"
+          speaker_label: dominantSpeakerLabel, // Dominant speaker
         },
         {
           onConflict: 'meeting_id',

@@ -46,7 +46,7 @@ export const MeetingRoom = () => {
         return (
           <div className="w-full h-full bg-white">
             <iframe
-              src="https://orbits-tr.vercel.app/"
+              src="https://livetranslator-iota.vercel.app/"
               className="w-full h-full border-0"
               title="Orbits Translator"
               allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen"

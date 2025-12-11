@@ -19,9 +19,9 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-roboto)', 'var(--font-open-sans)', 'sans-serif'],
+        sans: ['var(--font-roboto)', 'Helvetica', 'Arial', 'sans-serif'],
         heading: ['var(--font-roboto)', 'sans-serif'],
-        body: ['var(--font-open-sans)', 'sans-serif'],
+        body: ['Helvetica', 'Arial', 'sans-serif'],
       },
       letterSpacing: {
         'apple-tight': '-0.025em',

@@ -1,6 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Roboto, Open_Sans } from "next/font/google"; // Changed from Outfit
+import { Roboto } from "next/font/google"; // Changed from Outfit
 import type { PropsWithChildren } from "react";
 
 import "@stream-io/video-react-sdk/dist/css/styles.css";
@@ -16,12 +16,6 @@ const roboto = Roboto({
   subsets: ["latin"],
   weight: ["100", "300", "400", "500", "700", "900"],
   variable: "--font-roboto",
-});
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-open-sans",
 });
 
 export const viewport: Viewport = {
@@ -49,7 +43,7 @@ const AppLayout = ({ children }: Readonly<PropsWithChildren>) => {
           },
         }}
       >
-        <body className={cn("bg-dark-2 antialiased", roboto.variable, openSans.variable)}>
+        <body className={cn("bg-dark-2 antialiased", roboto.variable)}>
           {children}
           <Toaster />
         </body>

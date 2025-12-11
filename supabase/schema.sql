@@ -72,6 +72,7 @@ create policy "Allow anon select eburon_tts"
 create table public.transcripts (
   id uuid not null default gen_random_uuid (),
   session_id text not null,
+  meeting_id text null,       -- Added meeting_id
   user_id text not null,
   source_language text null default 'auto'::text,
   full_transcript_text text null default ''::text,

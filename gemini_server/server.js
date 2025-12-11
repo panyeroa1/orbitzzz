@@ -96,9 +96,10 @@ wss.on('connection', async (ws, req) => {
     const targetLang = url.searchParams.get('lang') || 'Spanish';
     const mode = url.searchParams.get('mode') || 'translation';
     const sessionId = url.searchParams.get('session_id') || `session_${Date.now()}`;
+    const meetingId = url.searchParams.get('meeting_id') || null;
     const userId = url.searchParams.get('user_id') || 'anonymous';
     
-    console.log(`[Gemini Server] Target Language: ${targetLang}, Mode: ${mode}, Session: ${sessionId}`);
+    console.log(`[Gemini Server] Target Language: ${targetLang}, Mode: ${mode}, Session: ${sessionId}, Meeting: ${meetingId}`);
 
     // Track full transcript for this session in memory
     let fullTranscript = "";
@@ -130,6 +131,7 @@ wss.on('connection', async (ws, req) => {
                     .from('transcripts')
                     .insert({
                         session_id: sessionId,
+                        meeting_id: meetingId, // Save meeting_id
                         user_id: userId,
                         full_transcript_text: text,
                         source_language: 'auto' 

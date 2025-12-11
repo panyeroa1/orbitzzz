@@ -57,9 +57,9 @@ export const MeetingRoom = () => {
       <TitleBar />
 
       {/* Main Content Area (Video + Sidebar) */}
-      <div className="flex-1 flex overflow-hidden w-full relative">
-        <div className="flex-1 flex items-center justify-center p-4">
-            <div className="w-full h-full max-w-[1200px] flex items-center justify-center rounded-lg overflow-hidden border border-white/5 shadow-2xl bg-black/20 backdrop-blur-sm">
+      <div className="flex-1 flex overflow-hidden w-full relative px-14 py-4">
+        <div className="flex-1 flex items-center justify-center">
+            <div className="w-full h-full max-w-[1400px] flex items-center justify-center rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/30 backdrop-blur-md">
                 <CallLayout />
             </div>
         </div>
@@ -69,16 +69,18 @@ export const MeetingRoom = () => {
           {showParticipants && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 350, opacity: 1 }}
+              animate={{ width: 380, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="h-full border-l border-white/10 bg-[#1e1e1e]/90 backdrop-blur-md flex flex-col z-40"
+              className="h-full ml-4 rounded-2xl border border-white/10 bg-[#1e1e1e]/80 backdrop-blur-xl flex flex-col z-40 overflow-hidden"
             >
               <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 h-[60px]">
                 <h2 className="text-sm font-medium text-white/90">Participants</h2>
                 <button 
                   onClick={() => setShowParticipants(false)}
                   className="text-white/50 hover:text-white transition-colors"
+                  title="Close sidebar"
+                  aria-label="Close sidebar"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>

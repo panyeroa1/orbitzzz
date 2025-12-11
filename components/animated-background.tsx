@@ -20,77 +20,68 @@ export const AnimatedBackground = ({
       {/* Background Gradient to ensure depth */}
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-black via-gray-900 to-[#050505]" />
 
-      {/* Waves Container */}
-      <div className="absolute inset-x-0 bottom-0 top-0 z-0 opacity-50">
+      {/* Waves Container - Full screen slow wavy background */}
+      <div className="absolute inset-0 z-0 opacity-40">
         <svg
-          className="absolute bottom-0 h-[50vh] min-h-[400px] w-full"
-          viewBox="0 24 150 28"
+          className="absolute inset-0 h-full w-full"
+          viewBox="0 0 1440 900"
           preserveAspectRatio="none"
-          shapeRendering="auto"
         >
           <defs>
             <path
-              id="gentle-wave"
-              d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
+              id="slow-wave"
+              d="M0,400 C180,350 360,450 540,400 C720,350 900,450 1080,400 C1260,350 1440,450 1620,400 L1620,900 L0,900 Z"
+            />
+            <path
+              id="slow-wave-2"
+              d="M0,500 C240,450 480,550 720,500 C960,450 1200,550 1440,500 L1440,900 L0,900 Z"
+            />
+            <path
+              id="slow-wave-3"
+              d="M0,600 C160,550 320,650 480,600 C640,550 800,650 960,600 C1120,550 1280,650 1440,600 L1440,900 L0,900 Z"
             />
           </defs>
-          {/* Parallax Waves */}
-          <g className="parallax-waves">
+          <g className="slow-waves">
             <use
-              xlinkHref="#gentle-wave"
-              x="48"
-              y="0"
-              fill="rgba(255,255,255,0.03)" // Very faint white/gray
+              xlinkHref="#slow-wave"
+              fill="rgba(30,30,40,0.5)"
+              className="wave-1"
             />
             <use
-              xlinkHref="#gentle-wave"
-              x="48"
-              y="3"
-              fill="rgba(255,255,255,0.05)"
+              xlinkHref="#slow-wave-2"
+              fill="rgba(20,20,30,0.4)"
+              className="wave-2"
             />
             <use
-              xlinkHref="#gentle-wave"
-              x="48"
-              y="5"
-              fill="rgba(255,255,255,0.02)"
-            />
-            <use
-              xlinkHref="#gentle-wave"
-              x="48"
-              y="7"
-              fill="rgba(255,255,255,0.01)"
+              xlinkHref="#slow-wave-3"
+              fill="rgba(15,15,25,0.3)"
+              className="wave-3"
             />
           </g>
         </svg>
 
-        {/* Styles for animation */}
         <style jsx>{`
-          .parallax-waves > use {
-            animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5)
-              infinite;
+          .wave-1 {
+            animation: slow-sway 30s ease-in-out infinite;
           }
-          .parallax-waves > use:nth-child(1) {
-            animation-delay: -2s;
-            animation-duration: 7s;
+          .wave-2 {
+            animation: slow-sway 40s ease-in-out infinite reverse;
           }
-          .parallax-waves > use:nth-child(2) {
-            animation-delay: -3s;
-            animation-duration: 10s;
+          .wave-3 {
+            animation: slow-sway 50s ease-in-out infinite;
           }
-          .parallax-waves > use:nth-child(3) {
-            animation-delay: -4s;
-            animation-duration: 13s;
-          }
-          .parallax-waves > use:nth-child(4) {
-            animation-delay: -5s;
-            animation-duration: 20s;
-          }
-          @keyframes move-forever {
-            0% {
-              transform: translate3d(-90px, 0, 0);
+          @keyframes slow-sway {
+            0%, 100% {
+              transform: translateX(0) translateY(0);
             }
-            100% {
-              transform: translate3d(85px, 0, 0);
+            25% {
+              transform: translateX(-30px) translateY(10px);
+            }
+            50% {
+              transform: translateX(0) translateY(-15px);
+            }
+            75% {
+              transform: translateX(30px) translateY(5px);
             }
           }
         `}</style>

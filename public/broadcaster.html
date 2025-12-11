@@ -429,9 +429,15 @@
     const SUPABASE_URL = "https://bridhpobwsfttwalwhih.supabase.co";
     const SUPABASE_KEY = "sb_publishable_fc4iX_EGxN1Pzc4Py_SOog_8KJyvdQU";
 
-    // Initialize Supabase
-    const { createClient } = window.supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Initialize Supabase (defensive in case script fails to load)
+    let supabaseClient = null;
+    try {
+      const { createClient } = window.supabase;
+      supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch (err) {
+      console.error("Supabase init failed", err);
+      alert("Supabase failed to load. Check connection.");
+    }
 
     // Anonymous client id per browser session
     const ANON_CLIENT_ID_KEY = "eburon_anon_client_id";
@@ -714,6 +720,7 @@
     let recognition = null;
     let isListening = false;
     let stopRequested = false;
+    let isStarting = false;
     let fullTranscript = "";
     
     // Save State
@@ -799,22 +806,27 @@
     }
 
     async function startListening() {
-      if (!SpeechRecognition) return log("Browser not supported.", true);
+      if (isStarting || isListening) return;
+      isStarting = true;
+      if (!SpeechRecognition) {
+        log("Browser not supported.", true);
+        isStarting = false;
+        return;
+      }
       if (!recognition) initRecognition();
       
       stopRequested = false;
       fullTranscript = "";
       transcriptEl.value = "";
       
-      // Init IDs
       currentSessionId = crypto.randomUUID ? crypto.randomUUID() : "sess-" + Date.now();
       currentRecordId = crypto.randomUUID ? crypto.randomUUID() : "rec-" + Date.now();
       
-      // Update lang based on selection
       recognition.lang = sourceLangSelect.value || navigator.language || "en-US";
       
       await ensureMicPermission();
       try { recognition.start(); } catch (e) { log("Start error: " + e.message, true); }
+      isStarting = false;
     }
 
     function stopListening() {
@@ -843,40 +855,47 @@
             dbStatusEl.style.color = "#000";
             
             // Call speaker detection API
-            const speakerResponse = await fetch("/api/detect-speaker", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text })
-            });
-            
-            if (!speakerResponse.ok) {
-              throw new Error("Speaker detection failed");
-            }
-            
-            const speakerData = await speakerResponse.json();
-            const segments = speakerData.segments || [];
-            
-            // Map voice names to speaker labels
-            const voiceMap = new Map();
-            let maleCount = 1;
-            let femaleCount = 1;
-            
-            const labeledSegments = segments.map(seg => {
-              const voice = seg.voice || "Unknown";
+            let formattedTranscript = text;
+            try {
+              const speakerResponse = await fetch("/api/detect-speaker", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+              });
               
-              if (!voiceMap.has(voice)) {
-                // Determine if male or female based on voice name
-                const isFemale = ["Aoede", "Kore"].includes(voice);
-                const label = isFemale 
-                  ? `Female ${femaleCount++}` 
-                  : `Male ${maleCount++}`;
-                voiceMap.set(voice, label);
+              if (!speakerResponse.ok) {
+                throw new Error("Speaker detection failed");
               }
               
-              return `${voiceMap.get(voice)}: ${seg.text}`;
-            });
-            
-            const formattedTranscript = labeledSegments.join("\n\n");
+              const speakerData = await speakerResponse.json();
+              const segments = speakerData.segments || [];
+              
+              // Map voice names to speaker labels
+              const voiceMap = new Map();
+              let maleCount = 1;
+              let femaleCount = 1;
+              
+              const labeledSegments = segments.map(seg => {
+                const voice = seg.voice || "Unknown";
+                
+                if (!voiceMap.has(voice)) {
+                  const isFemale = ["Aoede", "Kore"].includes(voice);
+                  const label = isFemale 
+                    ? `Female ${femaleCount++}` 
+                    : `Male ${maleCount++}`;
+                  voiceMap.set(voice, label);
+                }
+                
+                return `${voiceMap.get(voice)}: ${seg.text}`;
+              });
+              
+              if (labeledSegments.length) {
+                formattedTranscript = labeledSegments.join("\n\n");
+              }
+            } catch (err) {
+              log("Speaker detection issue, saving raw transcript.", true);
+              formattedTranscript = text;
+            }
             
             // Save to Supabase
             const nowIso = new Date().toISOString();
@@ -884,6 +903,8 @@
             
             // UPSERT to transcripts table (User Provided Schema)
             // Schema: id (pkey), session_id, user_id, full_transcript_text
+            if (!supabaseClient) throw new Error("Supabase unavailable");
+
             const { error } = await supabaseClient
               .from("transcripts")  // Changed from transcriptions to transcripts
               .upsert({
@@ -956,7 +977,7 @@
     if (autoStartParam === "true" || isEmbedded) {
       log("Auto-starting transcription...");
       setTimeout(() => {
-        startListening();
+        if (!isListening) startListening();
       }, 1000); // Give browser time to initialize
     }
 

@@ -54,6 +54,17 @@ export const MeetingRoom = () => {
             />
           </div>
         );
+      case "translator":
+        return (
+          <div className="w-full h-full bg-[#0d0f18]">
+            <iframe
+              src="https://orbitz-translator.vercel.app/"
+              className="w-full h-full border-0"
+              title="Eburon Translator"
+              allow="microphone; autoplay; clipboard-write; fullscreen; speaker; audio *"
+            />
+          </div>
+        );
       case "donation":
         return (
           <div className="p-6">
@@ -126,6 +137,7 @@ export const MeetingRoom = () => {
         onLeave={() => router.push("/")}
         onToggleParticipants={() => setActiveSidebar(prev => prev === "participants" ? null : "participants")}
         onToggleBroadcast={() => setActiveSidebar(prev => prev === "broadcaster" ? null : "broadcaster")}
+        onToggleTranslator={() => setActiveSidebar(prev => prev === "translator" ? null : "translator")}
         onToggleDonation={() => setActiveSidebar(prev => prev === "donation" ? null : "donation")}
       />
 

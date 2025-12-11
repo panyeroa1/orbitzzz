@@ -12,6 +12,7 @@ import {
   Disc, 
   Smile,
   Heart,
+  Languages,
 } from "lucide-react";
 import { useCall } from "@stream-io/video-react-sdk";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ interface MeetingBottomBarProps {
   onLeave: () => void;
   onToggleParticipants: () => void;
   onToggleBroadcast: () => void;
+  onToggleTranslator: () => void;
   onToggleDonation: () => void;
   isMicEnabled: boolean;
   isCamEnabled: boolean;
@@ -30,6 +32,7 @@ export const MeetingBottomBar = ({
   onLeave,
   onToggleParticipants,
   onToggleBroadcast,
+  onToggleTranslator,
   onToggleDonation,
   isMicEnabled,
   isCamEnabled
@@ -146,6 +149,8 @@ export const MeetingBottomBar = ({
           <ControlButton icon={Users} label="Participants" onClick={onToggleParticipants} mouseX={mouseX} />
           
           <ControlButton icon={Radio} label="Broadcast" onClick={onToggleBroadcast} showArrow={false} mouseX={mouseX} />
+          
+          <ControlButton icon={Languages} label="Translator" onClick={onToggleTranslator} showArrow={false} mouseX={mouseX} />
           
           <ControlButton icon={Heart} label="Donate" onClick={onToggleDonation} showArrow={false} mouseX={mouseX} />
           

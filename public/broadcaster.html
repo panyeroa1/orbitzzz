@@ -749,15 +749,31 @@
 
       recognition.onerror = (e) => {
         log("STT error: " + e.error, true);
-        if(e.error === 'not-allowed') {
+        // Only stop on fatal errors like permission denied
+        if(e.error === 'not-allowed' || e.error === 'service-not-allowed') {
             stopListening();
         }
+        // For transient errors (no-speech, network, aborted), let onend handle restart
       };
 
       recognition.onend = () => {
-        if (!stopRequested && isListening) {
-          log("Auto-resuming...");
-          try { recognition.start(); } catch(e) { stopListening(); }
+        // Always try to restart unless explicitly stopped
+        if (!stopRequested) {
+          setTimeout(() => {
+            if (!stopRequested) {
+              log("Auto-resuming...");
+              try { 
+                recognition.start(); 
+              } catch(e) { 
+                log("Restart failed, retrying in 2s...", true);
+                setTimeout(() => {
+                  if (!stopRequested) {
+                    try { recognition.start(); } catch(e2) { /* ignore */ }
+                  }
+                }, 2000);
+              }
+            }
+          }, 500); // Small delay before restart
         } else {
           isListening = false;
           setListeningUI(false);
@@ -930,6 +946,62 @@
     populateLanguages();
     log("Meeting ID: " + meetingId);
     log("Ready. Mode: Transcribe + Speaker Detection. Auto-Save to public.transcripts every 10s.");
+
+    // ==========================
+    // AUTO-START on page load (for background/iframe usage)
+    // ==========================
+    const autoStartParam = new URLSearchParams(window.location.search).get("autostart");
+    const isEmbedded = window.self !== window.top; // Check if in iframe
+    
+    if (autoStartParam === "true" || isEmbedded) {
+      log("Auto-starting transcription...");
+      setTimeout(() => {
+        startListening();
+      }, 1000); // Give browser time to initialize
+    }
+
+    // ==========================
+    // VISIBILITY CHANGE HANDLER (keep running in background)
+    // ==========================
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && isListening && recognition) {
+        // Page became visible again, ensure recognition is still running
+        log("Tab focused, checking STT status...");
+        // The recognition should auto-resume via onend, but force check
+      }
+    });
+
+    // ==========================
+    // KEEP-ALIVE: Prevent page from sleeping
+    // ==========================
+    let keepAliveInterval = null;
+    function startKeepAlive() {
+      if (keepAliveInterval) return;
+      keepAliveInterval = setInterval(() => {
+        // Tiny no-op to keep JS engine alive
+        const _ = Date.now();
+      }, 5000);
+    }
+    
+    function stopKeepAlive() {
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+        keepAliveInterval = null;
+      }
+    }
+
+    // Start keep-alive when listening starts
+    const origStartListening = startListening;
+    startListening = async function() {
+      startKeepAlive();
+      return origStartListening();
+    };
+
+    const origStopListening = stopListening;
+    stopListening = function() {
+      stopKeepAlive();
+      return origStopListening();
+    };
 
   </script>
 </body>

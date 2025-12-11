@@ -51,20 +51,27 @@ create index IF not exists idx_transcripts_meeting on public.transcripts using b
 -- Enable Row Level Security and allow anon
 ALTER TABLE public.transcripts ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "Allow anon insert transcripts"
-  on public.transcripts
-  for insert
-  with check (true);
+-- Drop existing policies if they exist (safe to re-run)
+DROP POLICY IF EXISTS "Allow anon insert transcripts" ON public.transcripts;
+DROP POLICY IF EXISTS "Allow anon select transcripts" ON public.transcripts;
+DROP POLICY IF EXISTS "Allow anon update transcripts" ON public.transcripts;
 
-create policy if not exists "Allow anon select transcripts"
-  on public.transcripts
-  for select
-  using (true);
+-- Create RLS policies for anonymous access
+CREATE POLICY "Allow anon insert transcripts"
+  ON public.transcripts
+  FOR INSERT
+  WITH CHECK (true);
 
-create policy if not exists "Allow anon update transcripts"
-  on public.transcripts
-  for update
-  using (true);
+CREATE POLICY "Allow anon select transcripts"
+  ON public.transcripts
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow anon update transcripts"
+  ON public.transcripts
+  FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
 
 
 -- Index for fast meeting lookup

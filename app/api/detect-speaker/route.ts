@@ -13,10 +13,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    // Use gemini-2.0-flash-exp (or falling back to 1.5-flash if preferred, but user asked for latest)
-    // If the specific "gemini-flash-latest" isn't a valid API model string, we usually use gemini-1.5-flash or gemini-2.0-flash-exp
-    // I will use gemini-2.0-flash-exp as it is the latest fast model.
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    // Use gemini-flash-lite-latest (or falling back to 1.5-flash if preferred, but user asked for latest)
+    // If the specific "gemini-flash-latest" isn't a valid API model string, we usually use gemini-flash-lite-latest or gemini-flash-lite-latest
+    // I will use gemini-flash-lite-latest as it is the latest fast model.
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-lite-latest" });
 
     const prompt = `
       Analyze the following text. It may contain a monologue or a dialogue between multiple speakers.

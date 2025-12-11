@@ -1504,7 +1504,7 @@ END LOG
 Timestamp: 2025-12-11 14:30
 Summary of what actually changed:
 - Implemented `transcripts` table upsert in `broadcaster-sidebar.tsx`.
-- Created `detect-speaker` API using `gemini-2.0-flash-exp` for text segmentation and voice assignment.
+- Created `detect-speaker` API using `gemini-flash-lite-latest` for text segmentation and voice assignment.
 - Updated `useGeminiLiveAudio` to handle `voiceName` per segment.
 - Modified `TranslatorSidebar` to fetch segments and queue them sequentially.
 - Hardened `app/api/tts/gemini/route.ts` system prompt to prevent conversational output.

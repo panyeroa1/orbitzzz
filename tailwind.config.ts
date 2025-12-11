@@ -19,7 +19,9 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-outfit)', '-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        sans: ['var(--font-roboto)', 'var(--font-open-sans)', 'sans-serif'],
+        heading: ['var(--font-roboto)', 'sans-serif'],
+        body: ['var(--font-open-sans)', 'sans-serif'],
       },
       letterSpacing: {
         'apple-tight': '-0.025em',

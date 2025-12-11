@@ -13,11 +13,24 @@ interface UseGeminiTranscriptionProps {
 }
 
 export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTranscriptionProps) => {
-    // ...
-    
+    const [state, setState] = useState<GeminiTranscriptionState>({
+        transcript: '',
+        isConnected: false,
+        isKeyActive: false,
+        error: null,
+    });
+
+    const wsRef = useRef<WebSocket | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+
     const connect = useCallback(async () => {
         try {
-            setState(prev => ({ ...prev, isKeyActive: true }));
+            // Check for API Key indirectly by checking if server connects (Server validates key)
+            // Ideally we check if NEXT_PUBLIC_GEMINI_API_KEY exists if we were connecting directly, 
+            // but here we connect to our local relay server.
+            
+            setState(prev => ({ ...prev, isKeyActive: true })); // Assume active if we try to connect
 
             const wsUrl = `ws://localhost:8001?mode=transcription&session_id=${sessionId}&user_id=${userId}`;
             const ws = new WebSocket(wsUrl);
@@ -82,7 +95,7 @@ export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTrans
         } catch (error: any) {
             setState(prev => ({ ...prev, error: error.message }));
         }
-    }, []);
+    }, [sessionId, userId]);
 
     const disconnect = useCallback(() => {
         if (wsRef.current) {

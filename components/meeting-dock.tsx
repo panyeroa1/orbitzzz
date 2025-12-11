@@ -61,12 +61,12 @@ function ControlIcon({ icon: Icon, label, isActive, isDestructive, mouseX, onCli
         {/* Icon Container */}
         <motion.div
           className={cn(
-            "aspect-square w-full rounded-full flex items-center justify-center transition-all duration-200 shadow-lg border border-white/10",
+            "aspect-square w-full rounded-xl flex items-center justify-center transition-all duration-200 shadow-md border border-white/10",
             isDestructive 
-              ? "bg-red-500 hover:bg-red-600" 
+              ? "bg-red-500/80 hover:bg-red-500" 
               : isActive 
-                ? "bg-white text-black" 
-                : "bg-dark-3 hover:bg-dark-4 text-white"
+                ? "bg-white text-black shadow-lg shadow-white/20" 
+                : "bg-black/40 hover:bg-black/60 text-white"
           )}
         >
           <Icon size={20} className={cn(isDestructive ? "text-white" : "", isActive ? "text-black" : "text-white")} />
@@ -104,7 +104,7 @@ export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, 
       <motion.div
         onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
         onMouseLeave={() => mouseX.set(Infinity)}
-        className="flex items-end gap-3 px-6 py-3 bg-black/20 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl pointer-events-auto"
+        className="flex items-end gap-3 px-4 py-3 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[24px] shadow-2xl pointer-events-auto"
       >
         {/* Microphone */}
         <ControlIcon

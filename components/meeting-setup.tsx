@@ -1,5 +1,3 @@
-"use client";
-
 import {
   DeviceSettings,
   VideoPreview,
@@ -81,8 +79,18 @@ export const MeetingSetup = ({ setIsSetupComplete }: MeetingSetupProps) => {
 
       <Button
         className="rounded-md bg-green-500 px-4 py-2.5"
-        onClick={() => {
-          call.join();
+        onClick={async () => {
+          await call.join({
+            create: true,
+            data: {
+              settings_override: {
+                waiting_room: {
+                  enabled: true,
+                  join_policy: "request_to_join",
+                }
+              } as any
+            }
+          });
 
           setIsSetupComplete(true);
         }}

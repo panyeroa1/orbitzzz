@@ -8,22 +8,12 @@ import {
   useCallStateHooks,
   useCall,
 } from "@stream-io/video-react-sdk";
-import { LayoutList, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-import { EndCallButton } from "./end-call-button";
 import { Loader } from "./loader";
 import { TranslationModal } from "./translation-modal";
 
@@ -77,12 +67,18 @@ export const MeetingRoom = () => {
 
 
 
-
-
+      
       {/* Meeting Dock Controls */}
       <MeetingDock 
         onLeave={() => router.push("/")}
         onToggleParticipants={() => setShowParticipants((prev) => !prev)}
+        onToggleLayout={() => {
+            setLayout((prev) => {
+              if (prev === "speaker-left") return "grid";
+              if (prev === "grid") return "speaker-right";
+              return "speaker-left";
+            });
+        }}
         onToggleBroadcast={() => {
             const meetingId = call?.id || "unknown";
             // Open local broadcaster page which embeds the external tool

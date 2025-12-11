@@ -2,8 +2,8 @@
 
 import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
 import { 
-  Mic, MicOff, Video, VideoOff, MonitorUp, Users, 
-  PhoneOff, Settings, Radio, LayoutList
+  Mic, MicOff, Video, VideoOff, Users, 
+  PhoneOff, Radio, LayoutList
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCall, useCallStateHooks } from "@stream-io/video-react-sdk";

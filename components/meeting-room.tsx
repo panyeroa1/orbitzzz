@@ -77,7 +77,7 @@ export const MeetingRoom = () => {
 
 
 
-import { MeetingDock } from "./meeting-dock";
+
 
       {/* Meeting Dock Controls */}
       <MeetingDock 

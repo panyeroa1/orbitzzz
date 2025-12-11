@@ -7,7 +7,7 @@ import {
   useCall,
 } from "@stream-io/video-react-sdk";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Loader } from "./loader";
@@ -31,6 +31,32 @@ export const MeetingRoom = () => {
   // Track which background services have been activated (to keep running)
   const [broadcasterActive, setBroadcasterActive] = useState(false);
   const [translatorActive, setTranslatorActive] = useState(false);
+
+  // Auto-hide controls logic
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const AUTO_HIDE_DELAY = 12000;
+
+  const resetHideTimer = useCallback(() => {
+    setIsControlsVisible(true);
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = setTimeout(() => setIsControlsVisible(false), AUTO_HIDE_DELAY);
+  }, []);
+
+  const handleUserActivity = useCallback(() => {
+    resetHideTimer();
+  }, [resetHideTimer]);
+
+  useEffect(() => {
+    resetHideTimer();
+    const events = ["mousemove", "mousedown", "touchstart", "keydown", "scroll"];
+    events.forEach((ev) => document.addEventListener(ev, handleUserActivity, { passive: true }));
+    return () => {
+      events.forEach((ev) => document.removeEventListener(ev, handleUserActivity));
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    };
+  }, [handleUserActivity, resetHideTimer]);
+
 
   // Call State Hooks
   const { useCallCallingState, useMicrophoneState, useCameraState } =
@@ -99,14 +125,22 @@ export const MeetingRoom = () => {
         </div>
       </div>
 
-      {/* PERSISTENT BACKGROUND IFRAMES */}
-      
-      {/* Broadcaster */}
+      {/* Main Video Area - Full Screen & Floating */}
+      {/* Dynamic padding based on visibility of bottom controls */}
+      <div className={`absolute inset-0 z-0 p-4 transition-all duration-500 ease-in-out ${isControlsVisible ? "pb-24" : "pb-4"}`}>
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 bg-black/50 shadow-2xl backdrop-blur-sm [&_.str-video]:h-full [&_.str-video]:w-full [&_.str-video__video]:h-full [&_.str-video__video]:w-full [&_.str-video__video]:object-cover">
+          <CallLayout />
+        </div>
+      </div>
+
+      {/* SIDEBARS: All sidebars are now floating overlays to prevent video resizing */}
+
+      {/* Persistent: Broadcaster */}
       {broadcasterActive && (
         <div 
           className={`absolute z-30 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             activeSidebar === "broadcaster" 
-              ? "right-4 top-4 bottom-24 w-[400px] rounded-3xl border border-white/10 shadow-2xl overflow-hidden" 
+              ? `right-4 top-4 w-[400px] rounded-3xl border border-white/10 shadow-2xl overflow-hidden ${isControlsVisible ? "bottom-24" : "bottom-4"}` 
               : "pointer-events-none fixed -left-[9999px] top-0 h-[1px] w-[1px] opacity-0"
           }`}
         >
@@ -129,12 +163,12 @@ export const MeetingRoom = () => {
         </div>
       )}
 
-      {/* Translator */}
+      {/* Persistent: Translator */}
       {translatorActive && (
         <div 
           className={`absolute z-30 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             activeSidebar === "translator" 
-              ? "right-4 top-4 bottom-24 w-[400px] rounded-3xl border border-white/10 shadow-2xl overflow-hidden" 
+              ? `right-4 top-4 w-[400px] rounded-3xl border border-white/10 shadow-2xl overflow-hidden ${isControlsVisible ? "bottom-24" : "bottom-4"}` 
               : "pointer-events-none fixed -left-[9999px] top-0 h-[1px] w-[1px] opacity-0"
           }`}
         >
@@ -157,50 +191,43 @@ export const MeetingRoom = () => {
         </div>
       )}
 
-      {/* Main Layout Area */}
-      <div className="absolute inset-0 flex p-4 pb-24 gap-4">
-        {/* Video Area - Floating Card */}
-        <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/10 bg-black/50 shadow-2xl backdrop-blur-sm [&_.str-video]:h-full [&_.str-video]:w-full [&_.str-video__video]:h-full [&_.str-video__video]:w-full [&_.str-video__video]:object-cover">
-          <CallLayout />
-        </div>
+      {/* Dynamic: Participants / Donation (Now also floating) */}
+      <AnimatePresence mode="wait">
+        {activeSidebar && activeSidebar !== "broadcaster" && activeSidebar !== "translator" && (
+          <motion.div
+            initial={{ x: 400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 400, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className={`absolute right-4 top-4 z-40 w-[400px] flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/80 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-in-out ${isControlsVisible ? "bottom-24" : "bottom-4"}`}
+          >
+            {/* Sidebar Header */}
+            <div className="flex h-[60px] shrink-0 items-center justify-between border-b border-white/10 bg-white/5 px-6">
+              <h2 className="text-sm font-semibold capitalize text-white/90">
+                {activeSidebar}
+              </h2>
+              <button
+                onClick={() => setActiveSidebar(null)}
+                className="rounded-full bg-white/5 p-2 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Close sidebar"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
 
-        {/* Dynamic Sidebar (Participants/Donation) */}
-        <AnimatePresence mode="wait">
-          {activeSidebar && activeSidebar !== "broadcaster" && activeSidebar !== "translator" && (
-            <motion.div
-              initial={{ width: 0, opacity: 0, scale: 0.95 }}
-              animate={{ width: 400, opacity: 1, scale: 1 }}
-              exit={{ width: 0, opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="z-40 flex h-full shrink-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-xl"
-            >
-              {/* Sidebar Header */}
-              <div className="flex h-[60px] shrink-0 items-center justify-between border-b border-white/10 bg-white/5 px-6">
-                <h2 className="text-sm font-semibold capitalize text-white/90">
-                  {activeSidebar}
-                </h2>
-                <button
-                  onClick={() => setActiveSidebar(null)}
-                  className="rounded-full bg-white/5 p-2 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-                  aria-label="Close sidebar"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Sidebar Content */}
-              <div className="flex-1 overflow-hidden">
-                <SidebarContent />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+            {/* Sidebar Content */}
+            <div className="flex-1 overflow-hidden">
+              <SidebarContent />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Bottom Control Bar */}
       <MeetingBottomBar
+        isVisible={isControlsVisible}
         isMicEnabled={isMicEnabled}
         isCamEnabled={isCamEnabled}
         onLeave={() => router.push("/")}

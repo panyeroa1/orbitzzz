@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React from "react";
 import {
   Mic,
   MicOff,
@@ -19,6 +19,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface MeetingBottomBarProps {
+  isVisible: boolean;
   onLeave: () => void;
   onToggleParticipants: () => void;
   onToggleBroadcast: () => void;
@@ -29,6 +30,7 @@ interface MeetingBottomBarProps {
 }
 
 export const MeetingBottomBar = ({
+  isVisible,
   onLeave,
   onToggleParticipants,
   onToggleBroadcast,
@@ -38,30 +40,6 @@ export const MeetingBottomBar = ({
   isCamEnabled,
 }: MeetingBottomBarProps) => {
   const call = useCall();
-
-  const [isVisible, setIsVisible] = useState(true);
-  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const AUTO_HIDE_DELAY = 12000;
-
-  const resetHideTimer = useCallback(() => {
-    setIsVisible(true);
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    hideTimeoutRef.current = setTimeout(() => setIsVisible(false), AUTO_HIDE_DELAY);
-  }, []);
-
-  const handleUserActivity = useCallback(() => {
-    resetHideTimer();
-  }, [resetHideTimer]);
-
-  useEffect(() => {
-    resetHideTimer();
-    const events = ["mousemove", "mousedown", "touchstart", "keydown", "scroll"];
-    events.forEach((ev) => document.addEventListener(ev, handleUserActivity, { passive: true }));
-    return () => {
-      events.forEach((ev) => document.removeEventListener(ev, handleUserActivity));
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    };
-  }, [handleUserActivity, resetHideTimer]);
 
   const buttons = [
     {

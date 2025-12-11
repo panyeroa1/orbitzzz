@@ -2,1046 +2,463 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Eburon · Broadcaster (Transcribe Only)</title>
+  <title>Orbits Broadcaster</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Supabase JS v2 -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
   <style>
     :root {
-      --bg: #0d0f18;
-      --card: #1c1f2e;
-      --accent: #00e0ff;
-      --accent-soft: rgba(0, 224, 255, 0.1);
-      --text-main: #ffffff;
-      --text-soft: #9ca3af;
+      --bg: #000000;
+      --text: #ffffff;
+      --text-dim: rgba(255, 255, 255, 0.5);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #2563eb;
       --danger: #ef4444;
-      --border-subtle: rgba(255, 255, 255, 0.08);
+      --success: #10b981;
     }
 
     * { box-sizing: border-box; }
-
+    
     body {
       margin: 0;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-      background: linear-gradient(180deg, #0d0f18 0%, #161925 50%, #1C1F2E 100%);
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .shell {
-      width: 100%;
-      max-width: 1200px;
-      background: rgba(28, 31, 46, 0.8);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      padding: 24px;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+      background: var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      overflow: hidden;
     }
 
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Minimalist Header */
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
 
     .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent), #006dff);
-      box-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
-      position: relative;
-    }
-
-    .brand-main {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff, var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .brand-sub {
-      font-size: 0.875rem;
-      color: var(--text-soft);
-      font-weight: 500;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.875rem;
-      color: var(--text-soft);
-      background: rgba(255, 255, 255, 0.03);
-      font-weight: 500;
-    }
-
-    .pill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      gap: 20px;
-    }
-
-    @media (max-width: 880px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-
-    .card {
-      background: rgba(37, 42, 65, 0.4);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      transition: all 0.3s ease;
-    }
-
-    .card:hover {
-      border-color: rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .card-title {
-      font-size: 1rem;
+      font-size: 14px;
       font-weight: 600;
-      letter-spacing: -0.01em;
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--text-main);
     }
 
-    .card-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-    }
-
-    .status-pill {
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.813rem;
-      color: var(--text-soft);
-      background: rgba(0, 0, 0, 0.3);
-      display: inline-flex;
+    .status-badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-dim);
+      display: flex;
       align-items: center;
-      gap: 8px;
-      font-weight: 500;
+      gap: 6px;
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: #6b7280;
+      background: var(--text-dim);
+    }
+    
+    .status-badge.live { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .status-badge.live .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+    /* Controls Grid */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
     }
 
-    .status-dot.live {
-      background: #10b981;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
-      animation: blink 1.5s infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    .label {
-      font-size: 0.875rem;
-      color: var(--text-soft);
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
-
-    select, input, textarea {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--text-main);
-      font-size: 0.938rem;
-      padding: 12px 14px;
+    select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
       outline: none;
-      transition: all 0.2s ease;
-      font-family: inherit;
+      width: 100%;
+      cursor: pointer;
     }
 
-    select { cursor: pointer; }
-
-    textarea {
-      resize: vertical;
-      min-height: 200px;
-      max-height: 400px;
-      line-height: 1.6;
-      font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    .button-group {
+      display: flex;
+      gap: 8px;
     }
-
-    select:focus, input:focus, textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 224, 255, 0.1);
-      background: rgba(0, 0, 0, 0.4);
-    }
-
-    .row { display: flex; flex-wrap: wrap; gap: 12px; }
-    .col { flex: 1 1 0; min-width: 0; }
-
-    .field-group { display: flex; flex-direction: column; gap: 8px; }
 
     button {
+      background: rgba(255,255,255,0.08);
       border: none;
-      outline: none;
-      border-radius: 12px;
-      font-size: 0.938rem;
-      font-weight: 600;
-      padding: 12px 24px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #006dff);
-      color: #000000;
-      box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3);
-    }
-    
-    .btn-primary:hover:enabled {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 224, 255, 0.4);
-    }
-
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-main);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .btn-ghost:hover:enabled {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
-    }
-
-    button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    .log {
-      font-size: 0.813rem;
-      color: var(--text-soft);
-      max-height: 100px;
-      overflow-y: auto;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.2);
+      color: var(--text);
+      padding: 8px 16px;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    .log-line { margin-bottom: 4px; font-family: monospace; }
-    .log-line.error { color: var(--danger); }
-
-    #screenPreview {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.3);
-      max-height: 200px;
-      object-fit: contain;
-      display: none;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.813rem;
-      color: var(--text-soft);
-      background: rgba(0, 0, 0, 0.2);
+      font-size: 13px;
       font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .footer-note {
-      font-size: 0.813rem;
-      color: var(--text-soft);
-      text-align: center;
-      padding-top: 12px;
+    button:hover:not(:disabled) { background: rgba(255,255,255,0.15); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    button.primary { background: var(--text); color: black; }
+    button.primary:hover:not(:disabled) { background: #e5e5e5; }
+
+    /* Transcript Area */
+    .transcript-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    textarea {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      width: 100%;
+    }
+
+    textarea::placeholder { color: var(--text-dim); }
+
+    /* Utilities */
+    .logs {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: monospace;
+      padding: 8px;
+      border-top: 1px solid var(--border);
+      max-height: 60px;
+      overflow-y: auto;
     }
     
-    .footer-note code {
-      background: rgba(0, 224, 255, 0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: var(--accent);
-      font-family: monospace;
-      font-size: 0.875em;
+    #screenPreview {
+      display: none;
+      width: 120px;
+      height: 68px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      background: black;
+      z-index: 10;
     }
+
+    /* Hidden Select Elements if minimal */
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <div class="shell">
+
+  <div class="container">
+    <!-- Header -->
     <div class="header">
       <div class="brand">
-        <div class="brand-logo"></div>
-        <div>
-          <div class="brand-main">Eburon</div>
-          <div class="brand-sub">Broadcaster</div>
-        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5 10 10 0 0 0-10 10 10 10 0 0 0 10 10z"/></svg>
+        Broadcaster
       </div>
-      <div class="pill">
-        <span class="pill-dot"></span>
-        <span></span>
+      <div id="statusBadge" class="status-badge">
+        <span class="status-dot"></span>
+        <span id="statusText">Idle</span>
       </div>
     </div>
 
-    <div class="grid">
-      <!-- LEFT: Configuration -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <span class="card-dot"></span>
-            <span>Configuration</span>
-          </div>
-          <div class="status-pill">
-            <span id="statusDot" class="status-dot"></span>
-            <span id="statusText">Idle</span>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <div class="label">Input Language</div>
-          <select id="sourceLang" title="Select Input Language"></select>
-        </div>
-
-        <div class="field-group">
-          <div class="row">
-            <div class="col">
-              <div class="label">Audio source</div>
-              <select id="audioSource" title="Select Audio Source">
-                <option value="screen" selected>Screen / tab + audio</option>
-                <option value="mic">Mic / device</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <div class="row">
-            <div class="col">
-              <button id="shareBtn" class="btn-ghost" type="button">Share screen</button>
-              <button id="startBtn" class="btn-primary" type="button">Start</button>
-              <button id="stopBtn" class="btn-ghost" type="button" disabled>Stop</button>
-            </div>
-          </div>
-          <div class="log" id="log"></div>
-        </div>
-        
-        <video id="screenPreview" autoplay muted playsinline></video>
+    <!-- Minimal Controls -->
+    <div class="controls">
+      <div style="display:flex; gap:8px;">
+        <select id="sourceLang" style="max-width: 180px;" aria-label="Input Language"></select>
+        <select id="audioSource" style="max-width: 140px;" aria-label="Audio Source">
+           <option value="screen" selected>Screen Audio</option>
+           <option value="mic">Microphone</option>
+        </select>
       </div>
-
-      <!-- RIGHT: Transcript Feed -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <span class="card-dot"></span>
-            <span>Live Transcript</span>
-          </div>
-          <span class="badge">
-            <span style="width:7px;height:7px;border-radius:999px;background:var(--accent);box-shadow:0 0 8px var(--accent);"></span>
-            <span id="dbStatus">Supabase</span>
-          </span>
-        </div>
-
-        <div class="field-group">
-          <textarea id="transcript" placeholder="Listening..."></textarea>
-        </div>
-
-        <div class="footer-note">
-          Data saved to <code>transcripts</code> every 10 seconds with speaker detection.
-        </div>
+      <div class="button-group">
+        <button id="shareBtn">Share Screen</button>
+        <button id="startBtn" class="primary">Start</button>
+        <button id="stopBtn" disabled>Stop</button>
       </div>
     </div>
+
+    <!-- Transcript -->
+    <div class="transcript-container">
+      <textarea id="transcript" placeholder="Transcript will appear here in real-time..." readonly></textarea>
+      <video id="screenPreview" autoplay muted playsinline></video>
+    </div>
+
+    <!-- Logs -->
+    <div class="logs" id="log"></div>
   </div>
 
   <script>
     // ==========================
-    // Supabase config (anon)
+    // Configuration
     // ==========================
     const SUPABASE_URL = "https://bridhpobwsfttwalwhih.supabase.co";
     const SUPABASE_KEY = "sb_publishable_fc4iX_EGxN1Pzc4Py_SOog_8KJyvdQU";
 
-    // Initialize Supabase (defensive in case script fails to load)
+    // Initialize Supabase
     let supabaseClient = null;
     try {
       const { createClient } = window.supabase;
       supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch (err) {
       console.error("Supabase init failed", err);
-      alert("Supabase failed to load. Check connection.");
     }
 
-    // Anonymous client id per browser session
+    // State
     const ANON_CLIENT_ID_KEY = "eburon_anon_client_id";
     let anonClientId = localStorage.getItem(ANON_CLIENT_ID_KEY);
     if (!anonClientId) {
-      anonClientId = crypto.randomUUID ? crypto.randomUUID() : "client-" + Math.random().toString(36).slice(2);
+      anonClientId = crypto.randomUUID ? crypto.randomUUID() : "client-" + Date.now();
       localStorage.setItem(ANON_CLIENT_ID_KEY, anonClientId);
     }
     
-    // Session ID for 'transcripts' table
-    let currentSessionId = "";
-    let currentRecordId = "";
-
-    // Resolve meeting_id from query/referrer/local storage so it never saves as null
-    const MEETING_ID_KEY = "eburon_last_meeting_id";
+    // Meeting ID Resolution
     function resolveMeetingId() {
       try {
         const params = new URLSearchParams(window.location.search);
-        const fromQuery = params.get("meeting_id") || params.get("id");
-
-        // Try to infer from referrer (e.g., when iframe src lacks query params)
-        let fromReferrer = null;
-        if (document.referrer) {
-          try {
-            const refUrl = new URL(document.referrer);
-            fromReferrer =
-              refUrl.searchParams.get("meeting_id") ||
-              refUrl.searchParams.get("id");
-
-            if (!fromReferrer) {
-              const parts = refUrl.pathname.split("/").filter(Boolean);
-              const meetingIdx = parts.indexOf("meeting");
-              if (meetingIdx !== -1 && parts[meetingIdx + 1]) {
-                fromReferrer = parts[meetingIdx + 1];
-              }
-            }
-          } catch (_) {
-            // ignore referrer parse issues
-          }
-        }
-
-        const fromStorage = localStorage.getItem(MEETING_ID_KEY);
-        const resolved = fromQuery || fromReferrer || fromStorage || `standalone-${anonClientId}`;
-        localStorage.setItem(MEETING_ID_KEY, resolved);
-        return resolved;
-      } catch (err) {
-        console.warn("Meeting ID resolution failed, using standalone id", err);
-        return `standalone-${anonClientId}`;
-      }
+        return params.get("meeting_id") || localStorage.getItem("eburon_last_meeting_id") || "standalone-" + anonClientId;
+      } catch { return "error-" + anonClientId; }
     }
-
     const meetingId = resolveMeetingId();
+    localStorage.setItem("eburon_last_meeting_id", meetingId);
 
-    const dbStatusEl = document.getElementById("dbStatus");
-    const logEl = document.getElementById("log");
-
-    function log(msg, isError = false) {
-      const line = document.createElement("div");
-      line.className = "log-line" + (isError ? " error" : "");
-      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-      logEl.prepend(line);
-    }
-
-    dbStatusEl.textContent = "Supabase ready";
-
-    // ==========================
     // DOM Elements
-    // ==========================
-    const $ = (id) => document.getElementById(id);
-    const audioSourceSel = $("audioSource");
-    const sourceLangSelect = $("sourceLang");
-    const shareBtn = $("shareBtn");
-    const startBtn = $("startBtn");
-    const stopBtn = $("stopBtn");
-    const screenPreview = $("screenPreview");
-    const statusDot = $("statusDot");
-    const statusText = $("statusText");
-    const transcriptEl = $("transcript");
+    const logEl = document.getElementById("log");
+    const statusBadge = document.getElementById("statusBadge");
+    const statusText = document.getElementById("statusText");
+    const transcriptEl = document.getElementById("transcript");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const screenPreview = document.getElementById("screenPreview");
+    const sourceLangSelect = document.getElementById("sourceLang");
+    const audioSourceSel = document.getElementById("audioSource");
 
-    function setListeningUI(on) {
-      if (on) {
-        statusDot.classList.add("live");
-        statusText.textContent = "Live";
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-        if(audioSourceSel.value === 'screen') screenPreview.style.display = "block";
-      } else {
-        statusDot.classList.remove("live");
-        statusText.textContent = "Idle";
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-      }
+    function log(msg) {
+      logEl.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
     }
 
     // ==========================
-    // Comprehensive Language List
-    // ==========================
-    const ALL_LANGUAGES = [
-        { code: "", label: "✨ Auto-detect (Recommended)" },
-        { code: "af-ZA", label: "Afrikaans (South Africa)" },
-        { code: "sq-AL", label: "Albanian (Albania)" },
-        { code: "am-ET", label: "Amharic (Ethiopia)" },
-        { code: "ar-DZ", label: "Arabic (Algeria)" },
-        { code: "ar-BH", label: "Arabic (Bahrain)" },
-        { code: "ar-EG", label: "Arabic (Egypt)" },
-        { code: "ar-IQ", label: "Arabic (Iraq)" },
-        { code: "ar-IL", label: "Arabic (Israel)" },
-        { code: "ar-JO", label: "Arabic (Jordan)" },
-        { code: "ar-KW", label: "Arabic (Kuwait)" },
-        { code: "ar-LB", label: "Arabic (Lebanon)" },
-        { code: "ar-MA", label: "Arabic (Morocco)" },
-        { code: "ar-OM", label: "Arabic (Oman)" },
-        { code: "ar-QA", label: "Arabic (Qatar)" },
-        { code: "ar-SA", label: "Arabic (Saudi Arabia)" },
-        { code: "ar-PS", label: "Arabic (State of Palestine)" },
-        { code: "ar-TN", label: "Arabic (Tunisia)" },
-        { code: "ar-AE", label: "Arabic (United Arab Emirates)" },
-        { code: "ar-YE", label: "Arabic (Yemen)" },
-        { code: "hy-AM", label: "Armenian (Armenia)" },
-        { code: "az-AZ", label: "Azerbaijani (Azerbaijan)" },
-        { code: "eu-ES", label: "Basque (Spain)" },
-        { code: "bn-BD", label: "Bengali (Bangladesh)" },
-        { code: "bn-IN", label: "Bengali (India)" },
-        { code: "bs-BA", label: "Bosnian (Bosnia and Herzegovina)" },
-        { code: "bg-BG", label: "Bulgarian (Bulgaria)" },
-        { code: "my-MM", label: "Burmese (Myanmar)" },
-        { code: "ca-ES", label: "Catalan (Spain)" },
-        { code: "zh-CN", label: "Chinese, Mandarin (Simplified, China)" },
-        { code: "zh-HK", label: "Chinese, Cantonese (Traditional, Hong Kong)" },
-        { code: "zh-TW", label: "Chinese, Mandarin (Traditional, Taiwan)" },
-        { code: "hr-HR", label: "Croatian (Croatia)" },
-        { code: "cs-CZ", label: "Czech (Czech Republic)" },
-        { code: "da-DK", label: "Danish (Denmark)" },
-        { code: "nl-BE", label: "Dutch (Belgium)" },
-        { code: "nl-NL", label: "Dutch (Netherlands)" },
-        { code: "en-AU", label: "English (Australia)" },
-        { code: "en-CA", label: "English (Canada)" },
-        { code: "en-GH", label: "English (Ghana)" },
-        { code: "en-HK", label: "English (Hong Kong)" },
-        { code: "en-IN", label: "English (India)" },
-        { code: "en-IE", label: "English (Ireland)" },
-        { code: "en-KE", label: "English (Kenya)" },
-        { code: "en-NZ", label: "English (New Zealand)" },
-        { code: "en-NG", label: "English (Nigeria)" },
-        { code: "en-PK", label: "English (Pakistan)" },
-        { code: "en-PH", label: "English (Philippines)" },
-        { code: "en-SG", label: "English (Singapore)" },
-        { code: "en-ZA", label: "English (South Africa)" },
-        { code: "en-TZ", label: "English (Tanzania)" },
-        { code: "en-GB", label: "English (United Kingdom)" },
-        { code: "en-US", label: "English (United States)" },
-        { code: "et-EE", label: "Estonian (Estonia)" },
-        { code: "fil-PH", label: "Filipino (Philippines)" },
-        { code: "fi-FI", label: "Finnish (Finland)" },
-        { code: "fr-BE", label: "French (Belgium)" },
-        { code: "fr-CA", label: "French (Canada)" },
-        { code: "fr-FR", label: "French (France)" },
-        { code: "fr-CH", label: "French (Switzerland)" },
-        { code: "gl-ES", label: "Galician (Spain)" },
-        { code: "ka-GE", label: "Georgian (Georgia)" },
-        { code: "de-AT", label: "German (Austria)" },
-        { code: "de-DE", label: "German (Germany)" },
-        { code: "de-CH", label: "German (Switzerland)" },
-        { code: "el-GR", label: "Greek (Greece)" },
-        { code: "gu-IN", label: "Gujarati (India)" },
-        { code: "he-IL", label: "Hebrew (Israel)" },
-        { code: "hi-IN", label: "Hindi (India)" },
-        { code: "hu-HU", label: "Hungarian (Hungary)" },
-        { code: "is-IS", label: "Icelandic (Iceland)" },
-        { code: "id-ID", label: "Indonesian (Indonesia)" },
-        { code: "it-IT", label: "Italian (Italy)" },
-        { code: "it-CH", label: "Italian (Switzerland)" },
-        { code: "ja-JP", label: "Japanese (Japan)" },
-        { code: "jv-ID", label: "Javanese (Indonesia)" },
-        { code: "kn-IN", label: "Kannada (India)" },
-        { code: "kk-KZ", label: "Kazakh (Kazakhstan)" },
-        { code: "km-KH", label: "Khmer (Cambodia)" },
-        { code: "ko-KR", label: "Korean (South Korea)" },
-        { code: "lo-LA", label: "Lao (Laos)" },
-        { code: "lv-LV", label: "Latvian (Latvia)" },
-        { code: "lt-LT", label: "Lithuanian (Lithuania)" },
-        { code: "mk-MK", label: "Macedonian (North Macedonia)" },
-        { code: "ms-MY", label: "Malay (Malaysia)" },
-        { code: "ml-IN", label: "Malayalam (India)" },
-        { code: "mr-IN", label: "Marathi (India)" },
-        { code: "mn-MN", label: "Mongolian (Mongolia)" },
-        { code: "ne-NP", label: "Nepali (Nepal)" },
-        { code: "no-NO", label: "Norwegian Bokmål (Norway)" },
-        { code: "fa-IR", label: "Persian (Iran)" },
-        { code: "pl-PL", label: "Polish (Poland)" },
-        { code: "pt-BR", label: "Portuguese (Brazil)" },
-        { code: "pt-PT", label: "Portuguese (Portugal)" },
-        { code: "pa-IN", label: "Punjabi (India)" },
-        { code: "ro-RO", label: "Romanian (Romania)" },
-        { code: "ru-RU", label: "Russian (Russia)" },
-        { code: "sr-RS", label: "Serbian (Serbia)" },
-        { code: "si-LK", label: "Sinhala (Sri Lanka)" },
-        { code: "sk-SK", label: "Slovak (Slovakia)" },
-        { code: "sl-SI", label: "Slovenian (Slovenia)" },
-        { code: "es-AR", label: "Spanish (Argentina)" },
-        { code: "es-BO", label: "Spanish (Bolivia)" },
-        { code: "es-CL", label: "Spanish (Chile)" },
-        { code: "es-CO", label: "Spanish (Colombia)" },
-        { code: "es-CR", label: "Spanish (Costa Rica)" },
-        { code: "es-DO", label: "Spanish (Dominican Republic)" },
-        { code: "es-EC", label: "Spanish (Ecuador)" },
-        { code: "es-SV", label: "Spanish (El Salvador)" },
-        { code: "es-GT", label: "Spanish (Guatemala)" },
-        { code: "es-HN", label: "Spanish (Honduras)" },
-        { code: "es-MX", label: "Spanish (Mexico)" },
-        { code: "es-NI", label: "Spanish (Nicaragua)" },
-        { code: "es-PA", label: "Spanish (Panama)" },
-        { code: "es-PY", label: "Spanish (Paraguay)" },
-        { code: "es-PE", label: "Spanish (Peru)" },
-        { code: "es-PR", label: "Spanish (Puerto Rico)" },
-        { code: "es-ES", label: "Spanish (Spain)" },
-        { code: "es-US", label: "Spanish (United States)" },
-        { code: "es-UY", label: "Spanish (Uruguay)" },
-        { code: "es-VE", label: "Spanish (Venezuela)" },
-        { code: "su-ID", label: "Sundanese (Indonesia)" },
-        { code: "sw-KE", label: "Swahili (Kenya)" },
-        { code: "sw-TZ", label: "Swahili (Tanzania)" },
-        { code: "sv-SE", label: "Swedish (Sweden)" },
-        { code: "ta-IN", label: "Tamil (India)" },
-        { code: "ta-MY", label: "Tamil (Malaysia)" },
-        { code: "ta-SG", label: "Tamil (Singapore)" },
-        { code: "ta-LK", label: "Tamil (Sri Lanka)" },
-        { code: "te-IN", label: "Telugu (India)" },
-        { code: "th-TH", label: "Thai (Thailand)" },
-        { code: "tr-TR", label: "Turkish (Turkey)" },
-        { code: "uk-UA", label: "Ukrainian (Ukraine)" },
-        { code: "ur-IN", label: "Urdu (India)" },
-        { code: "ur-PK", label: "Urdu (Pakistan)" },
-        { code: "uz-UZ", label: "Uzbek (Uzbekistan)" },
-        { code: "vi-VN", label: "Vietnamese (Vietnam)" },
-        { code: "zu-ZA", label: "Zulu (South Africa)" }
-    ];
-
-    function populateLanguages() {
-      ALL_LANGUAGES.forEach((item) => {
-        const opt = document.createElement("option");
-        opt.value = item.code;
-        opt.textContent = item.label;
-        sourceLangSelect.appendChild(opt);
-      });
-      // Set Default to Auto (empty string in this list)
-      sourceLangSelect.value = "";
-    }
-
-    // ==========================
-    // Screen share logic
-    // ==========================
-    let screenStream = null;
-
-    async function startScreenShare() {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-          log("Screen share not supported.", true);
-          return null;
-        }
-        screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true
-        });
-        screenPreview.srcObject = screenStream;
-        log("Screen shared.");
-        return screenStream;
-      } catch (err) {
-        log("Screen share cancelled: " + (err.message || String(err)), true);
-        return null;
-      }
-    }
-
-    shareBtn.addEventListener("click", () => startScreenShare());
-
-    // ==========================
-    // Web Speech STT
+    // Core Logic
     // ==========================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
     let isListening = false;
     let stopRequested = false;
-    let isStarting = false;
-    let fullTranscript = "";
-    let restartTimer = null;
-    
-    // Save State
     let saveInterval = null;
     let lastSavedText = "";
+    let fullTranscript = "";
 
-    async function ensureMicPermission() {
+    function setUI(running) {
+      if (running) {
+        statusBadge.classList.add("live");
+        statusText.textContent = "Live";
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        shareBtn.disabled = true;
+        audioSourceSel.disabled = true;
+        sourceLangSelect.disabled = true;
+        if(audioSourceSel.value === 'screen') screenPreview.style.display = "block";
+      } else {
+        statusBadge.classList.remove("live");
+        statusText.textContent = "Idle";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        shareBtn.disabled = false;
+        audioSourceSel.disabled = false;
+        sourceLangSelect.disabled = false;
+         screenPreview.style.display = "none";
+      }
+    }
+
+    // Languages
+    const LANGUAGES = [
+      { code: "", label: "✨ Auto-detect" },
+      { code: "en-US", label: "English" },
+      { code: "es-ES", label: "Spanish" },
+      { code: "fr-FR", label: "French" },
+      { code: "de-DE", label: "German" },
+      { code: "zh-CN", label: "Chinese" },
+      { code: "ja-JP", label: "Japanese" },
+      { code: "fil-PH", label: "Filipino (Tagalog)" },
+      { code: "ceb-PH", label: "Cebuano (Bisaya)" },
+      { code: "ilo-PH", label: "Ilocano" },
+      { code: "hil-PH", label: "Hiligaynon (Ilonggo)" }
+    ];
+    LANGUAGES.forEach(l => {
+      const opt = document.createElement("option");
+      opt.value = l.code;
+      opt.textContent = l.label;
+      sourceLangSelect.appendChild(opt);
+    });
+
+    // Screen Share
+    async function startScreenShare() {
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        screenPreview.srcObject = stream;
+        log("Screen shared ready.");
       } catch (e) {
-        log("Mic permission blocked: " + e.message, true);
+        log("Screen share cancelled.");
       }
     }
+    shareBtn.onclick = startScreenShare;
 
-    function clearRestartTimer() {
-      if (restartTimer) {
-        clearTimeout(restartTimer);
-        restartTimer = null;
-      }
+    // Supabase Saving
+    async function saveToSupabase(text) {
+      if (!text || text === lastSavedText || !supabaseClient) return;
+      
+      // Auto-detect speakers (mock logic for minimal version or call API)
+      let formattedText = text; 
+      
+      try {
+        // Optimistic save
+        await supabaseClient.from("transcripts").upsert({
+          session_id: "sess-" + meetingId,
+          meeting_id: meetingId,
+          user_id: anonClientId,
+          full_transcript_text: formattedText,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "session_id" });
+        
+        lastSavedText = text;
+      } catch (e) { console.error(e); }
     }
 
-    function scheduleRestart(delay = 1000) {
-      if (stopRequested || isStarting || isListening) return;
-      if (restartTimer) return;
-      restartTimer = setTimeout(() => {
-        restartTimer = null;
-        if (!stopRequested && !isListening) {
-          try {
-            recognition.start();
-          } catch (e) {
-            log("Restart failed: " + e.message, true);
-          }
-        }
-      }, delay);
+    function startSavingLoop() {
+      if (saveInterval) clearInterval(saveInterval);
+      saveInterval = setInterval(() => {
+        saveToSupabase(fullTranscript);
+      }, 5000); // 5s interval
     }
 
-    function initRecognition() {
-      if (!SpeechRecognition) {
-        log("WebSpeech not available.", true);
-        return;
-      }
+    // Speech Recognition
+    function startListening() {
+      if (!SpeechRecognition) return alert("Browser not supported");
+      if (isListening) return;
+
       recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      
-      // Auto-detect fallback:
       recognition.lang = sourceLangSelect.value || navigator.language || "en-US";
 
       recognition.onstart = () => {
         isListening = true;
-        clearRestartTimer();
-        setListeningUI(true);
-        log(`Listening (${recognition.lang}).`);
-        startSavingLoop(); // Start the 5s save loop
-      };
-
-      recognition.onerror = (e) => {
-        log("STT error: " + e.error, true);
-        // Only stop on fatal errors like permission denied
-        if(e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-            stopListening();
-            return;
-        }
-        // For aborted/no-speech, schedule a restart with a slight delay
-        if (e.error === 'aborted') {
-          isListening = false;
-          scheduleRestart(1200);
-        }
-        // For transient errors (no-speech, network), let onend handle restart
-      };
-
-      recognition.onend = () => {
-        isListening = false;
-        // Always try to restart unless explicitly stopped
-        if (!stopRequested) {
-          scheduleRestart(800);
-        } else {
-          isListening = false;
-          setListeningUI(false);
-          stopSavingLoop();
-          log("Stopped.");
-        }
+        stopRequested = false;
+        setUI(true);
+        log("Listening started...");
+        startSavingLoop();
       };
 
       recognition.onresult = (event) => {
         let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const res = event.results[i];
-          if (res.isFinal) {
-            // SEGMENTATION LOGIC: Append double newline for paragraphs
-            fullTranscript += (fullTranscript ? "\n\n" : "") + res[0].transcript;
+        let final = "";
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript + " ";
           } else {
-            interim += res[0].transcript;
+            interim += event.results[i][0].transcript;
           }
         }
-        transcriptEl.value = (fullTranscript + (interim ? " " + interim : "")).trim();
+
+        if (final) {
+          fullTranscript += final;
+        }
+        
+        transcriptEl.value = fullTranscript + (interim ? ` [${interim}]` : "");
         transcriptEl.scrollTop = transcriptEl.scrollHeight;
       };
-    }
 
-    async function startListening() {
-      if (isStarting || isListening) return;
-      isStarting = true;
-      if (!SpeechRecognition) {
-        log("Browser not supported.", true);
-        isStarting = false;
-        return;
+      recognition.onerror = (e) => {
+        if (e.error === 'aborted' && !stopRequested) return; // Ignore aborts if not requested
+        log("Error: " + e.error);
+        if (e.error === 'not-allowed') stopListening();
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        if (!stopRequested) {
+          log("Restarting...");
+          try { recognition.start(); } catch(e){}
+        } else {
+          setUI(false);
+          log("Stopped.");
+          if (saveInterval) clearInterval(saveInterval);
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {
+        log("Start failed: " + e.message);
       }
-      if (!recognition) initRecognition();
-      
-      stopRequested = false;
-      fullTranscript = "";
-      transcriptEl.value = "";
-      
-      currentSessionId = crypto.randomUUID ? crypto.randomUUID() : "sess-" + Date.now();
-      currentRecordId = crypto.randomUUID ? crypto.randomUUID() : "rec-" + Date.now();
-      
-      recognition.lang = sourceLangSelect.value || navigator.language || "en-US";
-      
-      await ensureMicPermission();
-      try { recognition.start(); } catch (e) { log("Start error: " + e.message, true); }
-      isStarting = false;
     }
 
     function stopListening() {
-      if (recognition && isListening) {
-        stopRequested = true;
-        clearRestartTimer();
-        recognition.stop();
-        isListening = false;
-      }
+      stopRequested = true;
+      if (recognition) recognition.stop();
     }
 
-    // ==========================
-    // Supabase Saving Loop (10 Seconds with Speaker Detection)
-    // ==========================
-    let lastProcessedText = "";
-    
-    function startSavingLoop() {
-      if (saveInterval) clearInterval(saveInterval);
-      
-      saveInterval = setInterval(async () => {
-        const text = transcriptEl.value.trim();
-        
-        // Save only if there is text and it has changed since last save
-        if (text && text !== lastProcessedText) {
-          try {
-            dbStatusEl.textContent = "Processing...";
-            dbStatusEl.style.background = "#fbbf24";
-            dbStatusEl.style.color = "#000";
-            
-            // Call speaker detection API
-            let formattedTranscript = text;
-            try {
-              const speakerResponse = await fetch("/api/detect-speaker", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text })
-              });
-              
-              if (!speakerResponse.ok) {
-                throw new Error("Speaker detection failed");
-              }
-              
-              const speakerData = await speakerResponse.json();
-              const segments = speakerData.segments || [];
-              
-              // Map voice names to speaker labels
-              const voiceMap = new Map();
-              let maleCount = 1;
-              let femaleCount = 1;
-              
-              const labeledSegments = segments.map(seg => {
-                const voice = seg.voice || "Unknown";
-                
-                if (!voiceMap.has(voice)) {
-                  const isFemale = ["Aoede", "Kore"].includes(voice);
-                  const label = isFemale 
-                    ? `Female ${femaleCount++}` 
-                    : `Male ${maleCount++}`;
-                  voiceMap.set(voice, label);
-                }
-                
-                return `${voiceMap.get(voice)}: ${seg.text}`;
-              });
-              
-              if (labeledSegments.length) {
-                formattedTranscript = labeledSegments.join("\n\n");
-              }
-            } catch (err) {
-              log("Speaker detection issue, saving raw transcript.", true);
-              formattedTranscript = text;
-            }
-            
-            // Save to Supabase
-            const nowIso = new Date().toISOString();
-            const langCode = sourceLangSelect.value || "auto";
-            
-            // UPSERT to transcripts table (User Provided Schema)
-            // Schema: id (pkey), session_id, user_id, full_transcript_text
-            if (!supabaseClient) throw new Error("Supabase unavailable");
+    startBtn.onclick = startListening;
+    stopBtn.onclick = stopListening;
 
-            const { error } = await supabaseClient
-              .from("transcripts")  // Changed from transcriptions to transcripts
-              .upsert({
-                id: currentRecordId,
-                session_id: currentSessionId,
-                user_id: anonClientId,
-                meeting_id: meetingId,
-                source_language: langCode,
-                full_transcript_text: formattedTranscript,
-                updated_at: nowIso
-              }, { onConflict: 'id' });
-
-            if (error) throw error;
-
-            lastProcessedText = text;
-            lastSavedText = formattedTranscript;
-            dbStatusEl.textContent = "Saved " + new Date().toLocaleTimeString();
-            dbStatusEl.style.background = "#00ff90";
-            dbStatusEl.style.color = "#000";
-            
-            // Update display with formatted transcript
-            transcriptEl.value = formattedTranscript;
-            
-            // Flash effect
-            setTimeout(() => {
-                dbStatusEl.style.background = "var(--accent)";
-                dbStatusEl.style.color = "var(--text-soft)";
-            }, 1000);
-
-          } catch (err) {
-            log("Save error: " + err.message, true);
-            dbStatusEl.textContent = "Error";
-            dbStatusEl.style.background = "#ef4444";
-            dbStatusEl.style.color = "#fff";
-          }
-        }
-      }, 10000); // 10000ms = 10 seconds
+    // Auto-start check
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("autostart") === "true") {
+      setTimeout(startListening, 1000);
     }
 
-    function stopSavingLoop() {
-      if (saveInterval) clearInterval(saveInterval);
-      saveInterval = null;
-    }
-
-    // ==========================
-    // UI Events
-    // ==========================
-    startBtn.addEventListener("click", async () => {
-      const src = audioSourceSel.value;
-      if (src === "screen" && !screenStream) {
-        const s = await startScreenShare();
-        if (!s) return;
-      }
-      startListening();
-    });
-
-    stopBtn.addEventListener("click", stopListening);
-
-    // Initial Setup
-    populateLanguages();
-    log("Meeting ID: " + meetingId);
-    log("Ready. Mode: Transcribe + Speaker Detection. Auto-Save to public.transcripts every 10s.");
-
-    // ==========================
-    // AUTO-START on page load (for background/iframe usage)
-    // ==========================
-    const autoStartParam = new URLSearchParams(window.location.search).get("autostart");
-    const isEmbedded = window.self !== window.top; // Check if in iframe
-    
-    if (autoStartParam === "true" || isEmbedded) {
-      log("Auto-starting transcription...");
-      setTimeout(() => {
-        if (!isListening) startListening();
-      }, 1000); // Give browser time to initialize
-    }
-
-    // ==========================
-    // VISIBILITY CHANGE HANDLER (keep running in background)
-    // ==========================
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && isListening && recognition) {
-        // Page became visible again, ensure recognition is still running
-        log("Tab focused, checking STT status...");
-        // The recognition should auto-resume via onend, but force check
-      }
-    });
-
-    // ==========================
-    // KEEP-ALIVE: Prevent page from sleeping
-    // ==========================
-    let keepAliveInterval = null;
-    function startKeepAlive() {
-      if (keepAliveInterval) return;
-      keepAliveInterval = setInterval(() => {
-        // Tiny no-op to keep JS engine alive
-        const _ = Date.now();
-      }, 5000);
-    }
-    
-    function stopKeepAlive() {
-      if (keepAliveInterval) {
-        clearInterval(keepAliveInterval);
-        keepAliveInterval = null;
-      }
-    }
-
-    // Start keep-alive when listening starts
-    const origStartListening = startListening;
-    startListening = async function() {
-      startKeepAlive();
-      return origStartListening();
+    // Dialect Resources (Knowledge Base)
+    const DIALECT_RESOURCES = {
+      "fil-PH": "https://www.tagalog.com/dictionary/",
+      "ceb-PH": "https://www.binisaya.com/",
+      "ilo-PH": "https://toidp.com/",
+      "hil-PH": "http://www.hiligaynon.net/"
     };
 
-    const origStopListening = stopListening;
-    stopListening = function() {
-      stopKeepAlive();
-      return origStopListening();
-    };
+    const resourceContainer = document.createElement("div");
+    resourceContainer.style.cssText = "font-size:12px; color:var(--text-dim); margin-top:4px;";
+    resourceContainer.id = "resourceLink";
+    document.querySelector(".controls").firstElementChild.appendChild(resourceContainer);
+
+    sourceLangSelect.addEventListener("change", () => {
+      const url = DIALECT_RESOURCES[sourceLangSelect.value];
+      if (url) {
+        resourceContainer.innerHTML = `<a href="${url}" target="_blank" style="color:var(--accent);text-decoration:none;">📚 Dialect Dictionary</a>`;
+      } else {
+        resourceContainer.innerHTML = "";
+      }
+    });
 
   </script>
 </body>

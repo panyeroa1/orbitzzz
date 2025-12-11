@@ -43,3 +43,17 @@ export const avatarImages = [
   "/images/avatar-4.png",
   "/images/avatar-5.png",
 ] as const;
+
+export const SIDEBAR_ACTIONS = [
+  {
+    label: "Broadcaster",
+    action: "broadcaster",
+    imgUrl: "/icons/video.svg",
+  },
+  {
+    label: "Translator",
+    action: "translator", 
+    imgUrl: "/icons/add-meeting.svg",
+  },
+] as const;
+

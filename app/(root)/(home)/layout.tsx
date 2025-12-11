@@ -5,9 +5,11 @@ import type { PropsWithChildren } from "react";
 import { Navbar } from "@/components/navbar";
 import { Dock } from "@/components/dock";
 
+import { AnimatedBackground } from "@/components/animated-background";
+
 const HomeLayout = ({ children }: PropsWithChildren) => {
   return (
-    <main className="relative min-h-screen">
+    <AnimatedBackground className="relative min-h-screen">
       <Navbar />
 
       {/* Full-screen content area */}
@@ -17,7 +19,7 @@ const HomeLayout = ({ children }: PropsWithChildren) => {
 
       {/* macOS-style Dock at bottom */}
       <Dock />
-    </main>
+    </AnimatedBackground>
   );
 };
 

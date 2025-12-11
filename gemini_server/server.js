@@ -49,7 +49,7 @@ const getConfig = (targetLang, mode) => {
                     
 IMPORTANT RULES:
 - Output ONLY the transcript. Do not add any conversational text, introductions, or commentary.
-- Label distinct speakers as "Speaker 1", "Speaker 2", etc. if you can identify them.
+- Label distinct speakers as "Male 1", "Female 1", "Male 2", "Female 2", or "Speaker 1" etc. based on voice characteristics.
 - If there is no speech, output nothing.
 - Punctuate the transcript correctly.
 - Do not translate. Keep the text in the original language of the speaker.`

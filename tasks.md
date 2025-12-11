@@ -1269,3 +1269,94 @@ Known limitations or follow-up tasks:
 
 ------------------------------------------------------------
 
+
+Task ID: T-0020
+Title: Implement Full-Screen UI with macOS Dock Navigation
+Status: DONE
+Owner: Miles
+Related repo or service: orbitzzz
+Branch: aorbits-tts
+Created: 2025-12-11 12:18
+Last updated: 2025-12-11 12:30
+
+START LOG
+
+Timestamp: 2025-12-11 12:18
+Current behavior or state:
+- Application uses traditional sidebar navigation on the left
+- Content area has padding and is not full-screen
+- User requested full-screen layout with macOS Dock-style bottom navigation
+
+Plan and scope for this task:
+- Create new Dock component with macOS-style hover magnification effects
+- Remove traditional Sidebar from layout
+- Make content area truly full-screen (remove padding)
+- Implement smooth spring animations for icon scaling
+- Add tooltips on hover
+- Add active state indicators (glow/dot)
+- Install framer-motion for animations
+
+Files or modules expected to change:
+- components/dock.tsx (new)
+- app/(root)/(home)/layout.tsx
+- package.json (framer-motion dependency)
+
+Risks or things to watch out for:
+- Performance of animations on lower-end devices
+- TypeScript type compatibility with framer-motion
+- Ensure mobile navigation still works (keep MobileNav)
+- Don't break existing page layouts
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Dependencies installed (framer-motion)
+- [x] Build verification completed successfully
+- [x] Logs and error handling reviewed
+
+END LOG
+
+Timestamp: 2025-12-11 12:30
+Summary of what actually changed:
+- Created components/dock.tsx with full macOS Dock implementation
+  - Hover magnification effect (icon scales 48px → 72px)
+  - Distance-based scaling algorithm for smooth transitions
+  - Spring animations for natural bounce effect
+  - Tooltips appear above icons on hover
+  - Active state indicators (gradient glow + colored dot)
+  - Glassmorphism background with backdrop blur
+- Updated app/(root)/(home)/layout.tsx
+  - Removed Sidebar component completely
+  - Changed to full-screen layout (removed px-6, sm:px-14 padding)
+  - Integrated Dock component at bottom
+  - Added pb-28 for Dock clearance
+- Installed framer-motion@11.x for animation support
+- Fixed all TypeScript type errors for MotionValue
+
+Files actually modified:
+- components/dock.tsx (new, 118 lines)
+- app/(root)/(home)/layout.tsx
+- package.json
+
+How it was tested:
+- npm run build - passed successfully (exit code 0)
+- All TypeScript type errors resolved
+- Build output shows all routes compiled correctly
+- Manual testing required for visual verification and animation smoothness
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- User should start dev server (npm run dev) to see Dock in action
+- Test hover magnification effects on desktop browser
+- Verify tooltips appear correctly on hover
+- Ensure active state indicators work when navigating
+- Test on different screen sizes (Dock hidden on mobile/tablet <lg breakpoint)
+- MobileNav still used for small screens (unchanged)
+- Consider adding keyboard navigation (Tab key support) for accessibility
+
+------------------------------------------------------------
+

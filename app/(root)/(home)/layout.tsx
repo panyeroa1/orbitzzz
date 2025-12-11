@@ -1,20 +1,20 @@
 import type { PropsWithChildren } from "react";
 
 import { Navbar } from "@/components/navbar";
-import { Sidebar } from "@/components/sidebar";
+import { Dock } from "@/components/dock";
 
 const HomeLayout = ({ children }: PropsWithChildren) => {
   return (
-    <main>
+    <main className="relative min-h-screen">
       <Navbar />
 
-      <div className="flex">
-        <Sidebar />
+      {/* Full-screen content area */}
+      <section className="min-h-screen w-full pt-20 pb-28">
+        <div className="w-full h-full">{children}</div>
+      </section>
 
-        <section className="flex min-h-screen flex-1 flex-col px-6 pb-6 pt-28 max-md:pb-14 sm:px-14">
-          <div className="w-full">{children}</div>
-        </section>
-      </div>
+      {/* macOS-style Dock at bottom */}
+      <Dock />
     </main>
   );
 };

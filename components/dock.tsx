@@ -1,0 +1,120 @@
+"use client";
+
+import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useRef, useState } from "react";
+
+import { SIDEBAR_LINKS } from "@/constants";
+import { cn } from "@/lib/utils";
+
+// Individual Dock Icon with magnification
+interface DockIconProps {
+  item: typeof SIDEBAR_LINKS[number];
+  mouseX: MotionValue<number>;
+}
+
+function DockIcon({ item, mouseX }: DockIconProps) {
+  const pathname = usePathname();
+  const ref = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
+
+  const distance = useTransform(mouseX, (val: number) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    const iconCenter = bounds.x + bounds.width / 2;
+    return Math.abs(val - iconCenter);
+  });
+
+  const widthSync = useTransform(distance, [0, 150], [72, 48]);
+  const width = useSpring(widthSync, {
+    mass: 0.1,
+    stiffness: 300,
+    damping: 20,
+  });
+
+  return (
+    <Link href={item.route}>
+      <motion.div
+        ref={ref}
+        style={{ width }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="relative flex flex-col items-center justify-center group"
+      >
+        {/* Tooltip */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{
+            opacity: isHovered ? 1 : 0,
+            y: isHovered ? 0 : 10,
+          }}
+          transition={{ duration: 0.2 }}
+          className="absolute -top-12 px-3 py-1.5 bg-black/80 backdrop-blur-md rounded-lg text-white text-sm font-medium whitespace-nowrap pointer-events-none z-50"
+        >
+          {item.label}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-black/80 rotate-45" />
+        </motion.div>
+
+        {/* Icon Container */}
+        <motion.div
+          className={cn(
+            "aspect-square w-full rounded-2xl flex items-center justify-center transition-all duration-200 relative overflow-hidden",
+            isActive
+              ? "bg-white/10 shadow-lg shadow-blue-500/20"
+              : "bg-white/5 hover:bg-white/10"
+          )}
+        >
+          {/* Active Indicator Glow */}
+          {isActive && (
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-pulse" />
+          )}
+
+          <Image
+            src={item.imgUrl}
+            alt={item.label}
+            width={32}
+            height={32}
+            className={cn(
+              "relative z-10 transition-all duration-200",
+              isActive ? "opacity-100 brightness-110" : "opacity-70"
+            )}
+          />
+        </motion.div>
+
+        {/* Active Indicator Dot */}
+        {isActive && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50"
+          />
+        )}
+      </motion.div>
+    </Link>
+  );
+}
+
+// Main Dock Component
+export function Dock() {
+  const mouseX = useMotionValue<number>(Infinity);
+
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-lg:hidden">
+      <motion.div
+        onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
+        onMouseLeave={() => mouseX.set(Infinity)}
+        className="flex items-end gap-4 px-6 py-3 bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[28px] shadow-2xl shadow-black/40"
+        style={{
+          backdropFilter: "blur(20px) saturate(180%)",
+        }}
+      >
+        {SIDEBAR_LINKS.map((item) => (
+          <DockIcon key={item.route} item={item} mouseX={mouseX} />
+        ))}
+      </motion.div>
+    </div>
+  );
+}

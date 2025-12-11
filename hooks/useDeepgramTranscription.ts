@@ -97,11 +97,16 @@ export function useDeepgramTranscription(
       isListeningRef.current = true;
 
       // Check if mediaDevices API is available
+      // Check if mediaDevices API is available and if we are in a Secure Context
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        const errorMsg = "Media Devices API not supported in this browser";
+        let errorMsg = "Media Devices API not supported in this browser.";
+        if (typeof window !== "undefined" && !window.isSecureContext) {
+           errorMsg = "Microphone access requires a Secure Context (HTTPS or localhost). You are currently using HTTP.";
+        }
         console.error("[Eburon]", errorMsg);
         setError(errorMsg);
         setIsListening(false);
+        isListeningRef.current = false; // Reset ref on error to allow retry
         return;
       }
 

@@ -1454,3 +1454,75 @@ Benefits achieved:
 
 ------------------------------------------------------------
 
+
+------------------------------------------------------------
+
+Task ID: T-0022
+Title: Implement Multi-Speaker TTS and Broadcaster Transcript Saving
+Status: DONE
+Owner: Miles
+Created: 2025-12-11 14:00
+Last updated: 2025-12-11 14:30
+
+START LOG
+
+Timestamp: 2025-12-11 14:00
+Current behavior or state:
+- Broadcaster saves transcripts to `eburon_tts_current` but not permanently to `transcripts` table.
+- Translator uses single voice for all output.
+- Speaker changes are not detected or represented in audio.
+
+Plan and scope for this task:
+- Update Broadcaster to upsert transcripts to Supabase `transcripts` table.
+- Create API `app/api/detect-speaker` to segment text and assign voices.
+- Update `useGeminiLiveAudio` to support dynamic voice selection.
+- Update `TranslatorSidebar` to use detection API and queue segmented audio.
+- Enforce strict non-conversational prompts for Gemini TTS.
+
+Files or modules expected to change:
+- components/broadcaster-sidebar.tsx
+- components/translator-sidebar.tsx
+- hooks/useGeminiLiveAudio.ts
+- app/api/detect-speaker/route.ts (new)
+- app/api/tts/gemini/route.ts
+
+Risks or things to watch out for:
+- Database connection errors.
+- TTS latency.
+- Audio queue synchronization.
+
+WORK CHECKLIST
+
+- [x] Code changes implemented according to the defined scope
+- [x] No unrelated refactors or drive-by changes
+- [x] Configuration and environment variables verified
+- [x] Logs and error handling reviewed
+- [x] Manual verification of multi-speaker flow
+
+END LOG
+
+Timestamp: 2025-12-11 14:30
+Summary of what actually changed:
+- Implemented `transcripts` table upsert in `broadcaster-sidebar.tsx`.
+- Created `detect-speaker` API using `gemini-2.0-flash-exp` for text segmentation and voice assignment.
+- Updated `useGeminiLiveAudio` to handle `voiceName` per segment.
+- Modified `TranslatorSidebar` to fetch segments and queue them sequentially.
+- Hardened `app/api/tts/gemini/route.ts` system prompt to prevent conversational output.
+
+Files actually modified:
+- components/broadcaster-sidebar.tsx
+- components/translator-sidebar.tsx
+- hooks/useGeminiLiveAudio.ts
+- app/api/detect-speaker/route.ts
+- app/api/tts/gemini/route.ts
+
+How it was tested:
+- Verified transcript saving in Supabase dashboard.
+- Verified multi-speaker dialogue ("Man: Hello. Woman: Hi") split correctly in logs.
+- Verified sequential audio playback with distinct voices.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- Latency introduced by the extra detection step.

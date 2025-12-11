@@ -3,7 +3,7 @@
 import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
 import { 
   Mic, MicOff, Video, VideoOff, MonitorUp, Users, 
-  PhoneOff, Settings, Radio
+  PhoneOff, Settings, Radio, LayoutList
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCall, useCallStateHooks } from "@stream-io/video-react-sdk";
@@ -85,9 +85,10 @@ interface MeetingDockProps {
   onLeave: () => void;
   onToggleParticipants: () => void;
   onToggleBroadcast: () => void;
+  onToggleLayout: () => void;
 }
 
-export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast }: MeetingDockProps) {
+export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, onToggleLayout }: MeetingDockProps) {
   const call = useCall();
   const router = useRouter();
   const { useMicrophoneState, useCameraState } = useCallStateHooks();
@@ -143,6 +144,15 @@ export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast }
           isActive={false} // Would need state passed down
         />
         
+        {/* Layout */}
+        <ControlIcon
+          icon={LayoutList}
+          label="Change Layout"
+          mouseX={mouseX}
+          onClick={onToggleLayout}
+          isActive={false}
+        />
+
         {/* Broadcast / Translate Custom Button */}
         <ControlIcon
           icon={Radio}

@@ -4,5 +4,10 @@
   "scss.lint.unknownAtRules": "ignore",
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+  "editor.allowVariableFontsInAccessibilityMode": true,
+  "editor.autoIndentOnPaste": true,
+  "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+  "editor.codeActions.triggerOnFocusChange": true,
+  "editor.columnSelection": true
 }

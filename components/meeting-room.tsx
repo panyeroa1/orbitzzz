@@ -1,6 +1,4 @@
 
-"use client";
-
 import {
   CallParticipantsList,
   CallingState,
@@ -14,12 +12,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 
-
 import { Loader } from "./loader";
 import { TranslationModal } from "./translation-modal";
 
 
 import { MeetingDock } from "./meeting-dock";
+import { AnimatedBackground } from "./animated-background";
+import { TitleBar } from "./title-bar";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -51,40 +50,44 @@ export const MeetingRoom = () => {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-hero bg-cover bg-center text-white">
-      <div className="relative flex size-full items-center justify-center">
-        <div className="flex size-full max-w-[1000px] items-center">
-          <CallLayout />
+    <AnimatedBackground>
+      {/* MacOS Title Bar */}
+      <TitleBar />
+
+      <div className="relative flex-1 w-full overflow-hidden text-white flex flex-col">
+        <div className="relative flex size-full items-center justify-center">
+          <div className="flex size-full max-w-[1000px] items-center">
+            <CallLayout />
+          </div>
+
+          {/* Right Sidebar (Glassmorphism) */}
+          <AnimatePresence>
+            {showParticipants && (
+              <motion.div
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute right-4 top-4 bottom-24 w-[350px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-40 flex flex-col"
+              >
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                  <h2 className="text-lg font-semibold text-white/90">Participants</h2>
+                  <button 
+                    onClick={() => setShowParticipants(false)}
+                    className="text-white/50 hover:text-white transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                  <CallParticipantsList onClose={() => setShowParticipants(false)} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        {/* Right Sidebar (Glassmorphism) */}
-        <AnimatePresence>
-          {showParticipants && (
-            <motion.div
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="absolute right-4 top-4 bottom-24 w-[350px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-40 flex flex-col"
-            >
-              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                <h2 className="text-lg font-semibold text-white/90">Participants</h2>
-                <button 
-                  onClick={() => setShowParticipants(false)}
-                  className="text-white/50 hover:text-white transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-                <CallParticipantsList onClose={() => setShowParticipants(false)} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-
       
       {/* Meeting Dock Controls */}
       <MeetingDock 
@@ -110,6 +113,6 @@ export const MeetingRoom = () => {
         open={showTranslation}
         onOpenChange={setShowTranslation}
       />
-    </div>
+    </AnimatedBackground>
   );
 };

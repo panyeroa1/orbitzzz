@@ -16,7 +16,7 @@ import { Loader } from "./loader";
 import { TranslationModal } from "./translation-modal";
 
 
-import { MeetingDock } from "./meeting-dock";
+import { MeetingBottomBar } from "./meeting-bottom-bar"; // Updated import
 import { AnimatedBackground } from "./animated-background";
 import { TitleBar } from "./title-bar";
 
@@ -30,9 +30,11 @@ export const MeetingRoom = () => {
   const [showTranslation, setShowTranslation] = useState(false);
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   
-  // Transcription State Removed (moved to Broadcast/Translate pages)
-  const { useCallCallingState } = useCallStateHooks();
+  // Call State Hooks
+  const { useCallCallingState, useMicrophoneState, useCameraState } = useCallStateHooks();
   const callingState = useCallCallingState();
+  const { isEnabled: isMicEnabled } = useMicrophoneState();
+  const { isEnabled: isCamEnabled } = useCameraState();
 
   if (callingState !== CallingState.JOINED) return <Loader />;
 
@@ -50,64 +52,62 @@ export const MeetingRoom = () => {
   };
 
   return (
-    <AnimatedBackground>
+    <AnimatedBackground className="flex flex-col h-screen overflow-hidden">
       {/* MacOS Title Bar */}
       <TitleBar />
 
-      <div className="relative flex-1 w-full overflow-hidden text-white flex flex-col">
-        <div className="relative flex size-full items-center justify-center">
-          <div className="flex size-full max-w-[1000px] items-center">
-            <CallLayout />
-          </div>
-
-          {/* Right Sidebar (Glassmorphism) */}
-          <AnimatePresence>
-            {showParticipants && (
-              <motion.div
-                initial={{ x: "100%", opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: "100%", opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute right-4 top-4 bottom-24 w-[350px] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-40 flex flex-col"
-              >
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                  <h2 className="text-lg font-semibold text-white/90">Participants</h2>
-                  <button 
-                    onClick={() => setShowParticipants(false)}
-                    className="text-white/50 hover:text-white transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-                  <CallParticipantsList onClose={() => setShowParticipants(false)} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Main Content Area (Video + Sidebar) */}
+      <div className="flex-1 flex overflow-hidden w-full relative px-24 py-4">
+        <div className="flex-1 flex items-center justify-center">
+            <div className="w-full h-full max-w-[1400px] flex items-center justify-center rounded-2xl overflow-hidden border border-white/5 shadow-2xl bg-black/30 backdrop-blur-md">
+                <CallLayout />
+            </div>
         </div>
+
+        {/* Pinned Right Sidebar */}
+        <AnimatePresence mode="wait">
+          {showParticipants && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 380, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="h-full ml-4 rounded-2xl border border-white/10 bg-[#1e1e1e]/80 backdrop-blur-xl flex flex-col z-40 overflow-hidden"
+            >
+              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 h-[60px]">
+                <h2 className="text-sm font-medium text-white/90">Participants</h2>
+                <button 
+                  onClick={() => setShowParticipants(false)}
+                  className="text-white/50 hover:text-white transition-colors"
+                  title="Close sidebar"
+                >
+                  <span className="sr-only">Close sidebar</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <CallParticipantsList onClose={() => setShowParticipants(false)} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
       
-      {/* Meeting Dock Controls */}
-      <MeetingDock 
+      {/* Fixed Bottom Control Bar */}
+      <MeetingBottomBar 
+        isMicEnabled={isMicEnabled}
+        isCamEnabled={isCamEnabled}
         onLeave={() => router.push("/")}
         onToggleParticipants={() => setShowParticipants((prev) => !prev)}
-        onToggleLayout={() => {
-            setLayout((prev) => {
-              if (prev === "speaker-left") return "grid";
-              if (prev === "grid") return "speaker-right";
-              return "speaker-left";
-            });
-        }}
         onToggleBroadcast={() => {
             const meetingId = call?.id || "unknown";
-            // Open local broadcaster page which embeds the external tool
             window.open(`/meeting/${meetingId}/broadcast`, "_blank", "width=800,height=700");
         }}
       />
 
-      {/* Translation Modal */}
+      {/* Translation Modal (Hidden logic for generic meeting room, can be re-enabled) */}
       <TranslationModal
         meetingId={call?.id || ""}
         open={showTranslation}

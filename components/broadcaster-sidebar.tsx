@@ -52,6 +52,10 @@ export function BroadcasterSidebar({ onActiveChange }: BroadcasterSidebarProps) 
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  
+  // Track current session for DB
+  const currentSessionId = useRef<string>("");
+  const currentRecordId = useRef<string>("");
 
   // Audio visualizer
   const startVisualizer = useCallback(async (stream?: MediaStream) => {
@@ -177,38 +181,62 @@ export function BroadcasterSidebar({ onActiveChange }: BroadcasterSidebarProps) 
 
     saveIntervalRef.current = setInterval(async () => {
       const text = transcript.trim();
-      if (text && text !== lastSaved) {
+      // We save even if text is empty to establish the session, or at least if text exists
+      if (text) { // Simple check, or check vs lastSaved
         try {
           const clientId = getClientId();
           const nowIso = new Date().toISOString();
-          const langCode = sourceLang || "auto";
+          const langCode = sourceLang || "en-US";
 
-          // Check if row exists
-          const { data: existing } = await supabase
-            .from("eburon_tts_current")
-            .select("id")
-            .eq("client_id", clientId)
-            .limit(1);
-
-          if (existing && existing.length > 0) {
-            await supabase
+          // 1. Update eburon_tts_current (existing logic)
+          // We only update if text changed to avoid redundant writes for TTS
+          if (text !== lastSaved) {
+            const { data: existing } = await supabase
               .from("eburon_tts_current")
-              .update({
+              .select("id")
+              .eq("client_id", clientId)
+              .limit(1);
+
+            if (existing && existing.length > 0) {
+              await supabase
+                .from("eburon_tts_current")
+                .update({
+                  source_text: text,
+                  source_lang_code: langCode,
+                  updated_at: nowIso,
+                })
+                .eq("client_id", clientId);
+            } else {
+              await supabase.from("eburon_tts_current").insert({
+                client_id: clientId,
                 source_text: text,
                 source_lang_code: langCode,
                 updated_at: nowIso,
-              })
-              .eq("client_id", clientId);
-          } else {
-            await supabase.from("eburon_tts_current").insert({
-              client_id: clientId,
-              source_text: text,
-              source_lang_code: langCode,
-              updated_at: nowIso,
-            });
+              });
+            }
+            setLastSaved(text);
           }
 
-          setLastSaved(text);
+          // 2. Update transcripts table (new logic)
+          // Uses the stable record ID and session ID generated at start
+          if (currentRecordId.current && currentSessionId.current) {
+             const { error: upsertError } = await supabase
+              .from("transcripts")
+              .upsert({
+                id: currentRecordId.current,
+                session_id: currentSessionId.current,
+                user_id: clientId,
+                source_language: langCode,
+                full_transcript_text: text,
+                updated_at: nowIso,
+                // We preserve created_at if it's an update, or helpful defaults
+              }, { onConflict: 'id' });
+              
+              if (upsertError) {
+                console.error("Error saving transcript:", upsertError);
+              }
+          }
+
           setStatusMessage(`Saved ${new Date().toLocaleTimeString()}`);
         } catch (err) {
           console.error("Save error:", err);
@@ -238,11 +266,18 @@ export function BroadcasterSidebar({ onActiveChange }: BroadcasterSidebarProps) 
       setIsActive(false);
       setStatusMessage("Stopped");
       onActiveChange?.(false);
+      // Reset session IDs
+      currentSessionId.current = "";
+      currentRecordId.current = "";
     } else {
       // Start
       setTranscript("");
       setLastSaved("");
       
+      // Generate new IDs for this session
+      currentSessionId.current = crypto.randomUUID?.() || `session-${Date.now()}`;
+      currentRecordId.current = crypto.randomUUID?.() || `record-${Date.now()}`;
+
       if (audioSource === "screen") {
         try {
           const stream = await navigator.mediaDevices.getDisplayMedia({

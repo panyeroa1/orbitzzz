@@ -5,6 +5,7 @@ import { Languages, Volume2, VolumeX, Play, Square } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 import { useSidebarVolume } from "@/hooks/use-sidebar-volume";
+import { useGeminiLiveAudio } from "@/hooks/useGeminiLiveAudio";
 
 interface TranslatorSidebarProps {
   onActiveChange?: (isActive: boolean) => void;
@@ -32,24 +33,18 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
   const [originalText, setOriginalText] = useState("Waiting for broadcast...");
   const [translatedText, setTranslatedText] = useState("Waiting...");
   const [statusMessage, setStatusMessage] = useState("Not started");
-  const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Use Gemini Live Audio hook for TTS
+  const { speak, stop: stopTTS, isSpeaking } = useGeminiLiveAudio();
 
   const channelRef = useRef<any>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioQueueRef = useRef<{ text: string; targetLang: string }[]>([]);
-  const lastTextRef = useRef("");
+  const lastTextRef = useRef(""); // Track incoming text to prevent reprocessing
+  const processedTextRef = useRef(""); // Track processed text to prevent loops
 
   const { isReduced, reduceVolume, restoreVolume } = useSidebarVolume({ reducedVolume: 0.08 });
 
-  // Play audio with queue
-  const playAudio = useCallback(async (text: string, lang: string) => {
-    if (isPlaying) {
-      audioQueueRef.current.push({ text, targetLang: lang });
-      return;
-    }
-
-    setIsPlaying(true);
-
+  // Process and play audio
+  const processAndPlay = useCallback(async (text: string, lang: string) => {
     try {
       // First, translate
       setTranslatedText("🔄 Translating...");
@@ -64,42 +59,41 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
       const { translatedText: translated } = await translateRes.json();
       setTranslatedText(translated);
 
-      // Then, get audio with Cartesia TTS
-      const ttsRes = await fetch(`${API_BASE}/api/tts/cartesia`, {
+      // Detect Speaker/Gender Segments
+      const detectRes = await fetch("/api/detect-speaker", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: translated }),
+        body: JSON.stringify({ text: translated }), 
       });
 
-      if (!ttsRes.ok) throw new Error(`TTS failed: ${ttsRes.status}`);
-
-      const blob = await ttsRes.blob();
-      const audio = audioRef.current || new Audio();
-      audioRef.current = audio;
-      audio.src = URL.createObjectURL(blob);
-
-      audio.onended = () => {
-        URL.revokeObjectURL(audio.src);
-        setIsPlaying(false);
-
-        // Play next in queue
-        if (audioQueueRef.current.length > 0) {
-          const next = audioQueueRef.current.shift()!;
-          setTimeout(() => playAudio(next.text, next.targetLang), 500);
+      if (detectRes.ok) {
+        const detectData = await detectRes.json();
+        const segments = detectData.segments || [];
+        
+        console.log(`[Translator] Segments detected: ${segments.length}`);
+        
+        if (segments.length > 0) {
+            // Queue segments sequentially
+            for (const seg of segments) {
+                if (seg.text && seg.voice) {
+                    console.log(`[Translator] Queuing: "${seg.text.substring(0, 15)}..." (${seg.voice})`);
+                    speak(seg.text, lang, seg.voice);
+                }
+            }
+        } else {
+            // Fallback
+             speak(translated, lang, "Orus");
         }
-      };
+      } else {
+        // Fallback
+        speak(translated, lang, "Orus");
+      }
 
-      audio.onerror = () => {
-        setIsPlaying(false);
-      };
-
-      await audio.play();
     } catch (err: any) {
       console.error("Translator error:", err);
       setTranslatedText(`Error: ${err.message}`);
-      setIsPlaying(false);
     }
-  }, [isPlaying]);
+  }, [speak]);
 
   // Start listening
   const start = useCallback(() => {
@@ -120,13 +114,15 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
         },
         async (payload: any) => {
           const text = payload.new?.source_text;
+          
+          // Only process if text is new and different from what we last saw
           if (!text || text === lastTextRef.current) return;
-
           lastTextRef.current = text;
-          setOriginalText(text);
-          setTranslatedText("🔄 Translating...");
 
-          await playAudio(text, targetLang);
+          setOriginalText(text);
+          setTranslatedText("🔄 Processing...");
+
+          await processAndPlay(text, targetLang);
         }
       )
       .subscribe((status: string) => {
@@ -141,7 +137,7 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
 
     setIsActive(true);
     onActiveChange?.(true);
-  }, [targetLang, playAudio, reduceVolume, onActiveChange]);
+  }, [targetLang, processAndPlay, reduceVolume, onActiveChange]);
 
   // Stop listening
   const stop = useCallback(() => {
@@ -150,30 +146,24 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
       channelRef.current = null;
     }
 
-    audioQueueRef.current = [];
+    stopTTS(); // Stop audio playback
     
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
     // Restore main volume
     restoreVolume();
 
     setIsActive(false);
-    setIsPlaying(false);
     setStatusMessage("Stopped");
     setOriginalText("Stopped");
     setTranslatedText("Stopped");
     onActiveChange?.(false);
-  }, [restoreVolume, onActiveChange]);
+  }, [restoreVolume, onActiveChange, stopTTS]);
 
   // Test audio
   const testAudio = useCallback(async () => {
     const testText = "Hello! This is a test of the translation system.";
     setOriginalText(testText);
-    await playAudio(testText, targetLang);
-  }, [targetLang, playAudio]);
+     await processAndPlay(testText, targetLang);
+  }, [targetLang, processAndPlay]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -181,9 +171,7 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
       if (channelRef.current) {
         channelRef.current.unsubscribe();
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      stopTTS();
       restoreVolume();
     };
   }, []);
@@ -237,7 +225,7 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
         
         <button
           onClick={testAudio}
-          disabled={isPlaying}
+          disabled={isSpeaking}
           className="px-4 py-4 rounded-apple font-semibold transition-all
             bg-dark-3/80 border border-white/10 text-white/70 hover:bg-dark-3 hover:text-white
             disabled:opacity-50"
@@ -288,12 +276,12 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
       {/* Translated Text */}
       <div className={cn(
         "bg-dark-3/50 rounded-apple p-4 border transition-colors",
-        isPlaying ? "border-[#00e0ff] bg-[#00e0ff]/5" : "border-white/10"
+        isSpeaking ? "border-[#00e0ff] bg-[#00e0ff]/5" : "border-white/10"
       )}>
         <div className="flex items-center gap-2 mb-3">
           <Languages className="w-4 h-4 text-[#00e0ff]" />
           <span className="text-sm font-semibold text-white/80">🌐 Translated Text</span>
-          {isPlaying && (
+          {isSpeaking && (
             <div className="ml-auto flex items-center gap-1">
               <div className="w-1.5 h-3 bg-[#00e0ff] rounded-full animate-pulse" />
               <div className="w-1.5 h-4 bg-[#00e0ff] rounded-full animate-pulse delay-75" />
@@ -316,8 +304,6 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
         )}
       </div>
 
-      {/* Hidden audio element */}
-      <audio ref={audioRef} className="hidden" />
     </div>
   );
 }

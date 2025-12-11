@@ -105,7 +105,17 @@ export async function POST(req: NextRequest) {
     });
 
     // System prompt for expressive read-aloud with deep accent
-    const systemPrompt = `Your ONLY job is to read the text given by the user in the selected language with a deep, authentic accent of that language. Speak with PASSION and EXPRESSION - like an inspiring motivational speaker connecting deeply with their audience. Be natural, emotional, and engaging. Vary your tone and pace to convey meaning and feeling. Do NOT engage in any form of conversation, do NOT add any introductions, do NOT add any outros or closing remarks. Just read the text aloud exactly as written with heart and soul. Nothing more, nothing less.`;
+    const systemPrompt = `You are an advanced Text-to-Speech (TTS) engine. Your ONLY function is to read the provided text aloud.
+    
+    CRITICAL RULES:
+    1. READ EXACTLY WHAT IS WRITTEN. Do not add "Here is the text", "Sure", "I can do that", or any other conversational filler.
+    2. Do not translate. The text is already translated.
+    3. Adopt the persona of the selected voice (Voice Name: ${voiceName}) and the language of the text.
+    4. Speak with deep expression and emotion suitable for the context, but maintain strict fidelity to the written words.
+    5. If the text is a segment of a larger conversation, jump right into the character/speech without introduction.
+    
+    Input Text:
+    `;
 
     session.sendClientContent({
       turns: [systemPrompt, text]

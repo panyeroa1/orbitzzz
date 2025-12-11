@@ -3,11 +3,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 interface TTSQueueItem {
   text: string;
   language: string;
+  voiceName?: string;
   id: string;
 }
 
 interface UseGeminiLiveAudioReturn {
-  speak: (text: string, language: string) => void;
+  speak: (text: string, language: string, voiceName?: string) => void;
   stop: () => void;
   isSpeaking: boolean;
   queueSize: number;
@@ -15,7 +16,10 @@ interface UseGeminiLiveAudioReturn {
 }
 
 // Map language codes to Gemini voice names
-function getVoiceName(language: string): string {
+// Now accepts an optional explicit voice, otherwise defaults based on language
+function getVoiceName(language: string, explicitVoice?: string): string {
+  if (explicitVoice) return explicitVoice;
+
   const languageToVoice: Record<string, string> = {
     'en': 'Orus',
     'es': 'Orus',
@@ -60,7 +64,8 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
       return;
     }
 
-    console.log(`[Gemini TTS] Speaking: "${item.text.substring(0, 50)}..." in ${item.language}`);
+    const voiceName = getVoiceName(item.language, item.voiceName);
+    console.log(`[Gemini TTS] Speaking: "${item.text.substring(0, 50)}..." in ${item.language} using ${voiceName}`);
     setCurrentText(item.text);
     setIsSpeaking(true);
 
@@ -71,7 +76,7 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: item.text,
-          voiceName: getVoiceName(item.language),
+          voiceName: voiceName,
         }),
       });
 
@@ -152,12 +157,13 @@ export function useGeminiLiveAudio(): UseGeminiLiveAudioReturn {
   }, []);
 
   // Add text to queue
-  const speak = useCallback((text: string, language: string) => {
+  const speak = useCallback((text: string, language: string, voiceName?: string) => {
     if (!text.trim()) return;
 
     const item: TTSQueueItem = {
       text,
       language,
+      voiceName,
       id: `${Date.now()}-${Math.random()}`,
     };
 

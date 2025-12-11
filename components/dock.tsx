@@ -213,9 +213,9 @@ export function Dock({ onSidebarAction, activeSidebar }: DockProps = {}) {
       <motion.div
         onMouseMove={(e: React.MouseEvent) => mouseX.set(e.pageX)}
         onMouseLeave={() => mouseX.set(Infinity)}
-        className="flex items-end gap-4 px-6 py-3 bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[28px] shadow-2xl shadow-black/40"
+        className="flex items-end gap-3 px-6 py-3 bg-[#1a1a1a]/80 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-2xl"
         style={{
-          backdropFilter: "blur(20px) saturate(180%)",
+          height: "80px", // Match MeetingBottomBar height constraint if appropriate, or let it grow. MeetingBottomBar has h-[80px]. Dock relies on icons. Let's keep it flexible but styled similarly.
         }}
       >
         {/* Navigation Icons */}

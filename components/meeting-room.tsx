@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  CallControls,
   CallParticipantsList,
-  CallStatsButton,
   CallingState,
   PaginatedGridLayout,
   SpeakerLayout,
@@ -29,6 +27,8 @@ import { EndCallButton } from "./end-call-button";
 import { Loader } from "./loader";
 import { TranslationModal } from "./translation-modal";
 
+
+import { MeetingDock } from "./meeting-dock";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
 
@@ -77,70 +77,18 @@ export const MeetingRoom = () => {
 
 
 
-      {/* Controls */}
-      <div className="fixed bottom-0 flex w-full flex-wrap items-center justify-center gap-3 pb-4">
-        <CallControls onLeave={() => router.push("/")} />
+import { MeetingDock } from "./meeting-dock";
 
-        {/* Broadcast Button */}
-        <button
-            onClick={() => {
+      {/* Meeting Dock Controls */}
+      <MeetingDock 
+        onLeave={() => router.push("/")}
+        onToggleParticipants={() => setShowParticipants((prev) => !prev)}
+        onToggleBroadcast={() => {
             const meetingId = call?.id || "unknown";
             // Open local broadcaster page which embeds the external tool
             window.open(`/meeting/${meetingId}/broadcast`, "_blank", "width=800,height=700");
-          }}
-          title="Open Broadcaster (Source)"
-          className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B] transition-all"
-        >
-          <div className="flex items-center gap-2">
-              <span className="text-red-500 animate-pulse">●</span>
-              <span className="text-white text-sm font-medium">Broadcast / Translate</span>
-          </div>
-        </button>
-
-        <DropdownMenu>
-          <div className="flex items-center">
-            <DropdownMenuTrigger
-              className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B]"
-              title="Call layout"
-            >
-              <LayoutList size={20} className="text-white" />
-            </DropdownMenuTrigger>
-          </div>
-          <DropdownMenuContent className="border-dark-1 bg-dark-1 text-white">
-            {["Grid", "Speaker Left", "Speaker Right"].map((item, i) => (
-              <div key={item + "-" + i}>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() =>
-                    setLayout(
-                      item.toLowerCase().replace(" ", "-") as CallLayoutType
-                    )
-                  }
-                >
-                  {item}
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator className="border-dark-1" />
-              </div>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <CallStatsButton />
-
-        <button
-          onClick={() =>
-            setShowParticipants((prevShowParticipants) => !prevShowParticipants)
-          }
-          title="Show participants"
-        >
-          <div className="cursor-pointer rounded-2xl bg-[#19232D] px-4 py-2 hover:bg-[#4C535B]">
-            <Users size={20} className="text-white" />
-          </div>
-        </button>
-
-        {!isPersonalRoom && <EndCallButton />}
-      </div>
+        }}
+      />
 
       {/* Translation Modal */}
       <TranslationModal

@@ -17,7 +17,7 @@ export const SIDEBAR_LINKS = [
   {
     label: "Recordings",
     route: "/recordings",
-    imgUrl: "/icons/video.svg",
+    imgUrl: "/icons/recordings.svg",
   },
   {
     label: "Personal Room",
@@ -27,12 +27,12 @@ export const SIDEBAR_LINKS = [
   {
     label: "Integrations",
     route: "/integrations",
-    imgUrl: "/icons/add-personal.svg",
+    imgUrl: "/icons/join-meeting.svg",
   },
   {
     label: "API Docs",
     route: "/docs",
-    imgUrl: "/icons/add-meeting.svg",
+    imgUrl: "/icons/copy.svg",
   },
 ] as const;
 

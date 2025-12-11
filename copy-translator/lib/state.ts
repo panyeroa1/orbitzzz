@@ -38,7 +38,7 @@ ${topicInstruction}
 /**
  * Settings
  */
-export const useSettings = create<{
+export interface SettingsState {
   systemPrompt: string;
   model: string;
   voice: string;
@@ -51,7 +51,9 @@ export const useSettings = create<{
   setLanguage1: (language: string) => void;
   setLanguage2: (language: string) => void;
   setTopic: (topic: string) => void;
-}>((set, get) => ({
+}
+
+export const useSettings = create<SettingsState>((set, get) => ({
   systemPrompt: generateSystemPrompt('English (US)', 'Dutch', ''),
   model: DEFAULT_LIVE_API_MODEL,
   voice: DEFAULT_VOICE,
@@ -108,8 +110,8 @@ export interface LiveClientToolResponse {
 }
 export interface GroundingChunk {
   web?: {
-    uri: string;
-    title: string;
+    uri?: string;
+    title?: string;
   };
 }
 
@@ -123,12 +125,14 @@ export interface ConversationTurn {
   groundingChunks?: GroundingChunk[];
 }
 
-export const useLogStore = create<{
+export interface LogStoreState {
   turns: ConversationTurn[];
   addTurn: (turn: Omit<ConversationTurn, 'timestamp'>) => void;
   updateLastTurn: (update: Partial<ConversationTurn>) => void;
   clearTurns: () => void;
-}>((set, get) => ({
+}
+
+export const useLogStore = create<LogStoreState>((set, get) => ({
   turns: [],
   addTurn: (turn: Omit<ConversationTurn, 'timestamp'>) =>
     set(state => ({

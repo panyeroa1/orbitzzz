@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { useSettings, useUI } from '../lib/state';
-import c from 'classnames';
+import c from 'clsx';
 import { AVAILABLE_VOICES, AVAILABLE_LANGUAGES } from '../lib/constants';
 import { useLiveAPIContext } from '../contexts/LiveAPIContext';
 import { useAuth } from '../lib/auth';
-import { useHistoryStore } from '../lib/history';
+import { useHistoryStore, HistoryItem } from '../lib/history';
 
 export default function Sidebar() {
   const { isSidebarOpen, toggleSidebar } = useUI();
@@ -107,7 +107,7 @@ export default function Sidebar() {
           </div>
           <div className="history-list">
             {history.length > 0 ? (
-              history.map(item => (
+              history.map((item: HistoryItem) => (
                 <div key={item.id} className="history-item">
                   <div className="history-item-source">
                     <strong>Source:</strong> {item.sourceText}

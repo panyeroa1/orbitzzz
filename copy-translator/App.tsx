@@ -18,16 +18,17 @@
  * limitations under the License.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ControlTray from './components/console/control-tray/ControlTray';
 import ErrorScreen from './components/demo/ErrorScreen';
 import StreamingConsole from './components/demo/streaming-console/StreamingConsole';
+import VideoPreview from './components/media/VideoPreview';
 
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import { LiveAPIProvider } from './contexts/LiveAPIContext';
 import { useAuth, updateUserSettings } from './lib/auth';
-import { useSettings } from './lib/state';
+import { useSettings, SettingsState } from './lib/state';
 
 const API_KEY = process.env.API_KEY;
 if (typeof API_KEY !== 'string') {
@@ -43,10 +44,12 @@ if (typeof API_KEY !== 'string') {
 function App() {
   const { user } = useAuth();
 
+  const [videoActive, setVideoActive] = useState(false);
+
   useEffect(() => {
     if (!user) return;
 
-    const unsub = useSettings.subscribe((state, prevState) => {
+    const unsub = useSettings.subscribe((state: SettingsState, prevState: SettingsState) => {
       const changes: Partial<{ systemPrompt: string; voice: string }> = {};
       if (state.systemPrompt !== prevState.systemPrompt) {
         changes.systemPrompt = state.systemPrompt;
@@ -64,16 +67,19 @@ function App() {
 
   return (
     <div className="App">
-      <LiveAPIProvider apiKey={API_KEY}>
+      <LiveAPIProvider apiKey={API_KEY as string}>
         <ErrorScreen />
         <Header />
         <Sidebar />
         <div className="streaming-console">
           <main>
             <div className="main-app-area">
-              <StreamingConsole />
+              <div className="video-container" style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <VideoPreview active={videoActive} />
+                <StreamingConsole />
+              </div>
             </div>
-            <ControlTray></ControlTray>
+            <ControlTray videoActive={videoActive} onToggleVideo={() => setVideoActive(!videoActive)}></ControlTray>
           </main>
         </div>
       </LiveAPIProvider>

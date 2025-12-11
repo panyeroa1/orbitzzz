@@ -12,6 +12,7 @@ import {
   useSettings,
   useLogStore,
   ConversationTurn,
+  LogStoreState,
 } from '../../../lib/state';
 import { useHistoryStore } from '../../../lib/history';
 import { useAuth, updateUserConversations } from '../../../lib/auth';
@@ -22,7 +23,7 @@ export default function StreamingConsole() {
   const { addHistoryItem } = useHistoryStore();
   const { user } = useAuth();
 
-  const turns = useLogStore(state => state.turns);
+  const turns = useLogStore((state: LogStoreState) => state.turns);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Set the configuration for the Live API

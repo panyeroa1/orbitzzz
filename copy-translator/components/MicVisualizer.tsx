@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import cn from 'classnames';
+import cn from 'clsx';
 
 interface MicVisualizerProps {
   volume: number;

@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-import cn from 'classnames';
+import cn from 'clsx';
 
 // FIX: Import React to use React.CSSProperties
 import React, { memo, ReactNode, useEffect, useRef, useState } from 'react';
@@ -31,9 +31,12 @@ import MicVisualizer from '../../MicVisualizer';
 
 export type ControlTrayProps = {
   children?: ReactNode;
+  videoActive: boolean;
+  onToggleVideo: () => void;
 };
 
-function ControlTray({ children }: ControlTrayProps) {
+function ControlTray(props: ControlTrayProps) {
+  const { children } = props;
   const [audioRecorder] = useState(() => new AudioRecorder());
   const [muted, setMuted] = useState(false);
   const [micVolume, setMicVolume] = useState(0);
@@ -154,6 +157,16 @@ function ControlTray({ children }: ControlTrayProps) {
             title={isTtsMuted ? 'Unmute audio output' : 'Mute audio output'}
           >
             <span className="icon">{isTtsMuted ? 'volume_off' : 'volume_up'}</span>
+          </button>
+          <button
+            className={cn('action-button', { active: props.videoActive })}
+            onClick={props.onToggleVideo}
+            aria-label={props.videoActive ? 'Turn off camera' : 'Turn on camera'}
+            title={props.videoActive ? 'Turn off camera' : 'Turn on camera'}
+          >
+            <span className="material-symbols-outlined">
+              {props.videoActive ? 'videocam' : 'videocam_off'}
+            </span>
           </button>
           <button
             className={cn('action-button')}

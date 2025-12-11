@@ -233,13 +233,13 @@ export class GenAILiveClient {
         // FIX: Changed this.emit to this.emitter.emit to fix property does not exist error.
         this.emitter.emit(
           'inputTranscription',
-          serverContent.inputTranscription.text,
+          serverContent.inputTranscription.text ?? '',
           // FIX: Property 'isFinal' does not exist on type 'Transcription'.
           (serverContent.inputTranscription as any).isFinal ?? false,
         );
         this.log(
           'server.inputTranscription',
-          serverContent.inputTranscription.text,
+          serverContent.inputTranscription.text ?? '',
         );
       }
 
@@ -247,13 +247,13 @@ export class GenAILiveClient {
         // FIX: Changed this.emit to this.emitter.emit to fix property does not exist error.
         this.emitter.emit(
           'outputTranscription',
-          serverContent.outputTranscription.text,
+          serverContent.outputTranscription.text ?? '',
           // FIX: Property 'isFinal' does not exist on type 'Transcription'.
           (serverContent.outputTranscription as any).isFinal ?? false,
         );
         this.log(
           'server.outputTranscription',
-          serverContent.outputTranscription.text,
+          serverContent.outputTranscription.text ?? '',
         );
       }
 

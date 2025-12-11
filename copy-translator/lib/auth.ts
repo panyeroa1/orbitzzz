@@ -16,6 +16,9 @@ interface AuthState {
   loading: boolean;
   loadingData: boolean;
   signOut: () => void;
+  signInWithPassword: (email: any, password: any) => Promise<any>;
+  signUp: (email: any, password: any) => Promise<any>;
+  sendPasswordResetEmail: (email: string) => Promise<any>;
 }
 
 export const useAuth = create<AuthState>(() => ({
@@ -26,6 +29,9 @@ export const useAuth = create<AuthState>(() => ({
   loadingData: false,
   // All auth actions are no-ops
   signOut: () => { /* No operation */ },
+  signInWithPassword: () => Promise.resolve({}),
+  signUp: () => Promise.resolve({}),
+  sendPasswordResetEmail: () => Promise.resolve({}),
 }));
 
 // --- DATABASE HELPERS (NO-OP) ---

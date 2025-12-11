@@ -84,11 +84,14 @@
     "@stream-io/node-sdk": "^0.7.22",
     "@stream-io/video-react-sdk": "^1.23.0",
     "@supabase/supabase-js": "^2.87.0",
+    "@types/lodash": "^4.17.21",
     "bufferutil": "^4.0.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
+    "eventemitter3": "^5.0.1",
     "framer-motion": "^12.23.26",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.555.0",
     "mime": "^4.1.0",
     "next": "^15",
@@ -100,7 +103,8 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "utf-8-validate": "^6.0.5",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/node": "^24",

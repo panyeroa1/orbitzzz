@@ -181,6 +181,7 @@ export function TranslatorSidebar({ onActiveChange }: TranslatorSidebarProps) {
       stopTTS();
       restoreVolume();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

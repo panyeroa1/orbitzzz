@@ -5,10 +5,10 @@
 
 import React from 'react';
 import './WelcomeScreen.css';
-import { useLogStore } from '../../../lib/state';
+import { useLogStore, LogStoreState } from '../../../lib/state';
 
 const WelcomeScreen: React.FC = () => {
-  const turns = useLogStore(state => state.turns);
+  const turns = useLogStore((state: LogStoreState) => state.turns);
   const lastTurn = turns.at(-1);
 
   // Find the most recent agent (translation) turn to display.

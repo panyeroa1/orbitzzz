@@ -24,11 +24,31 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-flash-lite-latest" });
 
-    // Create translation prompt
-    const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, nothing else.\n\nText to translate:\n${text}`;
+    // Translation prompt focused on fidelity
+    const prompt = `
+      You are a precise translator.
+      - Translate the user text to ${targetLanguage}.
+      - Preserve meaning, tone, speaker markers, punctuation, numbers, and line breaks.
+      - Do not summarize, omit, or add anything.
+      - If the text already contains the target language, return it unchanged.
+      - Output ONLY the translated text, with no labels or commentary.
+    `;
 
-    const result = await model.generateContent(prompt);
-    const translatedText = result.response.text();
+    const result = await model.generateContent({
+      contents: [
+        { role: "system", parts: [{ text: prompt.trim() }] },
+        { role: "user", parts: [{ text }] },
+      ],
+    });
+
+    const translatedText = result.response.text()?.trim() || "";
+
+    if (!translatedText) {
+      return NextResponse.json(
+        { error: "Empty translation returned" },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({
       originalText: text,

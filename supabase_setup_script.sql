@@ -27,6 +27,46 @@ CREATE TABLE IF NOT EXISTS public.transcriptions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- ============================================
+-- TABLE 1.5: transcripts (User Requested Schema)
+-- ============================================
+-- Stores formatted transcripts with speaker detection labels
+-- Used by broadcaster.html
+--
+CREATE TABLE IF NOT EXISTS public.transcripts (
+  id uuid NOT NULL DEFAULT gen_random_uuid (),
+  session_id text NOT NULL,
+  user_id text NOT NULL,
+  source_language text null default 'auto'::text,
+  full_transcript_text text null default ''::text,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  meeting_id text null,
+  constraint transcripts_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_transcripts_session on public.transcripts using btree (session_id) TABLESPACE pg_default;
+create index IF not exists idx_transcripts_meeting on public.transcripts using btree (meeting_id) TABLESPACE pg_default;
+
+-- Enable Row Level Security and allow anon
+ALTER TABLE public.transcripts ENABLE ROW LEVEL SECURITY;
+
+create policy if not exists "Allow anon insert transcripts"
+  on public.transcripts
+  for insert
+  with check (true);
+
+create policy if not exists "Allow anon select transcripts"
+  on public.transcripts
+  for select
+  using (true);
+
+create policy if not exists "Allow anon update transcripts"
+  on public.transcripts
+  for update
+  using (true);
+
+
 -- Index for fast meeting lookup
 CREATE INDEX IF NOT EXISTS idx_transcriptions_meeting_created
   ON public.transcriptions (meeting_id, created_at);

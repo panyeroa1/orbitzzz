@@ -1,8 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Roboto } from "next/font/google"; // Changed from Outfit
+import { Roboto } from "next/font/google";
 import type { PropsWithChildren } from "react";
-
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -17,6 +16,8 @@ const roboto = Roboto({
   weight: ["100", "300", "400", "500", "700", "900"],
   variable: "--font-roboto",
 });
+
+import { AnonymousUserProvider } from "@/components/providers/anonymous-user-provider";
 
 export const viewport: Viewport = {
   themeColor: "#0E78F9",
@@ -44,6 +45,7 @@ const AppLayout = ({ children }: Readonly<PropsWithChildren>) => {
         }}
       >
         <body className={cn("bg-dark-2 antialiased", roboto.variable)}>
+          <AnonymousUserProvider />
           {children}
           <Toaster />
         </body>

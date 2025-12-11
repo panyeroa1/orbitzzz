@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Eburon · Broadcaster</title>
+  <title>Eburon · Broadcaster (Transcribe Only)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Supabase JS v2 -->
@@ -10,14 +10,14 @@
 
   <style>
     :root {
-      --bg: #05060a;
-      --card: #0b0f18;
+      --bg: #0d0f18;
+      --card: #1c1f2e;
       --accent: #00e0ff;
-      --accent-soft: rgba(0, 224, 255, 0.14);
-      --text-main: #f7f7f7;
-      --text-soft: #a9b0c2;
-      --danger: #ff4b6a;
-      --border-subtle: rgba(255, 255, 255, 0.14);
+      --accent-soft: rgba(0, 224, 255, 0.1);
+      --text-main: #ffffff;
+      --text-soft: #9ca3af;
+      --danger: #ef4444;
+      --border-subtle: rgba(255, 255, 255, 0.08);
     }
 
     * { box-sizing: border-box; }
@@ -25,108 +25,100 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top left, #16263f 0, #020308 50%, #000000 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(180deg, #0d0f18 0%, #161925 50%, #1C1F2E 100%);
       color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 20px;
     }
 
     .shell {
       width: 100%;
-      max-width: 1120px;
-      background: linear-gradient(145deg, rgba(0,0,0,0.92), rgba(6,11,22,0.98));
+      max-width: 1200px;
+      background: rgba(28, 31, 46, 0.8);
+      backdrop-filter: blur(20px);
       border-radius: 20px;
-      border: 1px solid var(--border-subtle);
-      box-shadow:
-        0 18px 40px rgba(0,0,0,0.85),
-        0 0 40px rgba(0, 224, 255, 0.18);
-      padding: 14px 16px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 20px;
     }
 
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .brand-logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 25% 20%, #ffffff 0, #7ef1ff 16%, #00e0ff 35%, #006dff 80%, #001133 100%);
-      box-shadow:
-        0 0 20px rgba(0, 224, 255, 0.9),
-        0 0 32px rgba(0, 109, 255, 0.9);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #006dff);
+      box-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
       position: relative;
-      overflow: hidden;
-    }
-
-    .brand-logo::after {
-      content: "";
-      position: absolute;
-      inset: 3px;
-      border-radius: inherit;
-      border: 1px solid rgba(0,0,0,0.35);
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
     }
 
     .brand-main {
-      font-size: 1.02rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .brand-sub {
-      font-size: 0.74rem;
+      font-size: 0.875rem;
       color: var(--text-soft);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      font-weight: 500;
     }
 
     .pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--accent-soft);
-      font-size: 0.7rem;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.875rem;
       color: var(--text-soft);
-      background: linear-gradient(135deg, rgba(0, 224, 255, 0.12), transparent);
+      background: rgba(255, 255, 255, 0.03);
+      font-weight: 500;
     }
 
     .pill-dot {
       width: 8px;
       height: 8px;
-      border-radius: 999px;
+      border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 9px var(--accent);
-      animation: pillpulse 1.4s infinite ease-in-out;
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2s infinite;
     }
 
-    @keyframes pillpulse {
-      0%,100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.25); opacity: 0.3; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1.5fr;
-      gap: 10px;
+      gap: 20px;
     }
 
     @media (max-width: 880px) {
@@ -134,99 +126,96 @@
     }
 
     .card {
-      background: radial-gradient(circle at top, rgba(20,41,78,0.7) 0, rgba(7,11,20,0.98) 40%, rgba(3,4,10,1) 100%);
+      background: rgba(37, 42, 65, 0.4);
+      backdrop-filter: blur(10px);
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      position: relative;
-      overflow: hidden;
+      gap: 16px;
+      transition: all 0.3s ease;
     }
 
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at top right, rgba(0,224,255,0.16), transparent 55%);
-      pointer-events: none;
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .card-header {
-      position: relative;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 12px;
     }
 
     .card-title {
-      font-size: 0.86rem;
+      font-size: 1rem;
       font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      letter-spacing: -0.01em;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      color: var(--text-main);
     }
 
     .card-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 8px var(--accent);
     }
 
     .status-pill {
-      padding: 4px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      font-size: 0.7rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.813rem;
       color: var(--text-soft);
-      background: rgba(0,0,0,0.35);
+      background: rgba(0, 0, 0, 0.3);
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      font-weight: 500;
     }
 
     .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 999px;
-      background: gray;
-      box-shadow: 0 0 7px rgba(128,128,128,0.8);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6b7280;
     }
 
     .status-dot.live {
-      background: #00ff90;
-      box-shadow: 0 0 10px rgba(0,255,144,0.9);
-      animation: liveblink 1s infinite ease-in-out;
+      background: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+      animation: blink 1.5s infinite;
     }
 
-    @keyframes liveblink {
-      0%,100% { transform: scale(1); opacity: 0.7; }
-      50% { transform: scale(1.2); opacity: 1; }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     .label {
-      font-size: 0.76rem;
+      font-size: 0.875rem;
       color: var(--text-soft);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 3px;
+      font-weight: 500;
+      margin-bottom: 8px;
     }
 
     select, input, textarea {
       width: 100%;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(4,6,13,0.98);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.3);
       color: var(--text-main);
-      font-size: 0.82rem;
-      padding: 6px 8px;
+      font-size: 0.938rem;
+      padding: 12px 14px;
       outline: none;
-      transition: border .15s ease, box-shadow .15s ease, background .15s ease;
+      transition: all 0.2s ease;
+      font-family: inherit;
     }
 
     select { cursor: pointer; }
@@ -235,84 +224,85 @@
       resize: vertical;
       min-height: 200px;
       max-height: 400px;
-      line-height: 1.4;
-      font-family: monospace;
+      line-height: 1.6;
+      font-family: ui-monospace, 'SF Mono', Monaco, 'Cascadia Code', monospace;
     }
 
     select:focus, input:focus, textarea:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(0,224,255,0.26);
-      background: rgba(5,9,20,0.99);
+      box-shadow: 0 0 0 3px rgba(0, 224, 255, 0.1);
+      background: rgba(0, 0, 0, 0.4);
     }
 
-    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; }
     .col { flex: 1 1 0; min-width: 0; }
 
-    .field-group { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
 
     button {
       border: none;
       outline: none;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 7px 14px;
+      border-radius: 12px;
+      font-size: 0.938rem;
+      font-weight: 600;
+      padding: 12px 24px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 8px;
       cursor: pointer;
-      transition: background .14s ease, box-shadow .14s ease, transform .08s ease, opacity .14s ease;
+      transition: all 0.2s ease;
+      font-family: inherit;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #006cff);
-      color: #020307;
-      box-shadow:
-        0 0 16px rgba(0,224,255,0.7),
-        0 0 26px rgba(0,108,255,0.6);
+      background: linear-gradient(135deg, var(--accent), #006dff);
+      color: #000000;
+      box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3);
     }
+    
     .btn-primary:hover:enabled {
-      transform: translateY(-0.5px);
-      box-shadow:
-        0 0 20px rgba(0,224,255,0.9),
-        0 0 34px rgba(0,108,255,0.8);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 224, 255, 0.4);
     }
 
     .btn-ghost {
-      background: rgba(255,255,255,0.02);
-      color: var(--text-soft);
-      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
+    
     .btn-ghost:hover:enabled {
-      background: rgba(255,255,255,0.08);
-      transform: translateY(-0.5px);
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
+      transform: none !important;
     }
 
     .log {
-      font-size: 0.7rem;
+      font-size: 0.813rem;
       color: var(--text-soft);
-      max-height: 90px;
+      max-height: 100px;
       overflow-y: auto;
-      padding-right: 3px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .log-line { margin-bottom: 2px; }
+    
+    .log-line { margin-bottom: 4px; font-family: monospace; }
     .log-line.error { color: var(--danger); }
 
     #screenPreview {
       width: 100%;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: radial-gradient(circle at center, #283246, #050712);
-      max-height: 150px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.3);
+      max-height: 200px;
       object-fit: contain;
       display: none;
     }
@@ -320,36 +310,30 @@
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      font-size: 0.68rem;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.813rem;
       color: var(--text-soft);
-    }
-
-    .badge-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
+      background: rgba(0, 0, 0, 0.2);
+      font-weight: 500;
     }
 
     .footer-note {
-      font-size: 0.68rem;
-      color: rgba(155,165,190,0.9);
-      text-align: right;
+      font-size: 0.813rem;
+      color: var(--text-soft);
+      text-align: center;
+      padding-top: 12px;
     }
-
-    /* Audio Visualizer Canvas */
-    #audioVisualizer {
-      width: 100%;
-      height: 80px;
-      border-radius: 10px;
-      background: #0b0f18;
-      border: 1px solid rgba(255,255,255,0.06);
-      display: none;
+    
+    .footer-note code {
+      background: rgba(0, 224, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+      font-family: monospace;
+      font-size: 0.875em;
     }
   </style>
 </head>
@@ -365,7 +349,7 @@
       </div>
       <div class="pill">
         <span class="pill-dot"></span>
-        <span>Auto-detect · Auto-Save (5s)</span>
+        <span>Transcribe + Speaker Detection · Auto-Save (10s)</span>
       </div>
     </div>
 
@@ -384,20 +368,15 @@
         </div>
 
         <div class="field-group">
-          <div class="label">Meeting ID</div>
-          <input type="text" id="meetingIdInput" placeholder="Auto-detected from URL" readonly />
-        </div>
-
-        <div class="field-group">
           <div class="label">Input Language</div>
-          <select id="sourceLang" title="Select input language"></select>
+          <select id="sourceLang" title="Select Input Language"></select>
         </div>
 
         <div class="field-group">
           <div class="row">
             <div class="col">
               <div class="label">Audio source</div>
-              <select id="audioSource" title="Select audio source">
+              <select id="audioSource" title="Select Audio Source">
                 <option value="screen" selected>Screen / tab + audio</option>
                 <option value="mic">Mic / device</option>
               </select>
@@ -417,9 +396,6 @@
         </div>
         
         <video id="screenPreview" autoplay muted playsinline></video>
-        
-        <!-- Audio Visualizer -->
-        <canvas id="audioVisualizer" width="600" height="80"></canvas>
       </div>
 
       <!-- RIGHT: Transcript Feed -->
@@ -430,7 +406,7 @@
             <span>Live Transcript</span>
           </div>
           <span class="badge">
-            <span class="badge-dot"></span>
+            <span style="width:7px;height:7px;border-radius:999px;background:var(--accent);box-shadow:0 0 8px var(--accent);"></span>
             <span id="dbStatus">Supabase</span>
           </span>
         </div>
@@ -440,38 +416,77 @@
         </div>
 
         <div class="footer-note">
-          Data saved to <code>eburon_tts_current</code> every 5 seconds.
+          Data saved to <code>transcripts</code> every 10 seconds with speaker detection.
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Get meeting ID from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const meetingId = urlParams.get('meeting_id') || urlParams.get('id') || null;
-    
-    // Supabase config
-    const SUPABASE_URL = "https://mkmyfdqrejabgnymfmbb.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXlmZHFyZWphYmdueW1mbWJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MzMxMzYsImV4cCI6MjA4MDAwOTEzNn0.x_1VnQ-HWWPwNe9jjafhD_uoH2dyCyjO2RaKOQhYoJw";
+    // ==========================
+    // Supabase config (anon)
+    // ==========================
+    const SUPABASE_URL = "https://bridhpobwsfttwalwhih.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_fc4iX_EGxN1Pzc4Py_SOog_8KJyvdQU";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Initialize Supabase
+    const { createClient } = window.supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Anonymous client ID
+    // Anonymous client id per browser session
     const ANON_CLIENT_ID_KEY = "eburon_anon_client_id";
     let anonClientId = localStorage.getItem(ANON_CLIENT_ID_KEY);
     if (!anonClientId) {
       anonClientId = crypto.randomUUID ? crypto.randomUUID() : "client-" + Math.random().toString(36).slice(2);
       localStorage.setItem(ANON_CLIENT_ID_KEY, anonClientId);
     }
+    
+    // Session ID for 'transcripts' table
+    let currentSessionId = "";
+    let currentRecordId = "";
+
+    // Resolve meeting_id from query/referrer/local storage so it never saves as null
+    const MEETING_ID_KEY = "eburon_last_meeting_id";
+    function resolveMeetingId() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const fromQuery = params.get("meeting_id") || params.get("id");
+
+        // Try to infer from referrer (e.g., when iframe src lacks query params)
+        let fromReferrer = null;
+        if (document.referrer) {
+          try {
+            const refUrl = new URL(document.referrer);
+            fromReferrer =
+              refUrl.searchParams.get("meeting_id") ||
+              refUrl.searchParams.get("id");
+
+            if (!fromReferrer) {
+              const parts = refUrl.pathname.split("/").filter(Boolean);
+              const meetingIdx = parts.indexOf("meeting");
+              if (meetingIdx !== -1 && parts[meetingIdx + 1]) {
+                fromReferrer = parts[meetingIdx + 1];
+              }
+            }
+          } catch (_) {
+            // ignore referrer parse issues
+          }
+        }
+
+        const fromStorage = localStorage.getItem(MEETING_ID_KEY);
+        const resolved = fromQuery || fromReferrer || fromStorage || `standalone-${anonClientId}`;
+        localStorage.setItem(MEETING_ID_KEY, resolved);
+        return resolved;
+      } catch (err) {
+        console.warn("Meeting ID resolution failed, using standalone id", err);
+        return `standalone-${anonClientId}`;
+      }
+    }
+
+    const meetingId = resolveMeetingId();
 
     const dbStatusEl = document.getElementById("dbStatus");
     const logEl = document.getElementById("log");
-    const meetingIdInput = document.getElementById("meetingIdInput");
-
-    if (meetingId) {
-      meetingIdInput.value = meetingId;
-    }
 
     function log(msg, isError = false) {
       const line = document.createElement("div");
@@ -482,7 +497,9 @@
 
     dbStatusEl.textContent = "Supabase ready";
 
+    // ==========================
     // DOM Elements
+    // ==========================
     const $ = (id) => document.getElementById(id);
     const audioSourceSel = $("audioSource");
     const sourceLangSelect = $("sourceLang");
@@ -493,7 +510,6 @@
     const statusDot = $("statusDot");
     const statusText = $("statusText");
     const transcriptEl = $("transcript");
-    const visualizerCanvas = $("audioVisualizer");
 
     function setListeningUI(on) {
       if (on) {
@@ -502,41 +518,156 @@
         startBtn.disabled = true;
         stopBtn.disabled = false;
         if(audioSourceSel.value === 'screen') screenPreview.style.display = "block";
-        visualizerCanvas.style.display = "block";
       } else {
         statusDot.classList.remove("live");
         statusText.textContent = "Idle";
         startBtn.disabled = false;
         stopBtn.disabled = true;
-        visualizerCanvas.style.display = "none";
       }
     }
 
-    // Language List
+    // ==========================
+    // Comprehensive Language List
+    // ==========================
     const ALL_LANGUAGES = [
-        { code: "", label: "✨ Auto-detect (System Default)" },
-        { code: "en-US", label: "English (United States)" },
+        { code: "", label: "✨ Auto-detect (Recommended)" },
+        { code: "af-ZA", label: "Afrikaans (South Africa)" },
+        { code: "sq-AL", label: "Albanian (Albania)" },
+        { code: "am-ET", label: "Amharic (Ethiopia)" },
+        { code: "ar-DZ", label: "Arabic (Algeria)" },
+        { code: "ar-BH", label: "Arabic (Bahrain)" },
+        { code: "ar-EG", label: "Arabic (Egypt)" },
+        { code: "ar-IQ", label: "Arabic (Iraq)" },
+        { code: "ar-IL", label: "Arabic (Israel)" },
+        { code: "ar-JO", label: "Arabic (Jordan)" },
+        { code: "ar-KW", label: "Arabic (Kuwait)" },
+        { code: "ar-LB", label: "Arabic (Lebanon)" },
+        { code: "ar-MA", label: "Arabic (Morocco)" },
+        { code: "ar-OM", label: "Arabic (Oman)" },
+        { code: "ar-QA", label: "Arabic (Qatar)" },
+        { code: "ar-SA", label: "Arabic (Saudi Arabia)" },
+        { code: "ar-PS", label: "Arabic (State of Palestine)" },
+        { code: "ar-TN", label: "Arabic (Tunisia)" },
+        { code: "ar-AE", label: "Arabic (United Arab Emirates)" },
+        { code: "ar-YE", label: "Arabic (Yemen)" },
+        { code: "hy-AM", label: "Armenian (Armenia)" },
+        { code: "az-AZ", label: "Azerbaijani (Azerbaijan)" },
+        { code: "eu-ES", label: "Basque (Spain)" },
+        { code: "bn-BD", label: "Bengali (Bangladesh)" },
+        { code: "bn-IN", label: "Bengali (India)" },
+        { code: "bs-BA", label: "Bosnian (Bosnia and Herzegovina)" },
+        { code: "bg-BG", label: "Bulgarian (Bulgaria)" },
+        { code: "my-MM", label: "Burmese (Myanmar)" },
+        { code: "ca-ES", label: "Catalan (Spain)" },
+        { code: "zh-CN", label: "Chinese, Mandarin (Simplified, China)" },
+        { code: "zh-HK", label: "Chinese, Cantonese (Traditional, Hong Kong)" },
+        { code: "zh-TW", label: "Chinese, Mandarin (Traditional, Taiwan)" },
+        { code: "hr-HR", label: "Croatian (Croatia)" },
+        { code: "cs-CZ", label: "Czech (Czech Republic)" },
+        { code: "da-DK", label: "Danish (Denmark)" },
+        { code: "nl-BE", label: "Dutch (Belgium)" },
+        { code: "nl-NL", label: "Dutch (Netherlands)" },
+        { code: "en-AU", label: "English (Australia)" },
+        { code: "en-CA", label: "English (Canada)" },
+        { code: "en-GH", label: "English (Ghana)" },
+        { code: "en-HK", label: "English (Hong Kong)" },
+        { code: "en-IN", label: "English (India)" },
+        { code: "en-IE", label: "English (Ireland)" },
+        { code: "en-KE", label: "English (Kenya)" },
+        { code: "en-NZ", label: "English (New Zealand)" },
+        { code: "en-NG", label: "English (Nigeria)" },
+        { code: "en-PK", label: "English (Pakistan)" },
+        { code: "en-PH", label: "English (Philippines)" },
+        { code: "en-SG", label: "English (Singapore)" },
+        { code: "en-ZA", label: "English (South Africa)" },
+        { code: "en-TZ", label: "English (Tanzania)" },
         { code: "en-GB", label: "English (United Kingdom)" },
-        { code: "es-ES", label: "Spanish (Spain)" },
-        { code: "es-MX", label: "Spanish (Mexico)" },
+        { code: "en-US", label: "English (United States)" },
+        { code: "et-EE", label: "Estonian (Estonia)" },
+        { code: "fil-PH", label: "Filipino (Philippines)" },
+        { code: "fi-FI", label: "Finnish (Finland)" },
+        { code: "fr-BE", label: "French (Belgium)" },
+        { code: "fr-CA", label: "French (Canada)" },
         { code: "fr-FR", label: "French (France)" },
+        { code: "fr-CH", label: "French (Switzerland)" },
+        { code: "gl-ES", label: "Galician (Spain)" },
+        { code: "ka-GE", label: "Georgian (Georgia)" },
+        { code: "de-AT", label: "German (Austria)" },
         { code: "de-DE", label: "German (Germany)" },
+        { code: "de-CH", label: "German (Switzerland)" },
+        { code: "el-GR", label: "Greek (Greece)" },
+        { code: "gu-IN", label: "Gujarati (India)" },
+        { code: "he-IL", label: "Hebrew (Israel)" },
+        { code: "hi-IN", label: "Hindi (India)" },
+        { code: "hu-HU", label: "Hungarian (Hungary)" },
+        { code: "is-IS", label: "Icelandic (Iceland)" },
+        { code: "id-ID", label: "Indonesian (Indonesia)" },
         { code: "it-IT", label: "Italian (Italy)" },
+        { code: "it-CH", label: "Italian (Switzerland)" },
+        { code: "ja-JP", label: "Japanese (Japan)" },
+        { code: "jv-ID", label: "Javanese (Indonesia)" },
+        { code: "kn-IN", label: "Kannada (India)" },
+        { code: "kk-KZ", label: "Kazakh (Kazakhstan)" },
+        { code: "km-KH", label: "Khmer (Cambodia)" },
+        { code: "ko-KR", label: "Korean (South Korea)" },
+        { code: "lo-LA", label: "Lao (Laos)" },
+        { code: "lv-LV", label: "Latvian (Latvia)" },
+        { code: "lt-LT", label: "Lithuanian (Lithuania)" },
+        { code: "mk-MK", label: "Macedonian (North Macedonia)" },
+        { code: "ms-MY", label: "Malay (Malaysia)" },
+        { code: "ml-IN", label: "Malayalam (India)" },
+        { code: "mr-IN", label: "Marathi (India)" },
+        { code: "mn-MN", label: "Mongolian (Mongolia)" },
+        { code: "ne-NP", label: "Nepali (Nepal)" },
+        { code: "no-NO", label: "Norwegian Bokmål (Norway)" },
+        { code: "fa-IR", label: "Persian (Iran)" },
+        { code: "pl-PL", label: "Polish (Poland)" },
         { code: "pt-BR", label: "Portuguese (Brazil)" },
         { code: "pt-PT", label: "Portuguese (Portugal)" },
-        { code: "zh-CN", label: "Chinese, Mandarin (Simplified)" },
-        { code: "ja-JP", label: "Japanese (Japan)" },
-        { code: "ko-KR", label: "Korean (South Korea)" },
+        { code: "pa-IN", label: "Punjabi (India)" },
+        { code: "ro-RO", label: "Romanian (Romania)" },
         { code: "ru-RU", label: "Russian (Russia)" },
-        { code: "ar-SA", label: "Arabic (Saudi Arabia)" },
-        { code: "hi-IN", label: "Hindi (India)" },
-        { code: "nl-NL", label: "Dutch (Netherlands)" },
-        { code: "pl-PL", label: "Polish (Poland)" },
-        { code: "tr-TR", label: "Turkish (Turkey)" },
-        { code: "vi-VN", label: "Vietnamese (Vietnam)" },
+        { code: "sr-RS", label: "Serbian (Serbia)" },
+        { code: "si-LK", label: "Sinhala (Sri Lanka)" },
+        { code: "sk-SK", label: "Slovak (Slovakia)" },
+        { code: "sl-SI", label: "Slovenian (Slovenia)" },
+        { code: "es-AR", label: "Spanish (Argentina)" },
+        { code: "es-BO", label: "Spanish (Bolivia)" },
+        { code: "es-CL", label: "Spanish (Chile)" },
+        { code: "es-CO", label: "Spanish (Colombia)" },
+        { code: "es-CR", label: "Spanish (Costa Rica)" },
+        { code: "es-DO", label: "Spanish (Dominican Republic)" },
+        { code: "es-EC", label: "Spanish (Ecuador)" },
+        { code: "es-SV", label: "Spanish (El Salvador)" },
+        { code: "es-GT", label: "Spanish (Guatemala)" },
+        { code: "es-HN", label: "Spanish (Honduras)" },
+        { code: "es-MX", label: "Spanish (Mexico)" },
+        { code: "es-NI", label: "Spanish (Nicaragua)" },
+        { code: "es-PA", label: "Spanish (Panama)" },
+        { code: "es-PY", label: "Spanish (Paraguay)" },
+        { code: "es-PE", label: "Spanish (Peru)" },
+        { code: "es-PR", label: "Spanish (Puerto Rico)" },
+        { code: "es-ES", label: "Spanish (Spain)" },
+        { code: "es-US", label: "Spanish (United States)" },
+        { code: "es-UY", label: "Spanish (Uruguay)" },
+        { code: "es-VE", label: "Spanish (Venezuela)" },
+        { code: "su-ID", label: "Sundanese (Indonesia)" },
+        { code: "sw-KE", label: "Swahili (Kenya)" },
+        { code: "sw-TZ", label: "Swahili (Tanzania)" },
+        { code: "sv-SE", label: "Swedish (Sweden)" },
+        { code: "ta-IN", label: "Tamil (India)" },
+        { code: "ta-MY", label: "Tamil (Malaysia)" },
+        { code: "ta-SG", label: "Tamil (Singapore)" },
+        { code: "ta-LK", label: "Tamil (Sri Lanka)" },
+        { code: "te-IN", label: "Telugu (India)" },
         { code: "th-TH", label: "Thai (Thailand)" },
-        { code: "id-ID", label: "Indonesian (Indonesia)" },
-        { code: "fil-PH", label: "Filipino (Philippines)" },
+        { code: "tr-TR", label: "Turkish (Turkey)" },
+        { code: "uk-UA", label: "Ukrainian (Ukraine)" },
+        { code: "ur-IN", label: "Urdu (India)" },
+        { code: "ur-PK", label: "Urdu (Pakistan)" },
+        { code: "uz-UZ", label: "Uzbek (Uzbekistan)" },
+        { code: "vi-VN", label: "Vietnamese (Vietnam)" },
+        { code: "zu-ZA", label: "Zulu (South Africa)" }
     ];
 
     function populateLanguages() {
@@ -546,10 +677,13 @@
         opt.textContent = item.label;
         sourceLangSelect.appendChild(opt);
       });
+      // Set Default to Auto (empty string in this list)
       sourceLangSelect.value = "";
     }
 
-    // Screen share
+    // ==========================
+    // Screen share logic
+    // ==========================
     let screenStream = null;
 
     async function startScreenShare() {
@@ -573,74 +707,21 @@
 
     shareBtn.addEventListener("click", () => startScreenShare());
 
-    // Audio Visualizer
-    let audioContext = null;
-    let analyzerNode = null;
-    let animationFrame = null;
-
-    async function startAudioVisualizer() {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          log("MediaDevices API not supported", true);
-          return;
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(stream);
-        analyzerNode = audioContext.createAnalyser();
-        analyzerNode.fftSize = 256;
-        source.connect(analyzerNode);
-
-        const bufferLength = analyzerNode.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        const ctx = visualizerCanvas.getContext("2d");
-
-        function draw() {
-          animationFrame = requestAnimationFrame(draw);
-          analyzerNode.getByteFrequencyData(dataArray);
-
-          ctx.fillStyle = "#0b0f18";
-          ctx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
-
-          const barWidth = (visualizerCanvas.width / bufferLength) * 2.5;
-          let x = 0;
-
-          for (let i = 0; i < bufferLength; i++) {
-            const barHeight = dataArray[i] / 2;
-            const gradient = ctx.createLinearGradient(0, visualizerCanvas.height - barHeight, 0, visualizerCanvas.height);
-            gradient.addColorStop(0, "#00e0ff");
-            gradient.addColorStop(1, "#006dff");
-            ctx.fillStyle = gradient;
-            ctx.fillRect(x, visualizerCanvas.height - barHeight, barWidth, barHeight);
-            x += barWidth + 1;
-          }
-        }
-
-        draw();
-      } catch (err) {
-        log("Visualizer error: " + err.message, true);
-      }
-    }
-
-    function stopAudioVisualizer() {
-      if (animationFrame) cancelAnimationFrame(animationFrame);
-      if (audioContext) audioContext.close();
-    }
-
+    // ==========================
     // Web Speech STT
+    // ==========================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
     let isListening = false;
     let stopRequested = false;
     let fullTranscript = "";
     
+    // Save State
     let saveInterval = null;
     let lastSavedText = "";
 
     async function ensureMicPermission() {
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
         await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (e) {
         log("Mic permission blocked: " + e.message, true);
@@ -655,14 +736,15 @@
       recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
+      
+      // Auto-detect fallback:
       recognition.lang = sourceLangSelect.value || navigator.language || "en-US";
 
       recognition.onstart = () => {
         isListening = true;
         setListeningUI(true);
-        log(`Listening (${recognition.lang || 'auto'}).`);
-        startSavingLoop();
-        startAudioVisualizer();
+        log(`Listening (${recognition.lang}).`);
+        startSavingLoop(); // Start the 5s save loop
       };
 
       recognition.onerror = (e) => {
@@ -680,7 +762,6 @@
           isListening = false;
           setListeningUI(false);
           stopSavingLoop();
-          stopAudioVisualizer();
           log("Stopped.");
         }
       };
@@ -690,7 +771,8 @@
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const res = event.results[i];
           if (res.isFinal) {
-            fullTranscript += (fullTranscript ? " " : "") + res[0].transcript;
+            // SEGMENTATION LOGIC: Append double newline for paragraphs
+            fullTranscript += (fullTranscript ? "\n\n" : "") + res[0].transcript;
           } else {
             interim += res[0].transcript;
           }
@@ -708,6 +790,11 @@
       fullTranscript = "";
       transcriptEl.value = "";
       
+      // Init IDs
+      currentSessionId = crypto.randomUUID ? crypto.randomUUID() : "sess-" + Date.now();
+      currentRecordId = crypto.randomUUID ? crypto.randomUUID() : "rec-" + Date.now();
+      
+      // Update lang based on selection
       recognition.lang = sourceLangSelect.value || navigator.language || "en-US";
       
       await ensureMicPermission();
@@ -721,70 +808,103 @@
       }
     }
 
-    // Supabase auto-save (5s) - Manual Check-Update-Insert to avoid unique constraint errors
+    // ==========================
+    // Supabase Saving Loop (10 Seconds with Speaker Detection)
+    // ==========================
+    let lastProcessedText = "";
+    
     function startSavingLoop() {
       if (saveInterval) clearInterval(saveInterval);
       
       saveInterval = setInterval(async () => {
         const text = transcriptEl.value.trim();
         
-        if (text && text !== lastSavedText) {
+        // Save only if there is text and it has changed since last save
+        if (text && text !== lastProcessedText) {
           try {
+            dbStatusEl.textContent = "Processing...";
+            dbStatusEl.style.background = "#fbbf24";
+            dbStatusEl.style.color = "#000";
+            
+            // Call speaker detection API
+            const speakerResponse = await fetch("/api/detect-speaker", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text })
+            });
+            
+            if (!speakerResponse.ok) {
+              throw new Error("Speaker detection failed");
+            }
+            
+            const speakerData = await speakerResponse.json();
+            const segments = speakerData.segments || [];
+            
+            // Map voice names to speaker labels
+            const voiceMap = new Map();
+            let maleCount = 1;
+            let femaleCount = 1;
+            
+            const labeledSegments = segments.map(seg => {
+              const voice = seg.voice || "Unknown";
+              
+              if (!voiceMap.has(voice)) {
+                // Determine if male or female based on voice name
+                const isFemale = ["Aoede", "Kore"].includes(voice);
+                const label = isFemale 
+                  ? `Female ${femaleCount++}` 
+                  : `Male ${maleCount++}`;
+                voiceMap.set(voice, label);
+              }
+              
+              return `${voiceMap.get(voice)}: ${seg.text}`;
+            });
+            
+            const formattedTranscript = labeledSegments.join("\n\n");
+            
+            // Save to Supabase
             const nowIso = new Date().toISOString();
             const langCode = sourceLangSelect.value || "auto";
             
-            // 1. Check if row exists for this client
-            const { data: existingRows, error: searchError } = await supabase
-              .from("eburon_tts_current")
-              .select("id")
-              .eq("client_id", anonClientId)
-              .limit(1);
-
-            if (searchError) throw searchError;
-
-            let error;
-
-            if (existingRows && existingRows.length > 0) {
-              // 2. UPDATE existing row
-              const { error: updateError } = await supabase
-                .from("eburon_tts_current")
-                .update({
-                  source_text: text,
-                  source_lang_code: langCode,
-                  updated_at: nowIso
-                })
-                .eq("client_id", anonClientId);
-              error = updateError;
-            } else {
-              // 3. INSERT new row
-              const { error: insertError } = await supabase
-                .from("eburon_tts_current")
-                .insert({
-                  client_id: anonClientId,
-                  source_text: text,
-                  source_lang_code: langCode,
-                  updated_at: nowIso
-                });
-              error = insertError;
-            }
+            // UPSERT to transcripts table (User Provided Schema)
+            // Schema: id (pkey), session_id, user_id, full_transcript_text
+            const { error } = await supabaseClient
+              .from("transcripts")  // Changed from transcriptions to transcripts
+              .upsert({
+                id: currentRecordId,
+                session_id: currentSessionId,
+                user_id: anonClientId,
+                meeting_id: meetingId,
+                source_language: langCode,
+                full_transcript_text: formattedTranscript,
+                updated_at: nowIso
+              }, { onConflict: 'id' });
 
             if (error) throw error;
 
-            lastSavedText = text;
+            lastProcessedText = text;
+            lastSavedText = formattedTranscript;
             dbStatusEl.textContent = "Saved " + new Date().toLocaleTimeString();
             dbStatusEl.style.background = "#00ff90";
             dbStatusEl.style.color = "#000";
             
+            // Update display with formatted transcript
+            transcriptEl.value = formattedTranscript;
+            
+            // Flash effect
             setTimeout(() => {
-                dbStatusEl.style.background = "";
-                dbStatusEl.style.color = "";
+                dbStatusEl.style.background = "var(--accent)";
+                dbStatusEl.style.color = "var(--text-soft)";
             }, 1000);
 
           } catch (err) {
             log("Save error: " + err.message, true);
+            dbStatusEl.textContent = "Error";
+            dbStatusEl.style.background = "#ef4444";
+            dbStatusEl.style.color = "#fff";
           }
         }
-      }, 5000);
+      }, 10000); // 10000ms = 10 seconds
     }
 
     function stopSavingLoop() {
@@ -792,7 +912,9 @@
       saveInterval = null;
     }
 
+    // ==========================
     // UI Events
+    // ==========================
     startBtn.addEventListener("click", async () => {
       const src = audioSourceSel.value;
       if (src === "screen" && !screenStream) {
@@ -806,10 +928,8 @@
 
     // Initial Setup
     populateLanguages();
-    log("Ready. Mode: Transcribe Only. Auto-Save to Supabase every 5s.");
-    if (meetingId) {
-      log("Meeting ID: " + meetingId);
-    }
+    log("Meeting ID: " + meetingId);
+    log("Ready. Mode: Transcribe + Speaker Detection. Auto-Save to public.transcripts every 10s.");
 
   </script>
 </body>

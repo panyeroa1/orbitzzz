@@ -71,7 +71,7 @@ wss.on('connection', async (ws, req) => {
     let audioBuffer = [];
     const BUFFER_LIMIT = 40; // Approx 4-5 seconds depending on chunk size/rate
     let isProcessing = false;
-    let fullTranscript = ""; // Keep track for the session
+    let chunkIndex = 0; // Track chunk order
 
     const processAudioBuffer = async () => {
         if (audioBuffer.length === 0 || isProcessing) return;
@@ -112,46 +112,32 @@ wss.on('connection', async (ws, req) => {
                     if (call.name === 'save_transcript_segment') {
                         const { text, speaker, language } = call.args;
                         if (text) {
-                            const labeledText = `${speaker}: ${text}\n\n`;
+                            const labeledText = `${speaker}: ${text}`;
                             console.log(`[Transcript] ${labeledText}`);
                             
                             // Send to client for display
-                            ws.send(JSON.stringify({ type: 'text', text: labeledText }));
+                            ws.send(JSON.stringify({ type: 'text', text: labeledText, speaker, language }));
                             
-                            // UPDATE SUPABASE (Accumulate)
-                            fullTranscript += labeledText;
-                            
-                            if (supabase) {
-                                // Upsert logic as requested
-                                const { error } = await supabase
-                                    .from('transcripts')
-                                    .upsert({
-                                        session_id: sessionId,
-                                        meeting_id: meetingId,
-                                        user_id: userId,
-                                        full_transcript_text: fullTranscript,
-                                        source_language: language || 'auto',
-                                        updated_at: new Date().toISOString()
-                                    }, { onConflict: 'session_id, user_id' }); // Conflict target? usually PK is UUID. 
-                                    // User wants "update row". We can match by ID if we stored it, or session_id/user_id unique constraint.
-                                    // The user provided INSERT... so we assume we are updating the SAME row for the session.
-                                    // Let's try to query first to get ID, then update.
-                                
-                                const { data: existing } = await supabase.from('transcripts').select('id').eq('session_id', sessionId).maybeSingle();
-                                
-                                if (existing) {
-                                     await supabase.from('transcripts').update({ 
-                                         full_transcript_text: fullTranscript,
-                                         updated_at: new Date().toISOString()
-                                     }).eq('id', existing.id);
-                                } else {
-                                     await supabase.from('transcripts').insert({
-                                         session_id: sessionId,
-                                         meeting_id: meetingId,
-                                         user_id: userId,
-                                         full_transcript_text: fullTranscript,
-                                         source_language: language || 'auto'
-                                     });
+                            // INSERT into Supabase transcriptions table
+                            if (supabase && meetingId) {
+                                try {
+                                    const { error } = await supabase
+                                        .from('transcriptions')
+                                        .insert({
+                                            meeting_id: meetingId,
+                                            chunk_index: chunkIndex++,
+                                            text_original: text,
+                                            source_language: language || 'auto',
+                                            speaker_label: speaker || 'Unknown'
+                                        });
+                                    
+                                    if (error) {
+                                        console.error("[Supabase] Insert Error:", error);
+                                    } else {
+                                        console.log(`[Supabase] Saved chunk ${chunkIndex - 1}`);
+                                    }
+                                } catch (dbErr) {
+                                    console.error("[Supabase] Exception:", dbErr);
                                 }
                             }
                         }

@@ -9,9 +9,9 @@ import {
   Shield, 
   Users, 
   Radio, 
-  Languages, 
   Disc, 
   Smile,
+  Heart,
 } from "lucide-react";
 import { useCall } from "@stream-io/video-react-sdk";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ interface MeetingBottomBarProps {
   onLeave: () => void;
   onToggleParticipants: () => void;
   onToggleBroadcast: () => void;
-  onToggleTranslator: () => void;
+  onToggleDonation: () => void;
   isMicEnabled: boolean;
   isCamEnabled: boolean;
 }
@@ -30,13 +30,14 @@ export const MeetingBottomBar = ({
   onLeave,
   onToggleParticipants,
   onToggleBroadcast,
-  onToggleTranslator,
+  onToggleDonation,
   isMicEnabled,
   isCamEnabled
 }: MeetingBottomBarProps) => {
   const call = useCall();
   const [isRecording, setIsRecording] = useState(false); 
   const mouseX = useMotionValue<number>(Infinity);
+
 
   const ControlButton = ({ 
     icon: Icon, 
@@ -145,7 +146,8 @@ export const MeetingBottomBar = ({
           <ControlButton icon={Users} label="Participants" onClick={onToggleParticipants} mouseX={mouseX} />
           
           <ControlButton icon={Radio} label="Broadcast" onClick={onToggleBroadcast} showArrow={false} mouseX={mouseX} />
-          <ControlButton icon={Languages} label="Translator" onClick={onToggleTranslator} showArrow={false} mouseX={mouseX} />
+          
+          <ControlButton icon={Heart} label="Donate" onClick={onToggleDonation} showArrow={false} mouseX={mouseX} />
           
           <ControlButton icon={Disc} label="Record" showArrow={false} mouseX={mouseX} />
           <ControlButton icon={Smile} label="Reactions" showArrow={false} mouseX={mouseX} />

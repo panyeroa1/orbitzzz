@@ -13,14 +13,19 @@ interface SimpleBroadcasterProps {
 export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterProps) {
   const [isActive, setIsActive] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [segmentedText, setSegmentedText] = useState("");
   const [lastSaved, setLastSaved] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>(null);
   const recognitionRef = useRef<any>(null);
+  const segmentIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const lastSegmentedTextRef = useRef<string>("");
+  const chunkCounterRef = useRef<number>(0); // Global chunk counter
 
   // Anonymous client ID
   const getClientId = () => {
@@ -170,38 +175,66 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
     }
   };
 
-  // Supabase auto-save every 5 seconds
-  const startAutoSave = () => {
-    if (saveIntervalRef.current) return;
+  // Segment text with Gemini every 10 seconds
+  const startSegmentation = () => {
+    if (segmentIntervalRef.current) return;
 
-    saveIntervalRef.current = setInterval(async () => {
+    segmentIntervalRef.current = setInterval(async () => {
       const text = transcript.trim();
-      if (text && text !== lastSaved) {
+      if (text && text !== lastSegmentedTextRef.current && !isProcessing) {
+        setIsProcessing(true);
         try {
-          const { error } = await supabase.from("eburon_tts_current").insert({
-            client_id: getClientId(),
-            source_text: text,
-            source_lang_code: "auto", // Mark as auto-detected
-            meeting_id: meetingId || null,
-            updated_at: new Date().toISOString(),
+          const response = await fetch("/api/detect-speaker", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
           });
 
-          if (error) throw error;
-          setLastSaved(text);
-          console.log("Saved to Supabase");
+          const data = await response.json();
+          if (data.segments) {
+            // Format segments into readable text
+            const formatted = data.segments
+              .map((seg: any) => `[${seg.voice}]: ${seg.text}`)
+              .join("\n\n");
+            setSegmentedText(formatted);
+            lastSegmentedTextRef.current = text;
+
+            // Save to Supabase
+            for (const seg of data.segments) {
+              const { error } = await supabase.from("transcriptions").insert({
+                meeting_id: meetingId || `broadcast-${Date.now()}`,
+                chunk_index: chunkCounterRef.current++,
+                text_original: seg.text,
+                speaker_label: seg.voice,
+                source_language: "auto",
+              });
+              
+              if (error) {
+                console.error("Supabase insert error:", error);
+              }
+            }
+            console.log(`Segmented and saved ${data.segments.length} chunks to Supabase`);
+          }
         } catch (err) {
-          console.error("Save error:", err);
+          console.error("Segmentation error:", err);
+        } finally {
+          setIsProcessing(false);
         }
       }
-    }, 5000);
+    }, 10000);
   };
 
-  const stopAutoSave = () => {
-    if (saveIntervalRef.current) {
-      clearInterval(saveIntervalRef.current);
-      saveIntervalRef.current = null;
+  const stopSegmentation = () => {
+    if (segmentIntervalRef.current) {
+      clearInterval(segmentIntervalRef.current);
+      segmentIntervalRef.current = null;
     }
   };
+
+  // Keep legacy save function for compatibility
+  const startAutoSave = () => {};
+
+  const stopAutoSave = () => {};
 
   // Toggle broadcaster
   const toggleBroadcaster = () => {
@@ -209,14 +242,19 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
       // Stop
       stopTranscription();
       stopVisualizer();
+      stopSegmentation();
       stopAutoSave();
       setIsActive(false);
     } else {
       // Start
       setTranscript("");
+      setSegmentedText("");
       setLastSaved("");
+      lastSegmentedTextRef.current = "";
+      chunkCounterRef.current = 0; // Reset chunk counter for new session
       startVisualizer();
       startTranscription();
+      startSegmentation();
       startAutoSave();
       setIsActive(true);
     }
@@ -227,6 +265,7 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
     return () => {
       stopTranscription();
       stopVisualizer();
+      stopSegmentation();
       stopAutoSave();
     };
   }, []);
@@ -259,12 +298,12 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
         </div>
       )}
 
-      {/* Live Transcript */}
+      {/* Live Transcript - Web Speech (Fast Local) */}
       {isActive && (
         <div className="bg-dark-3/50 rounded-xl p-4 border border-white/10 backdrop-blur-xl">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm font-semibold text-white/80">Live Transcript</span>
+            <span className="text-sm font-semibold text-white/80">Live Transcript (Local)</span>
           </div>
           <div className="min-h-[100px] max-h-[200px] overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/5">
             <p className={cn(
@@ -272,6 +311,26 @@ export function SimpleBroadcaster({ meetingId, className }: SimpleBroadcasterPro
               transcript && "animate-pulse"
             )}>
               {transcript || "Listening..."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Gemini Speaker Segmentation */}
+      {isActive && (
+        <div className="bg-dark-3/50 rounded-xl p-4 border border-white/10 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-3">
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              isProcessing ? "bg-yellow-500 animate-pulse" : "bg-blue-500"
+            )} />
+            <span className="text-sm font-semibold text-white/80">
+              Speaker Segmentation {isProcessing ? "(Processing...)" : "(Ready)"}
+            </span>
+          </div>
+          <div className="min-h-[100px] max-h-[200px] overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/5">
+            <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">
+              {segmentedText || "Waiting for speech..."}
             </p>
           </div>
         </div>

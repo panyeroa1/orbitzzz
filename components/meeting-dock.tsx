@@ -3,7 +3,7 @@
 import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
 import { 
   Mic, MicOff, Video, VideoOff, Users, 
-  PhoneOff, Radio, LayoutList
+  PhoneOff, Radio, LayoutList, Heart
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCall, useCallStateHooks } from "@stream-io/video-react-sdk";
@@ -86,9 +86,10 @@ interface MeetingDockProps {
   onToggleParticipants: () => void;
   onToggleBroadcast: () => void;
   onToggleLayout: () => void;
+  onToggleDonation: () => void;
 }
 
-export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, onToggleLayout }: MeetingDockProps) {
+export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, onToggleLayout, onToggleDonation }: MeetingDockProps) {
   const call = useCall();
   const router = useRouter();
   const { useMicrophoneState, useCameraState } = useCallStateHooks();
@@ -159,6 +160,15 @@ export function MeetingDock({ onLeave, onToggleParticipants, onToggleBroadcast, 
           label="Broadcast"
           mouseX={mouseX}
           onClick={onToggleBroadcast}
+          isActive={false}
+        />
+
+        {/* Donation Button */}
+        <ControlIcon
+          icon={Heart}
+          label="Donate to Church"
+          mouseX={mouseX}
+          onClick={onToggleDonation}
           isActive={false}
         />
 

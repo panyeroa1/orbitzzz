@@ -10,9 +10,10 @@ interface GeminiTranscriptionState {
 interface UseGeminiTranscriptionProps {
     sessionId: string;
     userId: string;
+    meetingId?: string;
 }
 
-export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTranscriptionProps) => {
+export const useGeminiLiveTranscription = ({ sessionId, userId, meetingId }: UseGeminiTranscriptionProps) => {
     const [state, setState] = useState<GeminiTranscriptionState>({
         transcript: '',
         isConnected: false,
@@ -32,7 +33,10 @@ export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTrans
             
             setState(prev => ({ ...prev, isKeyActive: true })); // Assume active if we try to connect
 
-            const wsUrl = `ws://localhost:8001?mode=transcription&session_id=${sessionId}&user_id=${userId}`;
+            let wsUrl = `ws://localhost:8001?mode=transcription&session_id=${sessionId}&user_id=${userId}`;
+            if (meetingId) {
+                wsUrl += `&meeting_id=${meetingId}`;
+            }
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
 
@@ -108,7 +112,7 @@ export const useGeminiLiveTranscription = ({ sessionId, userId }: UseGeminiTrans
         } catch (error: any) {
             setState(prev => ({ ...prev, error: error.message }));
         }
-    }, [sessionId, userId]);
+    }, [sessionId, userId, meetingId]);
 
     const disconnect = useCallback(() => {
         if (wsRef.current) {

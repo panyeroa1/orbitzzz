@@ -8,13 +8,16 @@ interface BroadcastPageProps {
 
 export default function BroadcastPage({ params }: BroadcastPageProps) {
   const { id: meetingId } = use(params);
+  const broadcasterUrl = `/broadcaster.html?meeting_id=${encodeURIComponent(
+    meetingId || "unknown"
+  )}`;
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-black">
       <iframe
-        src="https://conversations-omega.vercel.app/"
+        src={broadcasterUrl}
         className="w-full h-full border-0"
-        allow="microphone; camera; display-capture"
+        allow="microphone; camera; display-capture; autoplay; clipboard-write; fullscreen"
         title="Eburon Broadcaster"
       />
     </div>

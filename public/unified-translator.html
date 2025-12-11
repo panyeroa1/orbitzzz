@@ -421,7 +421,7 @@
     }
   }
 
-  function playNext() {
+    function playNext() {
     if (audioQueue.length === 0) {
       isSpeaking = false;
       translationCard.classList.remove('speaking');
@@ -430,6 +430,9 @@
         log("Resuming mic...");
         try { recognition.start(); } catch(e){}
       }
+      // Notify parent to unmute
+      window.parent.postMessage({ type: "translator-tts-end" }, "*");
+      
       updateDockState();
       return;
     }
@@ -443,6 +446,9 @@
       log("Pausing mic for playback...");
       recognition.stop(); // We will restart in playNext() when queue empty
     }
+
+    // Notify parent to mute
+    window.parent.postMessage({ type: "translator-tts-start" }, "*");
 
     const blob = audioQueue.shift();
     const url = URL.createObjectURL(blob);
@@ -470,15 +476,32 @@
       alert("Speech recognition not available in this browser.");
       return;
     }
+    
+    // barge-in: If TTS is playing, pause it and reset state
+    if (isSpeaking || !audioPlayer.paused) {
+      log("Interrupted TTS for manual mic start.");
+      audioPlayer.pause();
+      isSpeaking = false;
+      translationCard.classList.remove('speaking');
+      window.parent.postMessage({ type: "translator-tts-end" }, "*");
+      updateDockState();
+    }
+
     isListening = true;
     updateDockState();
     recognition.lang = document.getElementById('sourceLang').value;
     try {
       recognition.start();
     } catch (e) {
-      log("Start error: " + e.message);
-      isListening = false;
-      updateDockState();
+      // If already started, we just usurped the TTS, so that's fine. 
+      // If genuine error, log it.
+      if (e.message !== "Failed to execute 'start' on 'SpeechRecognition': recognition has already started.") {
+         log("Start error: " + e.message);
+         isListening = false;
+         updateDockState();
+      } else {
+         log("Mic already active.");
+      }
     }
   }
 

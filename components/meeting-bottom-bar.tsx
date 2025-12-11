@@ -6,13 +6,13 @@ import {
   MicOff,
   Video,
   VideoOff,
-  Shield,
+  PhoneOff,
   Users,
+  Shield,
+  MessageSquareText,
   Radio,
-  Disc,
-  Smile,
-  Heart,
-  Languages,
+  Globe,
+  DollarSign,
 } from "lucide-react";
 import { useCall } from "@stream-io/video-react-sdk";
 import { AnimatePresence, motion } from "framer-motion";
@@ -21,10 +21,8 @@ import { cn } from "@/lib/utils";
 interface MeetingBottomBarProps {
   isVisible: boolean;
   onLeave: () => void;
-  onToggleParticipants: () => void;
-  onToggleBroadcast: () => void;
-  onToggleTranslator: () => void;
-  onToggleDonation: () => void;
+  onSidebarChange: (sidebar: "participants" | "broadcaster" | "translator" | "donation" | "one-on-one" | null) => void;
+  activeSidebar: string | null;
   isMicEnabled: boolean;
   isCamEnabled: boolean;
 }
@@ -32,63 +30,41 @@ interface MeetingBottomBarProps {
 export const MeetingBottomBar = ({
   isVisible,
   onLeave,
-  onToggleParticipants,
-  onToggleBroadcast,
-  onToggleTranslator,
-  onToggleDonation,
+  onSidebarChange,
+  activeSidebar,
   isMicEnabled,
   isCamEnabled,
 }: MeetingBottomBarProps) => {
   const call = useCall();
 
-  const buttons = [
+  const mainControls = [
     {
       label: isMicEnabled ? "Mute" : "Unmute",
       icon: isMicEnabled ? Mic : MicOff,
       onClick: () => call?.microphone.toggle(),
       danger: false,
+      isActive: isMicEnabled,
     },
     {
       label: isCamEnabled ? "Stop Video" : "Start Video",
       icon: isCamEnabled ? Video : VideoOff,
       onClick: () => call?.camera.toggle(),
       danger: false,
+      isActive: isCamEnabled,
     },
-    { label: "Security", icon: Shield, onClick: () => {}, danger: false },
+    { label: "Security", icon: Shield, onClick: () => {}, danger: false, isActive: false },
+    {
+      label: "1:1",
+      icon: MessageSquareText, // Using MessageSquareText as visual proxy for 1:1 chat/translation
+      onClick: () => onSidebarChange?.("one-on-one"),
+      isActive: activeSidebar === "one-on-one",
+      danger: false,
+    },
     {
       label: "Participants",
       icon: Users,
-      onClick: onToggleParticipants,
-      danger: false,
-    },
-    {
-      label: "Broadcast",
-      icon: Radio,
-      onClick: onToggleBroadcast,
-      danger: false,
-    },
-    {
-      label: "Translator",
-      icon: Languages,
-      onClick: onToggleTranslator,
-      danger: false,
-    },
-    {
-      label: "Record",
-      icon: Disc,
-      onClick: () => {},
-      danger: false,
-    },
-    {
-      label: "Reactions",
-      icon: Smile,
-      onClick: () => {},
-      danger: false,
-    },
-    {
-      label: "Donate",
-      icon: Heart,
-      onClick: onToggleDonation,
+      onClick: () => onSidebarChange?.("participants"),
+      isActive: activeSidebar === "participants",
       danger: false,
     },
   ];
@@ -103,32 +79,74 @@ export const MeetingBottomBar = ({
           transition={{ type: "spring", stiffness: 280, damping: 26 }}
           className="fixed bottom-0 left-0 right-0 z-50 flex justify-center bg-gradient-to-t from-black/80 to-black/40 pb-3 pt-2"
         >
-          <div className="flex w-full max-w-full items-center justify-between gap-2 rounded-3xl border border-white/10 bg-black/70 px-4 py-3 shadow-2xl backdrop-blur-2xl">
-            <div className="flex flex-1 items-center justify-start gap-1 overflow-x-auto">
-              {buttons.map(({ label, icon: Icon, onClick, danger }) => (
-                <motion.button
-                  key={label}
-                  onClick={onClick}
-                  whileHover={{ scale: 1.08 }}
-                  className={cn(
-                    "group flex min-w-[76px] flex-col items-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white",
-                    danger && "text-red-500"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="whitespace-nowrap">{label}</span>
-                </motion.button>
-              ))}
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={onLeave}
-              className="flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-red-600/30 transition hover:bg-red-700"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onSidebarChange?.("broadcaster")}
+              title="Broadcaster"
+              className={cn(
+                "rounded-2xl bg-[#1A1A1A]/80 p-3.5 backdrop-blur-xl transition-all hover:bg-[#2A2A2A] hover:scale-105 active:scale-95 border border-white/5 shadow-lg",
+                activeSidebar === "broadcaster" ? "bg-blue-600/20 border-blue-500/50" : ""
+              )}
             >
-              Leave
-            </motion.button>
+              <Radio size={22} className={cn("text-white", activeSidebar === "broadcaster" ? "text-blue-400" : "")} />
+            </button>
+            <button
+              onClick={() => onSidebarChange?.("translator")}
+              title="Translator"
+              className={cn(
+                "rounded-2xl bg-[#1A1A1A]/80 p-3.5 backdrop-blur-xl transition-all hover:bg-[#2A2A2A] hover:scale-105 active:scale-95 border border-white/5 shadow-lg",
+                activeSidebar === "translator" ? "bg-blue-600/20 border-blue-500/50" : ""
+              )}
+            >
+              <Globe size={22} className={cn("text-white", activeSidebar === "translator" ? "text-blue-400" : "")} />
+            </button>
+          </div>
+
+          <div className="mx-4 flex items-center gap-2 rounded-3xl bg-[#0F0F0F]/80 p-1.5 backdrop-blur-2xl border border-white/5 shadow-2xl">
+            {mainControls.map((control, index) => (
+              <button
+                key={index}
+                onClick={control.onClick}
+                title={control.label}
+                className={cn(
+                  "group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all hover:bg-white/10 active:scale-95",
+                  control.danger ? "hover:bg-red-500/20" : "",
+                  control.isActive && !control.danger ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50" : "text-white/80 hover:text-white"
+                )}
+              >
+                <control.icon
+                  size={22}
+                  className={cn(
+                    "transition-transform group-hover:scale-110",
+                    control.danger ? "text-red-400" : ""
+                  )}
+                />
+                {control.isActive && !control.danger && (
+                  <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-blue-500" />
+                )}
+              </button>
+            ))}
+            
+            <button
+               onClick={onLeave}
+               title="Leave Meeting"
+               className="group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all hover:bg-red-500/20 active:scale-95"
+            >
+               <PhoneOff size={22} className="text-red-400 transition-transform group-hover:scale-110" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onSidebarChange?.("donation")}
+              title="Donate"
+              className={cn(
+                "rounded-2xl bg-[#1A1A1A]/80 p-3.5 backdrop-blur-xl transition-all hover:bg-[#2A2A2A] hover:scale-105 active:scale-95 border border-white/5 shadow-lg",
+                activeSidebar === "donation" ? "bg-blue-600/20 border-blue-500/50" : ""
+              )}
+            >
+              <DollarSign size={22} className={cn("text-white", activeSidebar === "donation" ? "text-blue-400" : "")} />
+            </button>
           </div>
         </motion.div>
       )}

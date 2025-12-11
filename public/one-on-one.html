@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Orbits 1:1 Translator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #05060a;
+      --card: #0b0f18;
+      --accent: #00e0ff;
+      --accent-soft: rgba(0, 224, 255, 0.14);
+      --text-main: #f7f7f7;
+      --text-soft: #a9b0c2;
+      --danger: #ff4b6a;
+      --border-subtle: rgba(255, 255, 255, 0.14);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: transparent;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    .header h2 { margin: 0; font-size: 1.1rem; color: var(--accent); }
+    .header small { color: var(--text-soft); font-size: 0.75rem; }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-subtle);
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+      appearance: none; /* Hide default arrow */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select:focus {
+      border-color: var(--accent);
+      background-color: rgba(255,255,255,0.1);
+    }
+
+    .mic-button {
+      margin-top: auto;
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), #00aaff);
+      color: #000;
+      font-weight: 800;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--accent-soft);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .mic-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 224, 255, 0.4);
+    }
+    .mic-button:active {
+      transform: translateY(1px);
+    }
+    .mic-button.active {
+      background: #ff4b6a; /* Red for Stop */
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 75, 106, 0.4);
+    }
+    .mic-button.active:hover {
+       box-shadow: 0 8px 25px rgba(255, 75, 106, 0.6);
+    }
+
+    .status-area {
+      min-height: 80px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      overflow-y: auto;
+    }
+    
+    .wave-visualizer {
+        height: 4px;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        margin-top: 10px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .wave-visualizer.active { opacity: 1; }
+    .bar {
+        width: 3px;
+        height: 100%;
+        background: var(--accent);
+        border-radius: 2px;
+        animation: wave 1s infinite ease-in-out;
+    }
+    .bar:nth-child(2) { animation-delay: 0.1s; }
+    .bar:nth-child(3) { animation-delay: 0.2s; }
+    .bar:nth-child(4) { animation-delay: 0.3s; }
+    .bar:nth-child(5) { animation-delay: 0.4s; }
+    
+    @keyframes wave {
+        0%, 100% { height: 2px; }
+        50% { height: 12px; }
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2>1:1 Translator</h2>
+    <small id="bindingIdDisplay">Connecting...</small>
+  </div>
+
+  <div class="control-group">
+    <label for="myLanguage">My Language (Input)</label>
+    <select id="myLanguage">
+      <option value="auto">✨ Auto Detect</option>
+      <option value="en-US">English</option>
+      <option value="es-ES">Spanish</option>
+      <option value="fr-FR">French</option>
+      <option value="de-DE">German</option>
+      <option value="it-IT">Italian</option>
+      <option value="ja-JP">Japanese</option>
+      <option value="zh-CN">Chinese</option>
+      <option value="pt-PT">Portuguese</option>
+      <option value="ru-RU">Russian</option>
+      <option value="hi-IN">Hindi</option>
+      <option value="fil-PH">Filipino</option>
+    </select>
+  </div>
+  
+  <div class="control-group">
+     <label>Live Status</label>
+     <div class="status-area" id="statusLog">
+        Ready to connect.
+     </div>
+  </div>
+  
+  <div class="wave-visualizer" id="visualizer">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  </div>
+
+  <button id="micBtn" class="mic-button" onclick="toggleMic()">
+    <span id="micIcon">🎙️</span>
+    <span id="micLabel">Open Mic</span>
+  </button>
+</div>
+
+<script>
+  // 1. Get Binding ID
+  const urlParams = new URLSearchParams(window.location.search);
+  const bindingId = urlParams.get('bindingId') || 'demo-room';
+  document.getElementById('bindingIdDisplay').textContent = `ID: ${bindingId.slice(0, 8)}...`;
+  
+  // 2. State
+  let isListening = false;
+  let recognition = null;
+  const statusLog = document.getElementById('statusLog');
+  const micBtn = document.getElementById('micBtn');
+  const micLabel = document.getElementById('micLabel');
+  const visualizer = document.getElementById('visualizer');
+  const myLanguageSelect = document.getElementById('myLanguage');
+
+  function log(msg) {
+    statusLog.textContent = msg;
+    // Keep internal history if needed, but for now just show latest status
+  }
+
+  // 3. Web Speech API Setup
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    
+    recognition.onstart = () => {
+      isListening = true;
+      updateUI();
+      log("Listening... Speak now.");
+      visualizer.classList.add('active');
+    };
+    
+    recognition.onerror = (event) => {
+        console.error("Speech Error", event.error);
+        log("Error: " + event.error);
+        if(event.error === 'not-allowed') {
+            isListening = false; 
+            updateUI();
+        }
+    };
+    
+    recognition.onend = () => {
+        if(isListening) {
+             // Auto-restart
+             try { recognition.start(); } catch(e){}
+        } else {
+             visualizer.classList.remove('active');
+             log("Mic closed.");
+        }
+        updateUI();
+    };
+    
+    recognition.onresult = (event) => {
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                final += event.results[i][0].transcript;
+            }
+        }
+        
+        if (final) {
+            log(`You said: "${final}"`);
+            // SEND TO BACKEND (Supabase) HERE
+            // payload: { binding_id: bindingId, text: final, source_lang: myLanguageSelect.value }
+            // For now, allow UI to reflect action
+        }
+    };
+    
+  } else {
+     log("Browser not supported.");
+     micBtn.disabled = true;
+  }
+
+  function toggleMic() {
+     if(isListening) {
+         isListening = false;
+         recognition.stop();
+     } else {
+         const lang = myLanguageSelect.value;
+         if (lang !== 'auto') recognition.lang = lang;
+         try {
+             recognition.start();
+         } catch(e) {
+             console.log("Already started", e);
+         }
+     }
+     updateUI();
+  }
+  
+  function updateUI() {
+      if(isListening) {
+          micBtn.classList.add('active');
+          micBtn.innerHTML = '<span>⏹</span> Stop Mic';
+      } else {
+          micBtn.classList.remove('active');
+          micBtn.innerHTML = '<span>🎙️</span> Open Mic';
+      }
+  }
+
+</script>
+</body>
+</html>

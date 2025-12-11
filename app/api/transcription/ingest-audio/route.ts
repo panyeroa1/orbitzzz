@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
+import { getSpeakerLabel } from "@/lib/speaker-utils";
 
 // Helper to send audio to Deepgram
 async function transcribeAudio(audioBuffer: Buffer, mimetype: string) {
@@ -67,10 +68,25 @@ export async function POST(req: NextRequest) {
 
     const confidence = results.confidence;
     const detectedLanguage = dgResponse.results?.channels?.[0]?.detected_language;
-    // Extract speaker from first word if available
+    
+    // Extract speaker from first word if available and map to label
     let speakerLabel = null;
+    let formattedTranscript = transcript;
+
     if (results.words && results.words.length > 0) {
-        speakerLabel = `speaker_${results.words[0].speaker}`;
+        // Get numeric speaker ID (e.g. 0, 1)
+        const speakerId = Number(results.words[0].speaker);
+        // Map to "Male 1", "Female 1" etc.
+        const readableLabel = getSpeakerLabel(speakerId);
+        
+        if (readableLabel) {
+            speakerLabel = readableLabel;
+            // Format as "Male 1: Text content"
+            formattedTranscript = `${readableLabel}: ${transcript}`;
+        } else {
+             // Fallback if no label found
+            speakerLabel = `speaker_${speakerId}`;
+        }
     }
 
     // 2. Upsert into Supabase (update single row per meeting)
@@ -80,9 +96,9 @@ export async function POST(req: NextRequest) {
         {
           meeting_id: meetingId,
           chunk_index: chunkIndex,
-          text_original: transcript,
+          text_original: formattedTranscript, // Saved as "Male 1: Hello..."
           source_language: detectedLanguage || "en",
-          speaker_label: speakerLabel,
+          speaker_label: speakerLabel, // Saved as "Male 1"
         },
         {
           onConflict: 'meeting_id',

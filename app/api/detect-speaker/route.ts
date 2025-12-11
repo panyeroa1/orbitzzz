@@ -1,5 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+
+const DEFAULT_MODEL = process.env.GEMINI_MODEL_ID || "gemini-flash-lite-latest";
 
 export async function POST(req: Request) {
   try {
@@ -9,90 +10,80 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    // Initialize the new Google GenAI SDK
-    // It automatically picks up GEMINI_API_KEY from process.env
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY not configured");
+    }
 
     const prompt = `
-      Analyze the following text. It may contain a monologue or a dialogue between multiple speakers.
-      Your task is to segment the text by speaker and assign the most appropriate voice to each segment.
+Break the transcript into speaker segments. The transcript may include multiple speakers. 
+Return JSON ONLY:
+[
+  { "text": "segment words", "voice": "Aoede" }
+]
 
-      Text: "${text}"
+Voices: Aoede (F), Charon (M), Kore (F alt), Orus (M alt).
 
-      Available Voices:
-      - Aoede (Female, use for women, narrators, or generic female)
-      - Charon (Male, use for men, deep voice, or generic male)
-      - Kore (Female, younger/alternative)
-      - Orus (Male, younger/alternative)
+Rules:
+1. Split each time a different speaker is implied.
+2. Keep order of the conversation.
+3. If speaker cannot be derived, still segment logically and choose a consistent voice.
 
-      Output Format:
-      Return ONLY a JSON array of objects. Do not wrap in markdown code blocks.
-      Example:
-      [
-        {"text": "Hello, how are you?", "voice": "Charon"},
-        {"text": "I am fine, thanks.", "voice": "Aoede"}
-      ]
+Transcript:
+${text}
+    `.trim();
 
-      Rules:
-      1. Split the text whenever the speaker changes (based on context cues like "He said", "She replied", or implicit dialogue).
-      2. If it is a single speaker, return a single object in the array.
-      3. Assign voices consistently (e.g., if "Paul" is Charon, keep him as Charon).
-    `;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${DEFAULT_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
 
-    // Generate content using gemini-2.5-flash
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      config: {
-        responseMimeType: "application/json", 
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }]
-        }
-      ]
-    });
-
-    let rawText = response.text; 
-    // In @google/genai v1+, .text is a getter (property) that returns string or null/undefined.
-    // We check just in case.
-    
-    if (typeof rawText === 'function') {
-        // @ts-ignore
-        rawText = rawText();
-    } 
-    
-    if (!rawText && response.candidates && response.candidates.length > 0) {
-        rawText = response.candidates[0].content?.parts?.[0]?.text;
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Gemini API error:", errorData);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
-    if (!rawText) {
-        rawText = ""; // Handle empty
-    }
+    const data = await response.json();
+    let rawText =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((part: any) => part?.text || "")
+        .join("")
+        .trim() || "";
 
-    // Clean up markdown
-    rawText = rawText.trim().replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '');
+    rawText = rawText.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "");
 
     let segments = [];
     try {
       segments = JSON.parse(rawText);
     } catch (e) {
       console.error("JSON parse failed:", rawText);
-      segments = [{ text: text, voice: "Aoede" }];
+      segments = [{ text, voice: "Aoede" }];
     }
-    
+
     if (!Array.isArray(segments) || segments.length === 0) {
-       segments = [{ text: text, voice: "Aoede" }];
+      segments = [{ text, voice: "Aoede" }];
     }
 
     return NextResponse.json({ segments });
   } catch (error: any) {
     console.error("Speaker detection error:", error);
-    // Return 200 with fallback to avoid breaking UI flow entirely, 
-    // OR return 500 if we want the UI to show red. 
-    // The user saw "Speaker detection failed" which implies non-200. 
-    // But my previous code returned 200.
-    // Let's return 200 with fallback so it 'works' but just defaults to one speaker if the API fails.
-    return NextResponse.json({ segments: [{ text: "Error in detection, using default voice.", voice: "Aoede" }] }); 
+    return NextResponse.json({
+      segments: [{ text: "Error in detection, using default voice.", voice: "Aoede" }],
+    });
   }
 }

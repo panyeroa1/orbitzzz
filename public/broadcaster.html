@@ -722,6 +722,7 @@
     let stopRequested = false;
     let isStarting = false;
     let fullTranscript = "";
+    let restartTimer = null;
     
     // Save State
     let saveInterval = null;
@@ -733,6 +734,28 @@
       } catch (e) {
         log("Mic permission blocked: " + e.message, true);
       }
+    }
+
+    function clearRestartTimer() {
+      if (restartTimer) {
+        clearTimeout(restartTimer);
+        restartTimer = null;
+      }
+    }
+
+    function scheduleRestart(delay = 1000) {
+      if (stopRequested || isStarting || isListening) return;
+      if (restartTimer) return;
+      restartTimer = setTimeout(() => {
+        restartTimer = null;
+        if (!stopRequested && !isListening) {
+          try {
+            recognition.start();
+          } catch (e) {
+            log("Restart failed: " + e.message, true);
+          }
+        }
+      }, delay);
     }
 
     function initRecognition() {
@@ -749,6 +772,7 @@
 
       recognition.onstart = () => {
         isListening = true;
+        clearRestartTimer();
         setListeningUI(true);
         log(`Listening (${recognition.lang}).`);
         startSavingLoop(); // Start the 5s save loop
@@ -759,28 +783,21 @@
         // Only stop on fatal errors like permission denied
         if(e.error === 'not-allowed' || e.error === 'service-not-allowed') {
             stopListening();
+            return;
         }
-        // For transient errors (no-speech, network, aborted), let onend handle restart
+        // For aborted/no-speech, schedule a restart with a slight delay
+        if (e.error === 'aborted') {
+          isListening = false;
+          scheduleRestart(1200);
+        }
+        // For transient errors (no-speech, network), let onend handle restart
       };
 
       recognition.onend = () => {
+        isListening = false;
         // Always try to restart unless explicitly stopped
         if (!stopRequested) {
-          setTimeout(() => {
-            if (!stopRequested) {
-              log("Auto-resuming...");
-              try { 
-                recognition.start(); 
-              } catch(e) { 
-                log("Restart failed, retrying in 2s...", true);
-                setTimeout(() => {
-                  if (!stopRequested) {
-                    try { recognition.start(); } catch(e2) { /* ignore */ }
-                  }
-                }, 2000);
-              }
-            }
-          }, 500); // Small delay before restart
+          scheduleRestart(800);
         } else {
           isListening = false;
           setListeningUI(false);
@@ -832,7 +849,9 @@
     function stopListening() {
       if (recognition && isListening) {
         stopRequested = true;
+        clearRestartTimer();
         recognition.stop();
+        isListening = false;
       }
     }
 

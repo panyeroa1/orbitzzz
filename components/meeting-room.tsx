@@ -127,7 +127,7 @@ export const MeetingRoom = () => {
           <div className="h-full bg-[#0d0f18]/80 text-white flex flex-col">
              {/* 1:1 Interface - Embedding the simplified translator/binding UI */}
              <iframe
-                src={`/one-on-one.html?bindingId=${call?.id}`} // Using meeting ID as binding ID for now
+                src={`/one-on-one?bindingId=${call?.id}`} // Using meeting ID as binding ID for now
                 className="flex-1 w-full border-0 bg-transparent"
                 allow="microphone; camera; display-capture; autoplay"
                 title="1:1 Translator"

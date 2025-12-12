@@ -1589,3 +1589,62 @@ Known limitations or follow-up tasks:
 - Translation latency depends on Gemini API.
 
 ------------------------------------------------------------
+
+Task ID: T-0018
+Title: Scaffold VocalProxy Project
+Status: DONE
+Owner: Miles
+Created: 2025-12-12 11:35
+Last updated: 2025-12-12 11:35
+
+START LOG
+
+Timestamp: 2025-12-12 11:30
+Current behavior or state:
+- User provided "VocalProxy" solution code.
+- Requested implementation.
+
+Plan and scope for this task:
+- Scaffold `vocal-proxy/` directory structure within the workspace.
+- Create all configuration and source files.
+
+Files or modules expected to change:
+- vocal-proxy/*
+
+Risks or things to watch out for:
+- Missing Environment Variables (left placeholders).
+
+WORK CHECKLIST
+
+- [x] Files created
+- [ ] Dependencies installed (Checking installation now)
+
+END LOG
+
+Timestamp: 2025-12-12 11:35
+Summary of what actually changed:
+- Created `vocal-proxy/` directory.
+- Populated with , s, and React app code.
+
+Files actually modified:
+- vocal-proxy/package.json
+- vocal-proxy/.env.example
+- vocal-proxy/setup-assistant.js
+- vocal-proxy/app/package.json
+- vocal-proxy/app/vite.config.js
+- vocal-proxy/app/index.html
+- vocal-proxy/app/src/main.jsx
+- vocal-proxy/app/src/App.css
+- vocal-proxy/app/src/App.jsx
+
+How it was tested:
+- Files check. Run `npm run setup` requires keys.
+
+Test result:
+- PASS (Scaffolding complete)
+
+Known limitations or follow-up tasks:
+- User must fill in .env keys.
+- User must run `npm install` and `npm run setup`.
+
+------------------------------------------------------------

@@ -1648,3 +1648,34 @@ Known limitations or follow-up tasks:
 - User must run `npm install` and `npm run setup`.
 
 ------------------------------------------------------------
+
+Task ID: T-0019
+Title: Implement Screen Sharing
+Status: IN-PROGRESS
+Owner: Miles
+Created: 2025-12-12 14:00
+Last updated: 2025-12-12 14:00
+
+START LOG
+
+Timestamp: 2025-12-12 14:00
+Current behavior or state:
+- No screen sharing button in meeting controls.
+
+Plan and scope for this task:
+- Add Screen Share button to `MeetingBottomBar`.
+- Connect to `call.screenShare.toggle()`.
+- Add active state visualization.
+
+Files or modules expected to change:
+- components/meeting-bottom-bar.tsx
+
+Risks or things to watch out for:
+- Ensure icon import doesn't conflict.
+
+WORK CHECKLIST
+
+- [ ] Code changes implemented according to the defined scope
+- [ ] Logs and error handling reviewed
+
+END LOG (pending)
